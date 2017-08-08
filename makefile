@@ -1,6 +1,6 @@
 ccarm=mips-openwrt-linux-g++
 all:
-	g++ main.cpp -o dupd -static -lrt
+	g++ main.cpp common.cpp log.cpp -I. -o dupd -static -lrt -std=c++11
 release:
 	g++ main.cpp -o dupd_amd64 -static -lrt	
 	g++ main.cpp -o dupd_x86 -static -lrt -m32
