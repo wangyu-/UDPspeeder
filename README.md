@@ -29,11 +29,11 @@ https://github.com/wangyu-/UDPspeeder/releases
 在模拟丢包的网络环境下，架设了vpn服务器(udp模式)。收发各有10%的丢包率
 
 #### 使用前
-![image0](images/Capture4.PNG)
+<img src="images/Capture4.PNG" width="500">
 #### 使用后
 3倍冗余数据。
-![image0](images/Capture5.PNG)
-![image0](images/Capture6.PNG)
+
+<img src="images/Capture6.PNG" width="500">
 
 # 进阶操作说明
 
