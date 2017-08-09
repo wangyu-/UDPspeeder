@@ -27,7 +27,7 @@ client支持多个udp连接，server也支持多个client
 
 目前有amd64,x86,ar71xx的binary
 
-如果你需要绕过UDP屏蔽/QOS，或者需要连接复用/连接保持功能，或者是加密。解决方案在另一个repo(可以跟UDPspeeder一起使用)：
+如果你需要绕过UDP屏蔽/QoS，或者需要连接复用/连接保持功能，或者是加密。解决方案在另一个repo(可以跟UDPspeeder一起使用)：
 
 https://github.com/wangyu-/udp2raw-tunnel
 
