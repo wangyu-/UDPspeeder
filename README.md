@@ -66,9 +66,9 @@ other options:
 
 # 应用
 
-### UDPspeeder + openvpn加速任何流量
-
+#### UDPspeeder + openvpn加速任何流量
 ![image0](images/Capture2.PNG)
-### UDPspeeder + kcptun/finalspeed同时加速tcp和udp流量
+#### UDPspeeder + kcptun/finalspeed同时加速tcp和udp流量
+这样对tcp而言，加速效果更好。
 ![image0](images/Capture3.PNG)
 
