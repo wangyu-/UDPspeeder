@@ -3,7 +3,8 @@
 UDP加速工具，降低丢包率，配合vpn可以加速任何协议，尤其适用于加速游戏和网页打开速度；同时也是一个UDP连接的调试和统计工具。
 
 这个是我自己稳定用了一个月的项目，用来加速美服的Brawl Stars和亚服的Mobile Legend，效果不错。
-
+#### 效果
+![image0](images/Capture8.PNG)
 #### 原理简介
 目前原理是多倍发包。以后会做各种优化。准备开发的功能有：对高频率的短包先合并再冗余；Reed–Solomon code，在流量小的时候多倍发包，流量大时用Reed–Solomon code。
 
@@ -54,17 +55,6 @@ https://github.com/wangyu-/UDPspeeder/releases
 现在client和server之间建立起了tunnel。想要连接44.55.66.77:7777，只需要连接 127.0.0.1:3333。来回的所有的udp流量会被加速。
 
 注:-d2 表示除了本来的包以外，额外再发2个冗余包。可调。
-# 效果
-在模拟丢包的网络环境下，架设了vpn服务器(udp模式)。收发各有10%的丢包率
-
-#### 使用前
-<img src="images/Capture4.PNG" width="700">
-
-#### 使用后
-
-使用-d2，也就是额外发2个包。等了一页半，终于出现了一个timeout。
-
-<img src="images/Capture6.PNG" width="700">
 
 # 进阶操作说明
 
