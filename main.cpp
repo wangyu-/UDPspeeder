@@ -11,7 +11,7 @@ typedef int i32_t;
 
 //const u32_t anti_replay_window_size=1000;
 typedef u64_t anti_replay_seq_t;
-int disable_anti_replay=0;
+int disable_replay_filter=0;
 int dup_num=3;
 int dup_delay=900;   //ms
 int iv_min=2;
@@ -30,68 +30,70 @@ u32_t remote_address_uint32=0;
 char local_address[100], remote_address[100];
 int local_port = -1, remote_port = -1;
 int multi_process_mode=0;
+const u32_t anti_replay_buff_size=10000;
+
+char key_string[1000]= "secret key";
 
 int VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV;
 
 struct anti_replay_t
 {
 	u64_t max_packet_received;
-	char window[anti_replay_window_size];
-	anti_replay_seq_t anti_replay_seq;
+
+	u64_t replay_buffer[anti_replay_buff_size];
+	unordered_set<u64_t> st;
+	u32_t const_id;
+	u32_t anti_replay_seq;
+	int index;
 	anti_replay_seq_t get_new_seq_for_send()
 	{
-		return anti_replay_seq++;
+		anti_replay_seq_t res=const_id;
+		res<<=32u;
+		anti_replay_seq++;
+		res|=anti_replay_seq;
+		memset(replay_buffer,0,sizeof(replay_buffer));
+		st.rehash(anti_replay_buff_size*10);
+		return res;
+	}
+	void prepare()
+	{
+		anti_replay_seq=get_true_random_number();//random first seq
+		const_id=get_true_random_number_nz();
 	}
 	anti_replay_t()
 	{
+
 		max_packet_received=0;
-		anti_replay_seq=0;//random first seq
+
+		index=0;
 		//memset(window,0,sizeof(window)); //not necessary
-	}
-	void re_init()
-	{
-		max_packet_received=0;
-		//memset(window,0,sizeof(window));
 	}
 
 	int is_vaild(u64_t seq)
 	{
-		if(disable_anti_replay) return 1;
-		//if(disabled) return 0;
-
-		if(seq==max_packet_received) return 0;
-		else if(seq>max_packet_received)
+		if(disable_replay_filter) return 1;
+		if(seq==0)
 		{
-			if(seq-max_packet_received>=anti_replay_window_size)
-			{
-				memset(window,0,sizeof(window));
-				window[seq%anti_replay_window_size]=1;
-			}
-			else
-			{
-				for (u64_t i=max_packet_received+1;i<seq;i++)
-					window[i%anti_replay_window_size]=0;
-				window[seq%anti_replay_window_size]=1;
-			}
-			max_packet_received=seq;
-			return 1;
+			mylog(log_debug,"seq=0\n");
+			return 0;
 		}
-		else if(seq<max_packet_received)
+		if(st.find(seq)!=st.end() )
 		{
-			if(max_packet_received-seq>=anti_replay_window_size) return 0;
-			else
-			{
-				if (window[seq%anti_replay_window_size]==1) return 0;
-				else
-				{
-					window[seq%anti_replay_window_size]=1;
-					return 1;
-				}
-			}
+			mylog(log_trace,"seq %llx exist\n",seq);
+			return 0;
 		}
 
+		if(replay_buffer[index]!=0)
+		{
+			assert(st.find(replay_buffer[index])!=st.end());
+			st.erase(replay_buffer[index]);
+		}
+		replay_buffer[index]=seq;
+		st.insert(seq);
+		index++;
+		if(index==int(anti_replay_buff_size)) index=0;
 
-		return 0; //for complier check
+		return 1; //for complier check
 	}
 }anti_replay;
 struct conn_manager_t  //TODO change map to unordered map
@@ -244,20 +246,7 @@ struct conn_manager_t  //TODO change map to unordered map
 }conn_manager;
 
 typedef u64_t my_time;
-/*struct my_time:timespec
-{
-    bool operator <(const my_time& other)const
-     {
-        if(tv_sec<other.tv_sec) return true;
-        else if(tv_sec>other.tv_sec) return false;
-        else return tv_nsec<other.tv_nsec;
-     }
-    bool operator ==(const my_time& other)const
-     {
-        if(tv_sec==other.tv_sec&&tv_nsec==other.tv_nsec) return true;
-        return false;
-     }
-};*/
+
 struct delay_data
 {
 	int fd;
@@ -345,13 +334,14 @@ int add_seq(char * data,int &data_len )
 int remove_seq(char * data,int &data_len)
 {
 	anti_replay_seq_t seq;
-	if(data_len<sizeof(seq)) return -1;
+	if(data_len<int(sizeof(seq))) return -1;
 	data_len-=sizeof(seq);
 	memcpy(&seq,data+data_len,sizeof(seq));
 	seq=ntoh64(seq);
 	if(anti_replay.is_vaild(seq)==0)
 	{
-		//return -1;   //TODO for test
+		mylog(log_trace,"seq %llx dropped bc of replay-filter\n ",seq);
+		return -1;   //TODO for test
 	}
 	return 0;
 }
@@ -369,12 +359,19 @@ int do_obscure(const char * input, int in_len,char *output,int &out_len)
 	memcpy(output+iv_len,input,in_len);
 
 	output[iv_len+in_len]=(uint8_t)iv_len;
-	for(i=0,j=0;i<in_len;i++,j++)
+
+	output[iv_len+in_len]^=output[0];
+	output[iv_len+in_len]^=key_string[0];
+
+	for(i=0,j=0,k=1;i<in_len;i++,j++,k++)
 	{
 		if(j==iv_len) j=0;
+		if(key_string[k]==0)k=0;
 		output[iv_len+i]^=output[j];
+		output[iv_len+i]^=key_string[k];
 	}
-	output[iv_len+in_len]^=output[0];
+
+
 	out_len=iv_len+in_len+1;
 	return 0;
 }
@@ -387,20 +384,22 @@ int de_obscure(const char * input, int in_len,char *output,int &out_len)
 	int i, j, k;
 	if (in_len > 65535||in_len<0)
 	{
-		printf("error1,%d",in_len);
+		mylog(log_debug,"in_len > 65535||in_len<0 ,  %d",in_len);
 		return -1;
 	}
-	int iv_len= int ((uint8_t)(input[in_len-1]^input[0]) );
+	int iv_len= int ((uint8_t)(input[in_len-1]^input[0]^key_string[0]) );
 	out_len=in_len-1-iv_len;
 	if(out_len<0)
 	{
-		printf("error2,%d %d",in_len,out_len);
+		mylog(log_debug,"%d %d\n",in_len,out_len);
 		return -1;
 	}
-	for(i=0,j=0;i<in_len;i++,j++)
+	for(i=0,j=0,k=1;i<in_len;i++,j++,k++)
 	{
 		if(j==iv_len) j=0;
-		output[i]=input[iv_len+i]^input[j];
+		if(key_string[k]==0)k=0;
+		output[i]=input[iv_len+i]^input[j]^key_string[k];
+
 	}
 	return 0;
 }
@@ -416,7 +415,7 @@ void check_delay_map()
 		//lfflush(stdout);
 		while(1)
 		{
-			int ret;
+			int ret=0;
 			it=delay_mp.begin();
 			if(it==delay_mp.end()) break;
 
@@ -424,13 +423,13 @@ void check_delay_map()
 			if(it->first < current_time||it->first ==current_time)
 			{
 				//send packet
-				printf("<%d>",it->second.len);
+				//printf("<%d>",it->second.len);
 				if(multi_process_mode)
 				{
 					if ((is_client && it->second.fd == remote_fd)
 							|| (is_server && it->second.fd == local_fd)) {
 						char new_data[buf_len];
-						int new_len;
+						int new_len=0;
 						do_obscure(it->second.data, it->second.len, new_data,
 								new_len);
 						ret = send(it->second.fd, new_data, new_len, 0);
@@ -440,8 +439,8 @@ void check_delay_map()
 					}
 
 					if (ret < 0) {
-						printf("send return %d at @300", ret);
-						exit(1);
+						mylog(log_fatal,"send return %d at @300", ret);
+						myexit(1);
 					}
 				}
 				else
@@ -449,7 +448,7 @@ void check_delay_map()
 					if(is_client)
 					{
 						char new_data[buf_len];
-						int new_len;
+						int new_len=0;
 						do_obscure(it->second.data, it->second.len, new_data,
 								new_len);
 						ret = send(it->second.fd, new_data, new_len, 0);
@@ -471,7 +470,7 @@ void check_delay_map()
 
 
 							char new_data[buf_len];
-							int new_len;
+							int new_len=0;
 							do_obscure(it->second.data, it->second.len, new_data,
 									new_len);
 
@@ -488,7 +487,7 @@ void check_delay_map()
 						}
 					}
 					if (ret < 0) {
-						printf("send return %d at @300", ret);
+						mylog(log_debug,"send return %d at @300", ret);
 					}
 				}
 
@@ -595,7 +594,7 @@ int event_loop()
 	if (bind(local_listen_fd, (struct sockaddr*) &local_me, slen) == -1)
 	{
 		mylog(log_fatal,"socket bind error");
-		exit(1);
+		myexit(1);
 	}
 
 	int epollfd = epoll_create1(0);
@@ -604,7 +603,7 @@ int event_loop()
 	if (epollfd < 0)
 	{
 		mylog(log_fatal,"epoll created return %d\n", epollfd);
-		exit(-1);
+		myexit(-1);
 	}
 	ev.events = EPOLLIN;
 	ev.data.fd = local_listen_fd;
@@ -613,7 +612,7 @@ int event_loop()
 	if(ret!=0)
 	{
 		mylog(log_fatal,"epoll created return %d\n", epollfd);
-		exit(-1);
+		myexit(-1);
 	}
 	int clear_timer_fd=-1;
 	set_timer(epollfd,clear_timer_fd);
@@ -622,8 +621,8 @@ int event_loop()
 
 	if ((delay_timer_fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)) < 0)
 	{
-		printf("timer_fd create error");
-		exit(1);
+		mylog(log_fatal,"timer_fd create error");
+		myexit(1);
 	}
 	ev.events = EPOLLIN;
 	ev.data.fd = delay_timer_fd;
@@ -635,8 +634,8 @@ int event_loop()
 	epoll_ctl(epollfd, EPOLL_CTL_ADD, delay_timer_fd, &ev);
 	if (ret < 0)
 	{
-		printf("epoll_ctl return %d\n", ret);
-		exit(-1);
+		mylog(log_fatal,"epoll_ctl return %d\n", ret);
+		myexit(-1);
 	}
 
 	for (;;)
@@ -645,9 +644,10 @@ int event_loop()
 		if (nfds < 0)
 		{
 			mylog(log_fatal,"epoll_wait return %d\n", nfds);
-			exit(-1);
+			myexit(-1);
 		}
 		int n;
+		int clear_triggered=0;
 		for (n = 0; n < nfds; ++n)
 		{
 			if (events[n].data.fd == local_listen_fd) //data income from local end
@@ -657,8 +657,9 @@ int event_loop()
 				if ((data_len = recvfrom(local_listen_fd, data, buf_len, 0,
 						(struct sockaddr *) &local_other, &slen)) == -1) //<--first packet from a new ip:port turple
 				{
-					printf("recv_from error");
-					exit(1);
+					mylog(log_error,"recv_from error,this shouldnt happen,but we can try to continue");
+					//myexit(1);
+					continue;
 				}
 				data[data_len] = 0; //for easier debug
 				u64_t u64=pack_u64(local_other.sin_addr.s_addr,ntohs(local_other.sin_port));
@@ -696,7 +697,7 @@ int event_loop()
 				{
 					add_seq(data,data_len);
 					char new_data[buf_len];
-					int new_len;
+					int new_len=0;
 					do_obscure(data, data_len, new_data, new_len);
 					ret = send(new_udp_fd, new_data,new_len, 0);
 
@@ -710,12 +711,12 @@ int event_loop()
 					char new_data[buf_len];
 					int new_len;
 					if (de_obscure(data, data_len, new_data, new_len) != 0) {
-						printf("error at line %d    ,data_len=%d \n", __LINE__,data_len);
+						mylog(log_trace,"de_obscure failed \n");
 						continue;
 					}
 
 					if (remove_seq(new_data, new_len) != 0) {
-						printf("error at line %d\n", __LINE__);
+						mylog(log_trace,"remove_seq failed \n");
 						continue;
 					}
 
@@ -729,10 +730,7 @@ int event_loop()
 			}
 			else if(events[n].data.fd == clear_timer_fd)
 			{
-				u64_t value;
-				read(clear_timer_fd, &value, 8);
-				mylog(log_debug, "timer!\n");
-				conn_manager.clear_inactive();
+				clear_triggered=1;
 			}
 			else if (events[n].data.fd == delay_timer_fd)
 			{
@@ -772,12 +770,12 @@ int event_loop()
 					char new_data[buf_len];
 					int new_len;
 					if (de_obscure(data, data_len, new_data, new_len) != 0) {
-						printf("error at line %d    ,data_len=%d \n", __LINE__,data_len);
+						mylog(log_debug,"data_len=%d \n",data_len);
 						continue;
 					}
 
 					if (remove_seq(new_data, new_len) != 0) {
-						printf("error at line %d\n", __LINE__);
+						mylog(log_debug,"remove_seq error \n");
 						continue;
 					}
 
@@ -790,7 +788,7 @@ int event_loop()
 				{
 					add_seq(data,data_len);
 					char new_data[buf_len];
-					int new_len;
+					int new_len=0;
 					do_obscure(data, data_len, new_data, new_len);
 
 					if(dup_num>1)
@@ -814,8 +812,15 @@ int event_loop()
 			}
 		}
 		check_delay_map();
+		if(clear_triggered)   // 删除操作在epoll event的最后进行，防止event cache中的fd失效。
+		{
+			u64_t value;
+			read(clear_timer_fd, &value, 8);
+			mylog(log_trace, "timer!\n");
+			conn_manager.clear_inactive();
+		}
 	}
-	exit(0);
+	myexit(0);
 	return 0;
 }
 void process_arg(int argc, char *argv[])
@@ -827,6 +832,7 @@ void process_arg(int argc, char *argv[])
 		{"log-level", required_argument,    0, 1},
 		{"log-position", no_argument,    0, 1},
 		{"disable-color", no_argument,    0, 1},
+		{"disable-filter", no_argument,    0, 1},
 		{NULL, 0, 0, 0}
       };
     int option_index = 0;
@@ -861,10 +867,10 @@ void process_arg(int argc, char *argv[])
 	{
 		printf(
 				"proc -c/-s -l ip:port -r ip:port  [-n dup_times] [-t dup_delay(1000=1ms)] \n");
-		exit( -1);
+		myexit( -1);
 	}
 	int no_l = 1, no_r = 1;
-	while ((opt = getopt_long(argc, argv, "l:r:d:t:hcsp",long_options,&option_index)) != -1)
+	while ((opt = getopt_long(argc, argv, "l:r:d:t:hcspk:",long_options,&option_index)) != -1)
 	{
 		//string opt_key;
 		//opt_key+=opt;
@@ -873,13 +879,22 @@ void process_arg(int argc, char *argv[])
 		case 'p':
 			multi_process_mode=1;
 			break;
+		case 'k':
+			sscanf(optarg,"%s\n",key_string);
+			if(strlen(key_string)==0)
+			{
+				mylog(log_fatal,"key len=0??\n");
+				myexit(-1);
+			}
+			break;
+
 		case 'd':
 			dup_num=-1;
 			sscanf(optarg,"%d\n",&dup_num);
 			if(dup_num<1 ||dup_num>10)
 			{
-				printf("dup_num must be between 1 and 10\n");
-				exit(-1);
+				mylog(log_fatal,"dup_num must be between 1 and 10\n");
+				myexit(-1);
 			}
 			break;
 		case 't':
@@ -887,8 +902,8 @@ void process_arg(int argc, char *argv[])
 			sscanf(optarg,"%d\n",&dup_delay);
 			if(dup_delay<1||dup_delay>1000*1000)
 			{
-				printf("dup_delay must be between 1 and 10\n");
-				exit(-1);
+				mylog(log_fatal,"dup_delay must be between 1 and 10\n");
+				myexit(-1);
 			}
 			break;
 		case 'c':
@@ -905,8 +920,8 @@ void process_arg(int argc, char *argv[])
 			}
 			else
 			{
-				printf(" -r ip:port\n");
-				exit(1);
+				mylog(log_fatal," -r ip:port\n");
+				myexit(1);
 				strcpy(local_address, "127.0.0.1");
 				sscanf(optarg, "%d", &local_port);
 			}
@@ -922,8 +937,8 @@ void process_arg(int argc, char *argv[])
 			}
 			else
 			{
-				printf(" -r ip:port\n");
-				exit(1);
+				mylog(log_fatal," -r ip:port\n");
+				myexit(1);
 				strcpy(remote_address, "127.0.0.1");
 				sscanf(optarg, "%d", &remote_port);
 			}
@@ -933,6 +948,11 @@ void process_arg(int argc, char *argv[])
 		case 1:
 			if(strcmp(long_options[option_index].name,"log-level")==0)
 			{
+			}
+			else if(strcmp(long_options[option_index].name,"disable-filter")==0)
+			{
+				disable_replay_filter=1;
+				//enable_log_color=0;
 			}
 			else if(strcmp(long_options[option_index].name,"disable-color")==0)
 			{
@@ -944,25 +964,26 @@ void process_arg(int argc, char *argv[])
 			}
 			break;
 		default:
-			printf("ignore unknown <%s>", optopt);
+			mylog(log_fatal,"unknown option <%x>", opt);
+			myexit(-1);
 		}
 	}
 
 	if (no_l)
-		printf("error: -i not found\n");
+		mylog(log_fatal,"error: -i not found\n");
 	if (no_r)
-		printf("error: -o not found\n");
+		mylog(log_fatal,"error: -o not found\n");
 	if (no_l || no_r)
-		exit(-1);
+		myexit(-1);
 	if (is_client == 0 && is_server == 0)
 	{
-		printf("-s -c hasnt been set\n");
-		exit(-1);
+		mylog(log_fatal,"-s -c hasnt been set\n");
+		myexit(-1);
 	}
 	if (is_client == 1 && is_server == 1)
 	{
-		printf("-s -c cant be both set\n");
-		exit(-1);
+		mylog(log_fatal,"-s -c cant be both set\n");
+		myexit(-1);
 	}
 }
 int multi_process()
@@ -982,8 +1003,8 @@ int multi_process()
 	local_me.sin_addr.s_addr = inet_addr(local_address);
 	if (bind(local_listen_fd, (struct sockaddr*) &local_me, slen) == -1)
 	{
-		printf("socket bind error");
-		exit(1);
+		mylog(log_fatal,"socket bind error");
+		myexit(1);
 	}
 	while (1)
 	{
@@ -991,11 +1012,11 @@ int multi_process()
 		if ((data_len = recvfrom(local_listen_fd, data, buf_len, 0,
 				(struct sockaddr *) &local_other, &slen)) == -1) //<--first packet from a new ip:port turple
 		{
-			printf("recv_from error");
-			exit(1);
+			mylog(log_fatal,"recv_from error");
+			myexit(1);
 		}
 
-		printf("received packet from %s:%d\n", inet_ntoa(local_other.sin_addr),
+		mylog(log_debug,"received packet from %s:%d\n", inet_ntoa(local_other.sin_addr),
 				ntohs(local_other.sin_port));
 
 		data[data_len] = 0;
@@ -1029,7 +1050,7 @@ int multi_process()
 		if (bind(local_fd, (struct sockaddr*) &local_me, slen) == -1) //偷懒的方法，有潜在问题
 		{
 			printf("socket bind error in chilld");
-			exit(1);
+			myexit(1);
 		}
 		int ret = connect(local_fd, (struct sockaddr *) &local_other, slen); //偷懒的方法，有潜在问题
 		if (fork() == 0)  //子
@@ -1037,7 +1058,7 @@ int multi_process()
 			if (ret != 0)
 			{
 				printf("connect return %d @1\n", ret);
-				exit(1);
+				myexit(1);
 			}
 			close(local_listen_fd);
 
@@ -1052,7 +1073,7 @@ int multi_process()
 			if (ret != 0)
 			{
 				printf("connect return %d @2\n", ret);
-				exit(1);
+				myexit(1);
 			}
 			if (is_client)
 			{
@@ -1075,7 +1096,7 @@ int multi_process()
 			}
 
 			if (ret < 0)
-				exit(-1);
+				myexit(-1);
 
 
 			setnonblocking(remote_fd);
@@ -1090,7 +1111,7 @@ int multi_process()
 			if (epollfd < 0)
 			{
 				printf("epoll return %d\n", epollfd);
-				exit(-1);
+				myexit(-1);
 			}
 			ev.events = EPOLLIN;
 			ev.data.fd = local_fd;
@@ -1098,7 +1119,7 @@ int multi_process()
 			if (ret < 0)
 			{
 				printf("epoll_ctl return %d\n", ret);
-				exit(-1);
+				myexit(-1);
 			}
 			ev.events = EPOLLIN;
 			ev.data.fd = remote_fd;
@@ -1106,13 +1127,13 @@ int multi_process()
 			if (ret < 0)
 			{
 				printf("epoll_ctl return %d\n", ret);
-				exit(-1);
+				myexit(-1);
 			}
 
 			if ((delay_timer_fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)) < 0)
 			{
 				printf("timer_fd create error");
-				exit(1);
+				myexit(1);
 			}
 			ev.events = EPOLLIN;
 			ev.data.fd = delay_timer_fd;
@@ -1125,7 +1146,7 @@ int multi_process()
 			if (ret < 0)
 			{
 				printf("epoll_ctl return %d\n", ret);
-				exit(-1);
+				myexit(-1);
 			}
 
 			check_delay_map();
@@ -1136,7 +1157,7 @@ int multi_process()
 				if (nfds <= 0)
 				{
 					printf("epoll_wait return %d\n", nfds);
-					exit(-1);
+					myexit(-1);
 				}
 				int n;
 				for (n = 0; n < nfds; ++n)
@@ -1147,7 +1168,7 @@ int multi_process()
 						if (data_len < 0)
 						{
 							printf("recv return %d @1", data_len);
-							exit(1);
+							myexit(1);
 						}
 
 						data[data_len] = 0;
@@ -1159,7 +1180,7 @@ int multi_process()
 						{
 							add_seq(data,data_len);
 							char new_data[buf_len];
-							int new_len;
+							int new_len=0;
 							do_obscure(data, data_len, new_data, new_len);
 							ret = send(remote_fd, new_data, new_len, 0);
 							if(dup_num>1)
@@ -1180,7 +1201,7 @@ int multi_process()
 						if (ret < 0)
 						{
 							printf("send return %d at @1", ret);
-							exit(1);
+							myexit(1);
 						}
 
 
@@ -1190,8 +1211,8 @@ int multi_process()
 						data_len = recv(remote_fd, data, buf_len, 0);
 						if (data_len < 0)
 						{
-							printf("recv return -1 @2", data_len);
-							exit(1);
+							printf("recv return -1 @2");
+							myexit(1);
 						}
 
 						data[data_len] = 0;
@@ -1212,7 +1233,7 @@ int multi_process()
 						{
 							add_seq(data,data_len);
 							char new_data[buf_len];
-							int new_len;
+							int new_len=0;
 							do_obscure(data, data_len, new_data, new_len);
 							ret = send(local_fd, new_data, new_len, 0);
 							if(dup_num>1)
@@ -1224,7 +1245,7 @@ int multi_process()
 						if (ret < 0)
 						{
 							printf("send return %d @2", ret);
-							exit(1);
+							myexit(1);
 						}
 					}
 					else if (events[n].data.fd == delay_timer_fd)
@@ -1237,17 +1258,18 @@ int multi_process()
 				}						//end for n = 0; n < nfds
 				check_delay_map();
 			}
-			exit(0);
+			myexit(0);
 		}
 		else //if(fork()==0)  ... else
 		{ //fork 's father process
 			close(local_fd); //father process only listen to local_listen_fd,so,close this fd
 		}
 	}  //while(1)end
-
+	return 0;
 }
 int main(int argc, char *argv[])
 {
+
 	//printf("%lld\n",get_current_time_us());
 
 	//printf("%lld\n",get_current_time_us());
@@ -1258,9 +1280,10 @@ int main(int argc, char *argv[])
 	dup2(1, 2);		//redirect stderr to stdout
 	int i, j, k;
 	process_arg(argc,argv);
-
-
 	init_random_number_fd();
+	anti_replay.prepare();
+
+
 
 	signal(SIGCHLD, handler);
 
