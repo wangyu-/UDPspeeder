@@ -59,7 +59,7 @@ https://github.com/wangyu-/UDPspeeder/releases
 <img src="images/Capture4.PNG" width="500">
 #### 使用后
 
-3倍冗余数据。等了一页半，终于出现了一个timeout。
+使用-d2，也就是额外发2个包。等了一页半，终于出现了一个timeout。
 
 <img src="images/Capture6.PNG" width="500">
 
