@@ -9,13 +9,18 @@ typedef long long i64_t;
 typedef unsigned int u32_t;
 typedef int i32_t;
 
-//const u32_t anti_replay_window_size=1000;
 typedef u64_t anti_replay_seq_t;
 int disable_replay_filter=0;
-int dup_num=3;
-int dup_delay=900;   //ms
+int dup_num=1;
+int dup_delay_min=20;   //0.1ms
+int dup_delay_max=20;
+//int dup_first_delay=9000;   //0.1ms
+
+int jitter_min=0;
+int jitter_max=0;
+
 int iv_min=2;
-int iv_max=30;//< 256;
+int iv_max=16;//< 256;
 int random_number_fd=-1;
 
 int remote_fd=-1;
@@ -24,7 +29,7 @@ int is_client = 0, is_server = 0;
 int local_listen_fd=-1;
 
 int disable_conv_clear=0;
-
+int mtu_warn=1350;
 u32_t remote_address_uint32=0;
 
 char local_address[100], remote_address[100];
@@ -34,6 +39,28 @@ const u32_t anti_replay_buff_size=10000;
 
 char key_string[1000]= "secret key";
 
+int random_drop=0;
+
+u64_t last_report_time=0;
+int report_interval=0;
+
+u64_t packet_send_count=0;
+u64_t dup_packet_send_count=0;
+u64_t packet_recv_count=0;
+u64_t dup_packet_recv_count=0;
+
+int random_between(u32_t a,u32_t b)
+{
+	if(a>b)
+	{
+		mylog(log_fatal,"min >max?? %d %d\n",a ,b);
+		myexit(1);
+	}
+	if(a==b)return a;
+	else return a+get_true_random_number()%(b+1-a);
+}
+
+int max_pending_packet=0;
 int VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV;
 
 struct anti_replay_t
@@ -51,8 +78,6 @@ struct anti_replay_t
 		res<<=32u;
 		anti_replay_seq++;
 		res|=anti_replay_seq;
-		memset(replay_buffer,0,sizeof(replay_buffer));
-		st.rehash(anti_replay_buff_size*10);
 		return res;
 	}
 	void prepare()
@@ -62,16 +87,15 @@ struct anti_replay_t
 	}
 	anti_replay_t()
 	{
-
+		memset(replay_buffer,0,sizeof(replay_buffer));
+		st.rehash(anti_replay_buff_size*10);
 		max_packet_received=0;
-
 		index=0;
-		//memset(window,0,sizeof(window)); //not necessary
 	}
 
 	int is_vaild(u64_t seq)
 	{
-		if(disable_replay_filter) return 1;
+		//if(disable_replay_filter) return 1;
 		if(seq==0)
 		{
 			mylog(log_debug,"seq=0\n");
@@ -112,11 +136,12 @@ struct conn_manager_t  //TODO change map to unordered map
 	//void (*clear_function)(uint64_t u64) ;
 
 	long long last_clear_time;
-
+	list<int> clear_list;
 	conn_manager_t()
 	{
 		clear_it=fd_last_active_time.begin();
 		long long last_clear_time=0;
+		rehash();
 		//clear_function=0;
 	}
 	~conn_manager_t()
@@ -127,11 +152,11 @@ struct conn_manager_t  //TODO change map to unordered map
 	{
 		return fd_to_u64.size();
 	}
-	void reserve()
+	void rehash()
 	{
-		u64_to_fd.reserve(10007);
-		fd_to_u64.reserve(10007);
-		fd_last_active_time.reserve(10007);
+		u64_to_fd.rehash(10007);
+		fd_to_u64.rehash(10007);
+		fd_last_active_time.rehash(10007);
 	}
 	void clear()
 	{
@@ -181,6 +206,12 @@ struct conn_manager_t  //TODO change map to unordered map
 		if(disable_conv_clear) return 0;
 		u64_t u64=fd_to_u64[fd];
 
+		u32_t ip= (u64 >> 32u);
+
+		int port= uint16_t((u64 << 32u) >> 32u);
+
+		mylog(log_info,"fd %d cleared,assocated adress %s,%d\n",fd,my_ntoa(ip),port);
+
 		close(fd);
 
 		fd_to_u64.erase(fd);
@@ -188,16 +219,25 @@ struct conn_manager_t  //TODO change map to unordered map
 		fd_last_active_time.erase(fd);
 		return 0;
 	}
-	int clear_inactive(char * ip_port=0)
+	void check_clear_list()
+	{
+		while(!clear_list.empty())
+		{
+			int fd=*clear_list.begin();
+			clear_list.pop_front();
+			erase_fd(fd);
+		}
+	}
+	int clear_inactive()
 	{
 		if(get_current_time()-last_clear_time>conv_clear_interval)
 		{
 			last_clear_time=get_current_time();
-			return clear_inactive0(ip_port);
+			return clear_inactive0();
 		}
 		return 0;
 	}
-	int clear_inactive0(char * ip_port)
+	int clear_inactive0()
 	{
 		if(disable_conv_clear) return 0;
 
@@ -226,14 +266,8 @@ struct conn_manager_t  //TODO change map to unordered map
 				it++;
 				u32_t fd= old_it->first;
 				erase_fd(old_it->first);
-				if(ip_port==0)
-				{
-					mylog(log_info,"fd %x cleared\n",fd);
-				}
-				else
-				{
-					mylog(log_info,"[%s]fd %x cleared\n",ip_port,fd);
-				}
+
+
 			}
 			else
 			{
@@ -245,7 +279,7 @@ struct conn_manager_t  //TODO change map to unordered map
 	}
 }conn_manager;
 
-typedef u64_t my_time;
+typedef u64_t my_time_t;
 
 struct delay_data
 {
@@ -253,37 +287,83 @@ struct delay_data
 	int times_left;
 	char * data;
 	int len;
+	u64_t u64;
 };
 int delay_timer_fd;
 
-multimap<my_time,delay_data> delay_mp;
-
-my_time time_after_delay(my_time time)
+int sendto_u64 (int fd,char * buf, int len,int flags, u64_t u64)
 {
-	time+=dup_delay*1000;
-	return time;
+
+	if(is_server)
+	{
+		dup_packet_send_count++;
+	}
+	if(is_server&&random_drop!=0)
+	{
+		if(get_true_random_number()%10000<(u32_t)random_drop)
+		{
+			return 0;
+		}
+	}
+
+	sockaddr_in tmp_sockaddr;
+
+	memset(&tmp_sockaddr,0,sizeof(tmp_sockaddr));
+	tmp_sockaddr.sin_family = AF_INET;
+	tmp_sockaddr.sin_addr.s_addr = (u64 >> 32u);
+
+	tmp_sockaddr.sin_port = htons(uint16_t((u64 << 32u) >> 32u));
+
+	return sendto(fd, buf,
+			len , 0,
+			(struct sockaddr *) &tmp_sockaddr,
+			sizeof(tmp_sockaddr));
 }
 
-
-int add_to_delay_mp(int fd,int times_left,char * buf,int len)
+int send_fd (int fd,char * buf, int len,int flags)
 {
+	if(is_client)
+	{
+		dup_packet_send_count++;
+	}
+	if(is_client&&random_drop!=0)
+	{
+		if(get_true_random_number()%10000<(u32_t)random_drop)
+		{
+			return 0;
+		}
+	}
+	return send(fd,buf,len,flags);
+}
+
+multimap<my_time_t,delay_data> delay_mp;
+
+int add_to_delay_mp(int fd,int times_left,u32_t delay,char * buf,int len,u64_t u64)
+{
+	if(max_pending_packet!=0&&int(delay_mp.size()) >=max_pending_packet)
+	{
+		mylog(log_warn,"max pending packet reached,ignored\n");
+		return 0;
+	}
 	delay_data tmp;
 	tmp.data = buf;
 	tmp.fd = fd;
 	tmp.times_left = times_left;
 	tmp.len = len;
-
-	my_time tmp_time=get_current_time_us();
-	//clock_gettime(CLOCK_MONOTONIC, &tmp_time);
-	tmp_time=time_after_delay(tmp_time);
+	tmp.u64=u64;
+	my_time_t tmp_time=get_current_time_us();
+	tmp_time+=delay*100;
 	delay_mp.insert(make_pair(tmp_time,tmp));
+
 	return 0;
 }
-int add_and_new(int fd,int times_left,char * buf,int len)
+int add_and_new(int fd,int times_left,u32_t delay,char * buf,int len,u64_t u64)
 {
+	if(times_left<=0) return -1;
+
 	char * str= (char *)malloc(len);
 	memcpy(str,buf,len);
-	add_to_delay_mp(fd,times_left,str,len);
+	add_to_delay_mp(fd,times_left,delay,str,len,u64);
 	return 0;
 }
 
@@ -340,9 +420,12 @@ int remove_seq(char * data,int &data_len)
 	seq=ntoh64(seq);
 	if(anti_replay.is_vaild(seq)==0)
 	{
+		if(disable_replay_filter==1)
+			return 0;
 		mylog(log_trace,"seq %llx dropped bc of replay-filter\n ",seq);
-		return -1;   //TODO for test
+		return -1;
 	}
+	packet_recv_count++;
 	return 0;
 }
 int do_obscure(const char * input, int in_len,char *output,int &out_len)
@@ -401,18 +484,16 @@ int de_obscure(const char * input, int in_len,char *output,int &out_len)
 		output[i]=input[iv_len+i]^input[j]^key_string[k];
 
 	}
+	dup_packet_recv_count++;
 	return 0;
 }
 void check_delay_map()
 {
-	//printf("<<<begin");
 	if(!delay_mp.empty())
 	{
-		my_time current_time;
+		my_time_t current_time;
 
-		multimap<my_time,delay_data>::iterator it;
-		//printf("<map_size:%d>",delay_mp.size());
-		//lfflush(stdout);
+		multimap<my_time_t,delay_data>::iterator it;
 		while(1)
 		{
 			int ret=0;
@@ -422,79 +503,50 @@ void check_delay_map()
 			current_time=get_current_time_us();
 			if(it->first < current_time||it->first ==current_time)
 			{
-				//send packet
-				//printf("<%d>",it->second.len);
-				if(multi_process_mode)
-				{
-					if ((is_client && it->second.fd == remote_fd)
-							|| (is_server && it->second.fd == local_fd)) {
-						char new_data[buf_len];
-						int new_len=0;
-						do_obscure(it->second.data, it->second.len, new_data,
-								new_len);
-						ret = send(it->second.fd, new_data, new_len, 0);
-					} else {
-						ret = send(it->second.fd, it->second.data,
-								it->second.len, 0);
-					}
-
-					if (ret < 0) {
-						mylog(log_fatal,"send return %d at @300", ret);
-						myexit(1);
-					}
-				}
-				else
-				{
-					if(is_client)
-					{
-						char new_data[buf_len];
-						int new_len=0;
-						do_obscure(it->second.data, it->second.len, new_data,
-								new_len);
-						ret = send(it->second.fd, new_data, new_len, 0);
-					}
-					else
-					{
-
-						if(conn_manager.exist_fd(it->second.fd))
-						{
-							u64_t u64=conn_manager.find_u64_by_fd(it->second.fd);
-
-							sockaddr_in tmp_sockaddr;
-
-							memset(&tmp_sockaddr,0,sizeof(tmp_sockaddr));
-							tmp_sockaddr.sin_family = AF_INET;
-							tmp_sockaddr.sin_addr.s_addr = (u64 >> 32u);
-
-							tmp_sockaddr.sin_port = htons(uint16_t((u64 << 32u) >> 32u));
-
-
+				if (is_client) {
+					if (conn_manager.exist_fd(it->second.fd)) {
+						u64_t u64 = conn_manager.find_u64_by_fd(it->second.fd);
+						if (u64 != it->second.u64) {
+							it->second.times_left = 0; //fd has been deleted and recreated
+							// 偷懒的做法
+						} else {
 							char new_data[buf_len];
-							int new_len=0;
-							do_obscure(it->second.data, it->second.len, new_data,
-									new_len);
-
-							ret = sendto(local_listen_fd, new_data,
-									new_len , 0,
-									(struct sockaddr *) &tmp_sockaddr,
-									sizeof(tmp_sockaddr));
-							//ret = send(it->second.fd, it->second.data,
-								//	it->second.len, 0);
+							int new_len = 0;
+							do_obscure(it->second.data, it->second.len,
+									new_data, new_len);
+							ret = send_fd(it->second.fd, new_data, new_len, 0);
 						}
-						else
-						{
-							it->second.times_left=0;
-						}
+					} else {
+						it->second.times_left = 0;
 					}
-					if (ret < 0) {
-						mylog(log_debug,"send return %d at @300", ret);
+				} else {
+
+					if (conn_manager.exist_fd(it->second.fd)) {
+						u64_t u64 = conn_manager.find_u64_by_fd(it->second.fd);
+						if (u64 != it->second.u64) {
+							it->second.times_left = 0;//fd has been deleted and recreated
+							// 偷懒的做法
+						} else {
+							char new_data[buf_len];
+							int new_len = 0;
+							do_obscure(it->second.data, it->second.len,
+									new_data, new_len);
+							sendto_u64(local_listen_fd, new_data, new_len, 0,
+									u64);
+						}
+					} else {
+						it->second.times_left = 0;
 					}
 				}
+				if (ret < 0) {
+					mylog(log_debug, "send return %d at @300", ret);
+				}
+
 
 				if(it->second.times_left>1)
 				{
 					//delay_mp.insert(pair<my_time,delay_data>(current_time));
-					add_to_delay_mp(it->second.fd,it->second.times_left-1,it->second.data,it->second.len);
+					add_to_delay_mp(it->second.fd,it->second.times_left-1,random_between(dup_delay_min,dup_delay_max),it->second.data,it->second.len,it->second.u64);
 				}
 				else
 				{
@@ -517,7 +569,6 @@ void check_delay_map()
 			timerfd_settime(delay_timer_fd,TFD_TIMER_ABSTIME,&its,0);
 		}
 	}
-	//printf("end");
 }
 int create_new_udp(int &new_udp_fd)
 {
@@ -544,6 +595,8 @@ int create_new_udp(int &new_udp_fd)
 		close(new_udp_fd);
 		return -1;
 	}
+
+
 	return 0;
 }
 int set_timer(int epollfd,int &timer_fd)
@@ -566,7 +619,7 @@ int set_timer(int epollfd,int &timer_fd)
 
 
 	ev.events = EPOLLIN;
-	ev.data.u64 = timer_fd;
+	ev.data.fd = timer_fd;
 
 	ret=epoll_ctl(epollfd, EPOLL_CTL_ADD, timer_fd, &ev);
 	if (ret < 0) {
@@ -581,7 +634,7 @@ int event_loop()
 	local_listen_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	int yes = 1;
 	//setsockopt(local_listen_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
-	set_buf_size(local_listen_fd);
+	set_buf_size(local_listen_fd,4*1024*1024);
 	setnonblocking(local_listen_fd);
 
 	//char data[buf_len];
@@ -652,23 +705,37 @@ int event_loop()
 		{
 			if (events[n].data.fd == local_listen_fd) //data income from local end
 			{
+
 				char data[buf_len];
 				int data_len;
-				if ((data_len = recvfrom(local_listen_fd, data, buf_len, 0,
+				if ((data_len = recvfrom(local_listen_fd, data, max_data_len, 0,
 						(struct sockaddr *) &local_other, &slen)) == -1) //<--first packet from a new ip:port turple
 				{
-					mylog(log_error,"recv_from error,this shouldnt happen,but we can try to continue");
+
+					mylog(log_error,"recv_from error,errno %s,this shouldnt happen,but lets try to pretend it didnt happen",strerror(errno));
 					//myexit(1);
 					continue;
+				}
+				mylog(log_trace, "received data from listen fd,%s:%d, len=%d\n", my_ntoa(local_other.sin_addr.s_addr),ntohs(local_other.sin_port),data_len);
+				if(data_len>mtu_warn)
+				{
+					mylog(log_warn,"huge packet,data len=%d (>%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",data_len,mtu_warn);
 				}
 				data[data_len] = 0; //for easier debug
 				u64_t u64=pack_u64(local_other.sin_addr.s_addr,ntohs(local_other.sin_port));
 
 				if(!conn_manager.exist_u64(u64))
 				{
+
+					if(int(conn_manager.fd_to_u64.size())>=max_conv_num)
+					{
+						mylog(log_info,"new connection from %s:%d ,but ignored,bc of max_conv_num reached\n",my_ntoa(local_other.sin_addr.s_addr),ntohs(local_other.sin_port));
+						continue;
+					}
 					int new_udp_fd;
 					if(create_new_udp(new_udp_fd)!=0)
 					{
+						mylog(log_info,"new connection from %s:%d ,but create udp fd failed\n",my_ntoa(local_other.sin_addr.s_addr),ntohs(local_other.sin_port));
 						continue;
 					}
 					struct epoll_event ev;
@@ -680,57 +747,73 @@ int event_loop()
 
 					ret = epoll_ctl(epollfd, EPOLL_CTL_ADD, new_udp_fd, &ev);
 					if (ret != 0) {
-						mylog(log_warn, "add udp_fd error \n");
-						//perror("why?");
+						mylog(log_info,"new connection from %s:%d ,but add to epoll failed\n",my_ntoa(local_other.sin_addr.s_addr),ntohs(local_other.sin_port));
 						close(new_udp_fd);
 						continue;
 					}
-					mylog(log_info,"created new udp\n");
+					mylog(log_info,"new connection from %s:%d ,created new udp fd %d\n",my_ntoa(local_other.sin_addr.s_addr),ntohs(local_other.sin_port),new_udp_fd);
 					conn_manager.insert_fd(new_udp_fd,u64);
 				}
-
-
 				int new_udp_fd=conn_manager.find_fd_by_u64(u64);
 				conn_manager.update_active_time(new_udp_fd);
 				int ret;
 				if(is_client)
 				{
 					add_seq(data,data_len);
-					char new_data[buf_len];
-					int new_len=0;
-					do_obscure(data, data_len, new_data, new_len);
-					ret = send(new_udp_fd, new_data,new_len, 0);
-
-					if(dup_num>1)
+					if(jitter_max==0)
 					{
-						add_and_new(new_udp_fd, dup_num - 1, data, data_len);
+						char new_data[buf_len];
+						int new_len=0;
+						do_obscure(data, data_len, new_data, new_len);
+						ret = send_fd(new_udp_fd, new_data,new_len, 0);
+						if (ret < 0) {
+							mylog(log_warn, "send returned %d ,errno:%s\n", ret,strerror(errno));
+						}
+						add_and_new(new_udp_fd, dup_num - 1,random_between(dup_delay_min,dup_delay_max), data, data_len,u64);
 					}
+					else
+					{
+						add_and_new(new_udp_fd, dup_num,random_between(jitter_min,jitter_max), data, data_len,u64);
+					}
+					packet_send_count++;
 				}
 				else
 				{
 					char new_data[buf_len];
 					int new_len;
+
 					if (de_obscure(data, data_len, new_data, new_len) != 0) {
 						mylog(log_trace,"de_obscure failed \n");
 						continue;
 					}
-
+					//dup_packet_recv_count++;
 					if (remove_seq(new_data, new_len) != 0) {
 						mylog(log_trace,"remove_seq failed \n");
 						continue;
 					}
-
-					ret = send(new_udp_fd, new_data,new_len, 0);
+					//packet_recv_count++;
+					ret = send_fd(new_udp_fd, new_data,new_len, 0);
+					if (ret < 0) {
+						mylog(log_warn, "send returned %d,%s\n", ret,strerror(errno));
+						//perror("what happened????");
+					}
 				}
 
-				if (ret < 0) {
-					mylog(log_warn, "send returned %d\n", ret);
-					//perror("what happened????");
-				}
+
 			}
 			else if(events[n].data.fd == clear_timer_fd)
 			{
 				clear_triggered=1;
+				if(report_interval!=0 &&get_current_time()-last_report_time>u64_t(report_interval)*1000)
+				{
+					last_report_time=get_current_time();
+					if(is_client)
+						mylog(log_info,"client-->server: %llu,%llu(include dup); server-->client %llu,%lld(include dup)\n",packet_send_count,
+							dup_packet_send_count,packet_recv_count,dup_packet_recv_count);
+					else
+						mylog(log_info,"client-->server: %llu,%llu(include dup); server-->client %llu,%lld(include dup)\n",packet_recv_count,dup_packet_recv_count,packet_send_count,
+								dup_packet_send_count);
+				}
 			}
 			else if (events[n].data.fd == delay_timer_fd)
 			{
@@ -745,25 +828,29 @@ int event_loop()
 				if(!conn_manager.exist_fd(udp_fd)) continue;
 
 				char data[buf_len];
-				int data_len =recv(udp_fd,data,buf_len,0);
+				int data_len =recv(udp_fd,data,max_data_len,0);
+				mylog(log_trace, "received data from udp fd %d, len=%d\n", udp_fd,data_len);
 				if(data_len<0)
 				{
-					mylog(log_warn, "recv failed %d\n", data_len);
+					if(errno==ECONNREFUSED)
+					{
+						//conn_manager.clear_list.push_back(udp_fd);
+						mylog(log_debug, "recv failed %d ,udp_fd%d,errno:%s\n", data_len,udp_fd,strerror(errno));
+					}
+
+					mylog(log_warn, "recv failed %d ,udp_fd%d,errno:%s\n", data_len,udp_fd,strerror(errno));
 					continue;
 				}
+				if(data_len>mtu_warn)
+				{
+					mylog(log_warn,"huge packet,data len=%d (>%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",data_len,mtu_warn);
+				}
+
 				assert(conn_manager.exist_fd(udp_fd));
 
 				conn_manager.update_active_time(udp_fd);
 
 				u64_t u64=conn_manager.find_u64_by_fd(udp_fd);
-
-				sockaddr_in tmp_sockaddr;
-
-				memset(&tmp_sockaddr,0,sizeof(tmp_sockaddr));
-				tmp_sockaddr.sin_family = AF_INET;
-				tmp_sockaddr.sin_addr.s_addr = (u64 >> 32u);
-
-				tmp_sockaddr.sin_port = htons(uint16_t((u64 << 32u) >> 32u));
 
 				if(is_client)
 				{
@@ -774,44 +861,53 @@ int event_loop()
 						continue;
 					}
 
+					//dup_packet_recv_count++;
 					if (remove_seq(new_data, new_len) != 0) {
 						mylog(log_debug,"remove_seq error \n");
 						continue;
 					}
-
-					ret = sendto(local_listen_fd, new_data,
-							new_len , 0,
-							(struct sockaddr *) &tmp_sockaddr,
-							sizeof(tmp_sockaddr));
+					//packet_recv_count++;
+					ret = sendto_u64(local_listen_fd, new_data,
+							new_len , 0,u64);
+					if (ret < 0) {
+						mylog(log_warn, "sento returned %d,%s\n", ret,strerror(errno));
+						//perror("ret<0");
+					}
 				}
 				else
 				{
 					add_seq(data,data_len);
-					char new_data[buf_len];
-					int new_len=0;
-					do_obscure(data, data_len, new_data, new_len);
 
-					if(dup_num>1)
+					if(jitter_max==0)
 					{
-						add_and_new(udp_fd, dup_num - 1, data, data_len);
+						char new_data[buf_len];
+						int new_len=0;
+						do_obscure(data, data_len, new_data, new_len);
+						ret = sendto_u64(local_listen_fd, new_data,
+								new_len , 0,u64);
+							add_and_new(udp_fd, dup_num - 1,random_between(dup_delay_min,dup_delay_max), data, data_len,u64);
+						if (ret < 0) {
+							mylog(log_warn, "sento returned %d,%s\n", ret,strerror(errno));
+							//perror("ret<0");
+						}
 					}
+					else
+					{
+							add_and_new(udp_fd, dup_num,random_between(jitter_min,jitter_max), data, data_len,u64);
+					}
+					packet_send_count++;
 
-					ret = sendto(local_listen_fd, new_data,
-							new_len , 0,
-							(struct sockaddr *) &tmp_sockaddr,
-							sizeof(tmp_sockaddr));
+
 				}
-				if (ret < 0) {
-					mylog(log_warn, "sento returned %d\n", ret);
-					//perror("ret<0");
-				}
-				mylog(log_trace, "%s :%d\n", inet_ntoa(tmp_sockaddr.sin_addr),
-						ntohs(tmp_sockaddr.sin_port));
-				mylog(log_trace, "%d byte sent\n", ret);
+
+				//mylog(log_trace, "%s :%d\n", inet_ntoa(tmp_sockaddr.sin_addr),
+					//	ntohs(tmp_sockaddr.sin_port));
+				//mylog(log_trace, "%d byte sent\n", ret);
 
 			}
 		}
 		check_delay_map();
+		conn_manager.check_clear_list();
 		if(clear_triggered)   // 删除操作在epoll event的最后进行，防止event cache中的fd失效。
 		{
 			u64_t value;
@@ -823,6 +919,42 @@ int event_loop()
 	myexit(0);
 	return 0;
 }
+void print_help()
+{
+	printf("UDPspeeder\n");
+	printf("version: %s %s\n",__DATE__,__TIME__);
+	printf("repository: https://github.com/wangyu-/UDPspeeder\n");
+	printf("\n");
+	printf("usage:\n");
+	printf("    run as client : ./this_program -c -l local_listen_ip:local_port -r server_ip:server_port  [options]\n");
+	printf("    run as server : ./this_program -s -l server_listen_ip:server_port -r remote_ip:remote_port  [options]\n");
+	printf("\n");
+	printf("common option,must be same on both sides:\n");
+	printf("    -k,--key              <string>        key for simple xor encryption,default:\"secret key\"\n");
+
+	printf("main options:\n");
+	printf("    -d                    <number>        duplicated packet number, -d 0 means no duplicate. default value:0\n");
+	printf("    -t                    <number>        duplicated packet delay time, unit: 0.1ms,default value:20(2ms)\n");
+	printf("    -j                    <number>        simulated jitter.randomly delay first packet for 0~jitter_value*0.1 ms,to\n");
+	printf("                                          create simulated jitter.default value:0.do not use if you dont\n");
+	printf("                                          know what it means\n");
+	printf("    --report              <number>        turn on udp send/recv report,and set a time interval for reporting,unit:s\n");
+	printf("advanced options:\n");
+	printf("    -t                    tmin:tmax       simliar to -t above,but delay randomly between tmin and tmax\n");
+	printf("    -j                    jmin:jmax       simliar to -j above,but create jitter randomly between jmin and jmax\n");
+	printf("    --random-drop         <number>        simulate packet loss ,unit 0.01%%\n");
+	printf("    -m                    <number>        max pending packets,to prevent the program from eating up all your memory.\n");
+	printf("other options:\n");
+	printf("    --log-level           <number>        0:never    1:fatal   2:error   3:warn \n");
+	printf("                                          4:info (default)     5:debug   6:trace\n");
+	printf("    --log-position                        enable file name,function name,line number in log\n");
+	printf("    --disable-color                       disable log color\n");
+	printf("    --sock-buf            <number>        buf size for socket,>=10 and <=10240,unit:kbyte,default:512\n");
+	//printf("    -p                                    use multi-process mode instead of epoll.very costly,only for test,do dont use\n");
+	printf("    -h,--help                             print this help message\n");
+
+	//printf("common options,these options must be same on both side\n");
+}
 void process_arg(int argc, char *argv[])
 {
 	int i, j, k;
@@ -833,10 +965,25 @@ void process_arg(int argc, char *argv[])
 		{"log-position", no_argument,    0, 1},
 		{"disable-color", no_argument,    0, 1},
 		{"disable-filter", no_argument,    0, 1},
+		{"sock-buf", required_argument,    0, 1},
+		{"random-drop", required_argument,    0, 1},
+		{"report", required_argument,    0, 1},
 		{NULL, 0, 0, 0}
       };
     int option_index = 0;
-
+	if (argc == 1)
+	{
+		print_help();
+		myexit( -1);
+	}
+	for (i = 0; i < argc; i++)
+	{
+		if(strcmp(argv[i],"-h")==0||strcmp(argv[i],"--help")==0)
+		{
+			print_help();
+			myexit(0);
+		}
+	}
 	for (i = 0; i < argc; i++)
 	{
 		if(strcmp(argv[i],"--log-level")==0)
@@ -859,18 +1006,22 @@ void process_arg(int argc, char *argv[])
 			enable_log_color=0;
 		}
 	}
-	printf("argc=%d ", argc);
-	for (i = 0; i < argc; i++)
-		printf("%s ", argv[i]);
-	printf("\n");
+
+    mylog(log_info,"argc=%d ", argc);
+
+	for (i = 0; i < argc; i++) {
+		log_bare(log_info, "%s ", argv[i]);
+	}
+	log_bare(log_info, "\n");
+
 	if (argc == 1)
 	{
-		printf(
-				"proc -c/-s -l ip:port -r ip:port  [-n dup_times] [-t dup_delay(1000=1ms)] \n");
-		myexit( -1);
+		print_help();
+		myexit(-1);
 	}
+
 	int no_l = 1, no_r = 1;
-	while ((opt = getopt_long(argc, argv, "l:r:d:t:hcspk:",long_options,&option_index)) != -1)
+	while ((opt = getopt_long(argc, argv, "l:r:d:t:hcspk:j:m:",long_options,&option_index)) != -1)
 	{
 		//string opt_key;
 		//opt_key+=opt;
@@ -881,6 +1032,7 @@ void process_arg(int argc, char *argv[])
 			break;
 		case 'k':
 			sscanf(optarg,"%s\n",key_string);
+			mylog(log_debug,"key=%s\n",key_string);
 			if(strlen(key_string)==0)
 			{
 				mylog(log_fatal,"key len=0??\n");
@@ -888,23 +1040,69 @@ void process_arg(int argc, char *argv[])
 			}
 			break;
 
-		case 'd':
-			dup_num=-1;
-			sscanf(optarg,"%d\n",&dup_num);
-			if(dup_num<1 ||dup_num>10)
+		case 'm':
+			sscanf(optarg,"%d\n",&max_pending_packet);
+			if(max_pending_packet<1000)
 			{
-				mylog(log_fatal,"dup_num must be between 1 and 10\n");
+				mylog(log_fatal,"max_pending_packet must be >1000\n");
 				myexit(-1);
 			}
 			break;
-		case 't':
-			dup_delay=-1;
-			sscanf(optarg,"%d\n",&dup_delay);
-			if(dup_delay<1||dup_delay>1000*1000)
+
+		case 'j':
+			if (strchr(optarg, ':') == 0)
 			{
-				mylog(log_fatal,"dup_delay must be between 1 and 10\n");
+				int jitter;
+				sscanf(optarg,"%d\n",&jitter);
+				if(jitter<0 ||jitter>1000*100)
+				{
+					mylog(log_fatal,"jitter must be between 0 and 100,000(10 second)\n");
+					myexit(-1);
+				}
+				jitter_min=0;
+				jitter_max=jitter;
+			}
+			else
+			{
+				sscanf(optarg,"%d:%d\n",&jitter_min,&jitter_max);
+				if(jitter_min<0 ||jitter_max<0||jitter_min>jitter_max)
+				{
+					mylog(log_fatal," must satisfy  0<=jmin<=jmax\n");
+					myexit(-1);
+				}
+			}
+			break;
+		case 't':
+			if (strchr(optarg, ':') == 0)
+			{
+				int dup_delay=-1;
+				sscanf(optarg,"%d\n",&dup_delay);
+				if(dup_delay<1||dup_delay>1000*100)
+				{
+					mylog(log_fatal,"dup_delay must be between 1 and 100,000(10 second)\n");
+					myexit(-1);
+				}
+				dup_delay_min=dup_delay_max=dup_delay;
+			}
+			else
+			{
+				sscanf(optarg,"%d:%d\n",&dup_delay_min,&dup_delay_max);
+				if(dup_delay_min<1 ||dup_delay_max<1||dup_delay_min>dup_delay_max)
+				{
+					mylog(log_fatal," must satisfy  1<=dmin<=dmax\n");
+					myexit(-1);
+				}
+			}
+			break;
+		case 'd':
+			dup_num=-1;
+			sscanf(optarg,"%d\n",&dup_num);
+			if(dup_num<0 ||dup_num>5)
+			{
+				mylog(log_fatal,"dup_num must be between 0 and 5\n");
 				myexit(-1);
 			}
+			dup_num+=1;
 			break;
 		case 'c':
 			is_client = 1;
@@ -962,6 +1160,44 @@ void process_arg(int argc, char *argv[])
 			{
 				enable_log_position=1;
 			}
+			else if(strcmp(long_options[option_index].name,"random-drop")==0)
+			{
+				sscanf(optarg,"%d",&random_drop);
+				if(random_drop<0||random_drop>10000)
+				{
+					mylog(log_fatal,"random_drop must be between 0 10000 \n");
+					myexit(-1);
+				}
+			}
+			else if(strcmp(long_options[option_index].name,"report")==0)
+			{
+				sscanf(optarg,"%d",&report_interval);
+
+				if(report_interval<=0)
+				{
+					mylog(log_fatal,"report_interval must be >0 \n");
+					myexit(-1);
+				}
+			}
+			else if(strcmp(long_options[option_index].name,"sock-buf")==0)
+			{
+				int tmp=-1;
+				sscanf(optarg,"%d",&tmp);
+				if(10<=tmp&&tmp<=10*1024)
+				{
+					socket_buf_size=tmp*1024;
+				}
+				else
+				{
+					mylog(log_fatal,"sock-buf value must be between 1 and 10240 (kbyte) \n");
+					myexit(-1);
+				}
+			}
+			else
+			{
+				mylog(log_fatal,"unknown option\n");
+				myexit(-1);
+			}
 			break;
 		default:
 			mylog(log_fatal,"unknown option <%x>", opt);
@@ -986,311 +1222,16 @@ void process_arg(int argc, char *argv[])
 		myexit(-1);
 	}
 }
-int multi_process()
-{
-	struct sockaddr_in local_me, local_other;
-	local_listen_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	int yes = 1;
-	setsockopt(local_listen_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
-	set_buf_size(local_listen_fd);
-
-	char data[buf_len];
-	//char *data=data0;
-	socklen_t slen = sizeof(sockaddr_in);
-	memset(&local_me, 0, sizeof(local_me));
-	local_me.sin_family = AF_INET;
-	local_me.sin_port = htons(local_port);
-	local_me.sin_addr.s_addr = inet_addr(local_address);
-	if (bind(local_listen_fd, (struct sockaddr*) &local_me, slen) == -1)
-	{
-		mylog(log_fatal,"socket bind error");
-		myexit(1);
-	}
-	while (1)
-	{
-		int data_len;
-		if ((data_len = recvfrom(local_listen_fd, data, buf_len, 0,
-				(struct sockaddr *) &local_other, &slen)) == -1) //<--first packet from a new ip:port turple
-		{
-			mylog(log_fatal,"recv_from error");
-			myexit(1);
-		}
-
-		mylog(log_debug,"received packet from %s:%d\n", inet_ntoa(local_other.sin_addr),
-				ntohs(local_other.sin_port));
-
-		data[data_len] = 0;
-		printf("recv_len: %d\n", data_len);
-		fflush(stdout);
-
-		if (is_server)
-		{
-			char new_data[buf_len];
-			int new_len;
-			if(de_obscure(data,data_len,new_data,new_len)!=0)
-			{
-				printf("remove_padding error!\n");
-				continue;
-			}
-			memcpy(data,new_data,new_len);
-			data_len=new_len;
-			if (remove_seq(data, data_len) != 0)
-			{
-				printf("remove_seq error!\n");
-				continue;
-			}
-
-
-			//data=new_data;
-		}
-
-		local_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-		//local_me.sin_addr.s_addr=inet_addr("127.0.0.1");
-		setsockopt(local_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
-		if (bind(local_fd, (struct sockaddr*) &local_me, slen) == -1) //偷懒的方法，有潜在问题
-		{
-			printf("socket bind error in chilld");
-			myexit(1);
-		}
-		int ret = connect(local_fd, (struct sockaddr *) &local_other, slen); //偷懒的方法，有潜在问题
-		if (fork() == 0)  //子
-		{
-			if (ret != 0)
-			{
-				printf("connect return %d @1\n", ret);
-				myexit(1);
-			}
-			close(local_listen_fd);
-
-			struct sockaddr_in remote_me, remote_other;
-			memset(&remote_other, 0, sizeof(remote_other));
-			remote_other.sin_family = AF_INET;
-			//printf("remote_address=%s  remote_port=%d\n",remote_address,remote_port);
-			remote_other.sin_port = htons(remote_port);
-			remote_other.sin_addr.s_addr = inet_addr(remote_address);
-			remote_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-			ret = connect(remote_fd, (struct sockaddr *) &remote_other, slen);
-			if (ret != 0)
-			{
-				printf("connect return %d @2\n", ret);
-				myexit(1);
-			}
-			if (is_client)
-			{
-				add_seq(data, data_len);
-				char new_data[buf_len];
-				int new_len;
-
-				do_obscure(data, data_len, new_data, new_len);
-				ret = send(remote_fd, new_data, new_len, 0); //<----send the packet receved by father process  ,only for this packet
-				printf("send return %d\n", ret);
-				if(dup_num > 1)
-				{
-					add_and_new(remote_fd, dup_num - 1, data, data_len);
-				}
-			}
-			else
-			{
-				ret = send(remote_fd, data, data_len, 0);
-				printf("send return %d\n", ret);
-			}
-
-			if (ret < 0)
-				myexit(-1);
-
-
-			setnonblocking(remote_fd);
-			set_buf_size(remote_fd);
-
-			setnonblocking(local_fd);
-			set_buf_size(local_fd);
-
-			int epollfd = epoll_create1(0);
-			const int max_events = 4096;
-			struct epoll_event ev, events[max_events];
-			if (epollfd < 0)
-			{
-				printf("epoll return %d\n", epollfd);
-				myexit(-1);
-			}
-			ev.events = EPOLLIN;
-			ev.data.fd = local_fd;
-			ret = epoll_ctl(epollfd, EPOLL_CTL_ADD, local_fd, &ev);
-			if (ret < 0)
-			{
-				printf("epoll_ctl return %d\n", ret);
-				myexit(-1);
-			}
-			ev.events = EPOLLIN;
-			ev.data.fd = remote_fd;
-			ret = epoll_ctl(epollfd, EPOLL_CTL_ADD, remote_fd, &ev);
-			if (ret < 0)
-			{
-				printf("epoll_ctl return %d\n", ret);
-				myexit(-1);
-			}
-
-			if ((delay_timer_fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)) < 0)
-			{
-				printf("timer_fd create error");
-				myexit(1);
-			}
-			ev.events = EPOLLIN;
-			ev.data.fd = delay_timer_fd;
-
-			itimerspec zero_its;
-			memset(&zero_its, 0, sizeof(zero_its));
-
-			timerfd_settime(delay_timer_fd, TFD_TIMER_ABSTIME, &zero_its, 0);
-			epoll_ctl(epollfd, EPOLL_CTL_ADD, delay_timer_fd, &ev);
-			if (ret < 0)
-			{
-				printf("epoll_ctl return %d\n", ret);
-				myexit(-1);
-			}
-
-			check_delay_map();
-
-			for (;;)
-			{
-				int nfds = epoll_wait(epollfd, events, max_events, 180 * 1000); //3mins
-				if (nfds <= 0)
-				{
-					printf("epoll_wait return %d\n", nfds);
-					myexit(-1);
-				}
-				int n;
-				for (n = 0; n < nfds; ++n)
-				{
-					if (events[n].data.fd == local_fd) //data income from local end
-					{
-						data_len = recv(local_fd, data, buf_len, 0);
-						if (data_len < 0)
-						{
-							printf("recv return %d @1", data_len);
-							myexit(1);
-						}
-
-						data[data_len] = 0;
-						printf("len %d received from child@1\n", data_len);
-						//printf("%s received from child@1\n",buf);
-
-						//printf("before send %s\n",buf);
-						if(is_client)
-						{
-							add_seq(data,data_len);
-							char new_data[buf_len];
-							int new_len=0;
-							do_obscure(data, data_len, new_data, new_len);
-							ret = send(remote_fd, new_data, new_len, 0);
-							if(dup_num>1)
-							{
-								add_and_new(remote_fd, dup_num - 1, data, data_len);
-							}
-						}
-						else
-						{
-							char new_data[buf_len];
-							int new_len;
-							if(de_obscure(data,data_len,new_data,new_len)!=0) {printf("error at line %d\n",__LINE__);continue;}
-
-							if(remove_seq(new_data,new_len)!=0) {printf("error at line %d\n",__LINE__);continue;}
-
-							ret = send(remote_fd, new_data, new_len, 0);
-						}
-						if (ret < 0)
-						{
-							printf("send return %d at @1", ret);
-							myexit(1);
-						}
-
-
-					}
-					else if (events[n].data.fd == remote_fd)
-					{
-						data_len = recv(remote_fd, data, buf_len, 0);
-						if (data_len < 0)
-						{
-							printf("recv return -1 @2");
-							myexit(1);
-						}
-
-						data[data_len] = 0;
-						printf("len %d received from child@1\n", data_len);
-						//printf("%s received from child@2\n",buf);
-						if(is_client)
-						{
-							char new_data[buf_len];
-							int new_len;
-							if(de_obscure(data,data_len,new_data,new_len)!=0) {printf("error at line %d\n",__LINE__);continue;}
-
-							if(remove_seq(new_data,new_len)!=0) {printf("error at line %d\n",__LINE__);continue;}
-
-
-							ret = send(local_fd, new_data, new_len, 0);
-						}
-						else
-						{
-							add_seq(data,data_len);
-							char new_data[buf_len];
-							int new_len=0;
-							do_obscure(data, data_len, new_data, new_len);
-							ret = send(local_fd, new_data, new_len, 0);
-							if(dup_num>1)
-							{
-								add_and_new(local_fd, dup_num - 1, data, data_len);
-							}
-						}
-
-						if (ret < 0)
-						{
-							printf("send return %d @2", ret);
-							myexit(1);
-						}
-					}
-					else if (events[n].data.fd == delay_timer_fd)
-					{
-						uint64_t value;
-						read(delay_timer_fd, &value, 8);
-						//printf("<timerfd_triggered, %d>",delay_mp.size());
-						//fflush(stdout);
-					}
-				}						//end for n = 0; n < nfds
-				check_delay_map();
-			}
-			myexit(0);
-		}
-		else //if(fork()==0)  ... else
-		{ //fork 's father process
-			close(local_fd); //father process only listen to local_listen_fd,so,close this fd
-		}
-	}  //while(1)end
-	return 0;
-}
 int main(int argc, char *argv[])
 {
 
-	//printf("%lld\n",get_current_time_us());
-
-	//printf("%lld\n",get_current_time_us());
-
-	//printf("%lld\n",get_current_time_us());
-
-	//printf("%lld\n",get_current_time());
 	dup2(1, 2);		//redirect stderr to stdout
 	int i, j, k;
 	process_arg(argc,argv);
 	init_random_number_fd();
 	anti_replay.prepare();
 
-
-
-	signal(SIGCHLD, handler);
-
-	mylog(log_info,"test\n");
-
 	remote_address_uint32=inet_addr(remote_address);
-
 
 	if(!multi_process_mode)
 	{
@@ -1298,7 +1239,6 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		multi_process();
 	}
 
 

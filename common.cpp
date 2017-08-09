@@ -201,9 +201,9 @@ unsigned short csum(const unsigned short *ptr,int nbytes) {
 
     return(answer);
 }
-int set_buf_size(int fd)
+int set_buf_size(int fd,int size)
 {
-	int socket_buf_size=1024*1024;
+	//int socket_buf_size=1024*1024;
     if(setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &socket_buf_size, sizeof(socket_buf_size))<0)
     //if(setsockopt(fd, SOL_SOCKET, SO_SNDBUFFORCE, &socket_buf_size, sizeof(socket_buf_size))<0)
     {
