@@ -8,7 +8,7 @@ UDP加速器，降低UDP传输的丢包率。尤其适用于游戏和语音。
 Linux主机，可以使是openwrt路由器，也可以是树莓派。在windows和mac上可以开虚拟机（桥接模式测试可用）。
 
 ### 安装
-下载编译好的二进制文件，解压到任意目录。
+下载编译好的二进制文件，解压到本地和服务器的任意目录。
 
 https://github.com/wangyu-/UDPspeeder/releases
 
@@ -25,8 +25,15 @@ https://github.com/wangyu-/UDPspeeder/releases
 
 现在client和server之间建立起了tunnel。想要连接44.55.66.77:7777，只需要连接 127.0.0.1:3333。来回的所有的udp流量会被加速。
 
-### 效果
+# 效果
+在模拟丢包的网络环境下，架设了vpn服务器(udp模式)。收发各有10%的丢包率
 
+#### 使用前
+![image0](images/Capture4.PNG)
+#### 使用后
+3倍冗余数据。
+![image0](images/Capture5.PNG)
+![image0](images/Capture6.PNG)
 
 # 进阶操作说明
 
