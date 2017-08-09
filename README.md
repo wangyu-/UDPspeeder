@@ -58,13 +58,13 @@ https://github.com/wangyu-/UDPspeeder/releases
 在模拟丢包的网络环境下，架设了vpn服务器(udp模式)。收发各有10%的丢包率
 
 #### 使用前
-<img src="images/Capture4.PNG" width="500">
+<img src="images/Capture4.PNG" width="700">
 
 #### 使用后
 
 使用-d2，也就是额外发2个包。等了一页半，终于出现了一个timeout。
 
-<img src="images/Capture6.PNG" width="500">
+<img src="images/Capture6.PNG" width="700">
 
 # 进阶操作说明
 
