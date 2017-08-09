@@ -2,7 +2,7 @@
 ![image0](images/Capture7.PNG)
 UDP加速工具，降低丢包率，配合vpn可以加速任何协议，尤其适用于游戏；同时也是一个UDP连接的调试和统计工具。
 
-这个是我自己稳定用了一个月的项目，用来玩服务器在美国的brawl stars和服务器在亚洲国外的mobile legend，效果不错。
+这个是我自己稳定用了一个月的项目，用来加速美服的Brawl Stars和亚服的Mobile Legend，效果不错。
 
 #### 原理简介
 目前原理就是简单粗暴的多倍发包(以后会做Reed–Solomon code)。
