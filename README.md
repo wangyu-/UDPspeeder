@@ -46,7 +46,7 @@ https://github.com/wangyu-/UDPspeeder/releases
 假设你有一个server，ip为44.55.66.77，有一个服务监听在udp 7777端口。 假设你需要加速本地到44.55.66.77:7777的流量。
 ```
 在client端运行:
-./speeder_ar71xx -l0.0.0.0:3323 -r 44.55.66.77:8855 -c  -d2
+./speeder_ar71xx -l0.0.0.0:3333 -r 44.55.66.77:8855 -c  -d2
 
 在server端运行:
 ./speeder_amd64 -l0.0.0.0:8855 -r127.0.0.1:7777 -s -d2
