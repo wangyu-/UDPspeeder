@@ -95,7 +95,7 @@ other options:
 # 应用
 
 #### UDPspeeder + openvpn加速任何流量
-如果你只是需要玩游戏，效果(可能/大概)会比kcp/finalspeed方案更好。可以优化tcp游戏的延迟（通过冗余发包，避免了上层的重传）。比如魔兽世界。
+如果你只是需要玩游戏，效果会比kcp/finalspeed方案更好。可以优化tcp游戏的延迟（通过冗余发包，避免了上层的重传）。比如魔兽世界用的是tcp连接。
 ![image0](images/Capture2.PNG)
 
 跟openvpn via kcptun方式的对比：
