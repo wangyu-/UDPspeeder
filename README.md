@@ -46,15 +46,16 @@ https://github.com/wangyu-/UDPspeeder/releases
 假设你有一个server，ip为44.55.66.77，有一个服务监听在udp 7777端口。 假设你需要加速本地到44.55.66.77:7777的流量。
 ```
 在client端运行:
-./speeder_ar71xx -l0.0.0.0:3333 -r 44.55.66.77:8855 -c  -d2
+./speeder_ar71xx -l0.0.0.0:3333 -r 44.55.66.77:8855 -c  -d2 -k "passwd"
 
 在server端运行:
-./speeder_amd64 -l0.0.0.0:8855 -r127.0.0.1:7777 -s -d2
+./speeder_amd64 -l0.0.0.0:8855 -r127.0.0.1:7777 -s -d2 -k "passwd"
 ```
 
 现在client和server之间建立起了tunnel。想要连接44.55.66.77:7777，只需要连接 127.0.0.1:3333。来回的所有的udp流量会被加速。
 
 注:-d2 表示除了本来的包以外，额外再发2个冗余包。可调。
+-k 指定一个字符串，server/client间所有收发的包都会被异或，改变协议特征，防止UDPspeeder的协议被运营商针对。
 
 # 进阶操作说明
 
