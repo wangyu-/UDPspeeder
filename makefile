@@ -1,18 +1,41 @@
-cc_cross=/home/wangyu/Desktop/OpenWrt-SDK-15.05-ar71xx-generic_gcc-4.8-linaro_uClibc-0.9.33.2.Linux-x86_64/staging_dir/toolchain-mips_34kc_gcc-4.8-linaro_uClibc-0.9.33.2/bin/mips-openwrt-linux-g++
-FLAGS=-Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -ggdb
-FLAGS2= -O3
+cc_cross=/home/wangyu/OpenWrt-SDK-ar71xx-for-linux-x86_64-gcc-4.8-linaro_uClibc-0.9.33.2/staging_dir/toolchain-mips_34kc_gcc-4.8-linaro_uClibc-0.9.33.2/bin/mips-openwrt-linux-g++
+cc_local=g++
+cc_ar71xx=/home/wangyu/OpenWrt-SDK-ar71xx-for-linux-x86_64-gcc-4.8-linaro_uClibc-0.9.33.2/staging_dir/toolchain-mips_34kc_gcc-4.8-linaro_uClibc-0.9.33.2/bin/mips-openwrt-linux-g++
+cc_bcm2708=/home/wangyu/raspberry/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf-g++ 
+FLAGS= -std=c++11 -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter
+SOURCES=main.cpp log.cpp common.cpp
+NAME=speeder
+TAR=${NAME}_binaries.tar.gz ${NAME}_amd64  ${NAME}_x86  ${NAME}_ar71xx ${NAME}_bcm2708
+
 all:
-	g++ main.cpp common.cpp log.cpp -I. -o speeder -static -lrt -std=c++11  ${FLAGS} ${FLAGS2}
-release:
-	g++ main.cpp common.cpp log.cpp -I. -o speeder_amd64 -static -lrt -std=c++11  ${FLAGS} ${FLAGS2} 
-	g++ -m32 main.cpp common.cpp log.cpp -I. -o speeder_x86 -static -lrt -std=c++11  ${FLAGS} ${FLAGS2}
-	${cc_cross} main.cpp common.cpp log.cpp -I. -o speeder_ar71xx -lrt -std=c++11  ${FLAGS} ${FLAGS2}
-	tar -zcvf udp_speeder_binaries.tar.gz speeder_amd64  speeder_x86  speeder_ar71xx
-cross:
-	${cc_cross} main.cpp common.cpp log.cpp -I. -o speeder_cross -lrt -std=c++11  ${FLAGS} ${FLAGS2}
-
+	rm -f ${NAME}
+	${cc_local}   -o ${NAME}          -I. ${SOURCES} ${FLAGS} -lrt  -static -O3
+fast:
+	rm -f ${NAME}
+	${cc_local}   -o ${NAME}          -I. ${SOURCES} ${FLAGS} -lrt
 debug:
-	g++ main.cpp common.cpp log.cpp -I. -o speeder -static -lrt -std=c++11  ${FLAGS} -Wformat-nonliteral -D MY_DEBUG
+	rm -f ${NAME}
+	${cc_local}   -o ${NAME}          -I. ${SOURCES} ${FLAGS} -lrt -Wformat-nonliteral -D MY_DEBUG 
 
-#g++ forward.cpp aes.c -o forward -static
-#	${ccarm} forward.cpp aes.c  -o forwardarm   -static -lgcc_eh
+ar71xx: 
+	${cc_ar71xx}  -o ${NAME}_ar71xx   -I. ${SOURCES} ${FLAGS} -lrt -lgcc_eh -static -O3
+bcm2708:
+	${cc_bcm2708} -o ${NAME}_bcm2708  -I. ${SOURCES} ${FLAGS} -lrt -static -O3
+amd64:
+	${cc_local}   -o ${NAME}_amd64    -I. ${SOURCES} ${FLAGS} -lrt -static -O3
+x86:
+	${cc_local}   -o ${NAME}_x86      -I. ${SOURCES} ${FLAGS} -lrt -m32 -static -O3
+
+cross:
+	${cc_cross}   -o ${NAME}_cross    -I. ${SOURCES} ${FLAGS} -lrt -O3
+
+cross2:
+	${cc_cross}   -o ${NAME}_cross    -I. ${SOURCES} ${FLAGS} -lrt -static -lgcc_eh -O3   
+
+
+release: amd64 x86 ar71xx bcm2708
+	tar -zcvf ${TAR}
+
+clean:	
+	rm -f ${TAR}
+	
