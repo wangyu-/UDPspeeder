@@ -26,7 +26,7 @@ UDP加速工具，降低丢包率，配合vpn可以加速任何协议，尤其�
 
 client支持多个udp连接，server也支持多个client
 
-目前有amd64,x86,ar71xx的binary
+目前有amd64,x86,ar71xx,树莓派armv7的binary
 
 如果你需要绕过UDP屏蔽/QoS，或者需要连接复用/连接保持功能，或者是加密。解决方案在另一个repo(可以跟UDPspeeder一起使用)：
 
