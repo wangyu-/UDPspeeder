@@ -708,6 +708,8 @@ int event_loop()
 
 				char data[buf_len];
 				int data_len;
+
+				slen = sizeof(sockaddr_in);
 				if ((data_len = recvfrom(local_listen_fd, data, max_data_len, 0,
 						(struct sockaddr *) &local_other, &slen)) == -1) //<--first packet from a new ip:port turple
 				{
@@ -949,7 +951,7 @@ void print_help()
 	printf("                                          4:info (default)     5:debug   6:trace\n");
 	printf("    --log-position                        enable file name,function name,line number in log\n");
 	printf("    --disable-color                       disable log color\n");
-	printf("    --sock-buf            <number>        buf size for socket,>=10 and <=10240,unit:kbyte,default:512\n");
+	printf("    --sock-buf            <number>        buf size for socket,>=10 and <=10240,unit:kbyte,default:1024\n");
 	//printf("    -p                                    use multi-process mode instead of epoll.very costly,only for test,do dont use\n");
 	printf("    -h,--help                             print this help message\n");
 
@@ -1224,7 +1226,10 @@ void process_arg(int argc, char *argv[])
 }
 int main(int argc, char *argv[])
 {
-
+	assert(sizeof(u64_t)==8);
+	assert(sizeof(i64_t)==8);
+	assert(sizeof(u32_t)==4);
+	assert(sizeof(i32_t)==4);
 	dup2(1, 2);		//redirect stderr to stdout
 	int i, j, k;
 	process_arg(argc,argv);
