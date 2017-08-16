@@ -35,7 +35,7 @@ https://github.com/wangyu-/udp2raw-tunnel
 # 简明操作说明
 
 ### 环境要求
-Linux主机，可以使是openwrt路由器，也可以是树莓派。在windows和mac上配合虚拟机可以稳定使用（speeder跑在Linux里，其他应用照常跑在window里，桥接模式测试可用）。
+Linux主机，可以是桌面版，可以是android手机/平板，可以是openwrt路由器，也可以是树莓派。在windows和mac上配合虚拟机可以稳定使用（speeder跑在Linux里，其他应用照常跑在window里，桥接模式测试可用）。
 
 ### 安装
 下载编译好的二进制文件，解压到本地和服务器的任意目录。
