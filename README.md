@@ -141,7 +141,7 @@ udp协议本身是ip协议加上了端口之后的直接封装，udp继承了ip�
 也是我正在用的方案。优点是可以随时在vpn和ss方案间快速切换。
 实际部署起来比图中看起来的还要简单。不需要端口映射，不需要改路由表，需要做的只是透过openvpn的ip访问ss server。
 
-![image0](images/Capture9.PNG)
+![image0](images/Capture10.PNG)
 
 # 编译教程
 暂时先参考udp2raw的这篇教程，几乎一样的过程。
