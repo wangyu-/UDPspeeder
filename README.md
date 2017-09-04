@@ -133,11 +133,11 @@ kcptun在udp层有RS code，也是一种冗余传输，通过openvpn把流量转
 
 udp协议本身是ip协议加上了端口之后的直接封装，udp继承了ip协议的实时/乱序到达特性，更适合中转vpn。
 
-#### UDPspeeder + kcptun/finalspeed同时加速tcp和udp流量
+#### UDPspeeder + kcptun/finalspeed + ss 同时加速tcp和udp流量
 如果你需要用加速的tcp看视频和下载文件，这样效果比vpn方案更好。不论是速度，还是流量的耗费上。
 ![image0](images/Capture3.PNG)
 
-#### 混合方案
+#### UDPspeeder + openvpn + ss 混合方案
 也是我正在用的方案。优点是可以随时在vpn和ss方案间快速切换。
 实际部署起来比图中看起来的还要简单。不需要改路由表，需要做的只是用openvpn的ip访问ss server。
 
