@@ -142,7 +142,7 @@ udp协议本身是ip协议加上了端口之后的直接封装，udp继承了ip�
 实际部署起来比图中看起来的还要简单。不需要改路由表，需要做的只是用openvpn的ip访问ss server。
 
 ![image0](images/Capture10.PNG)
-
+(也可以把图中的ss server换成其他的socks5 server，这样连ss client都不需要了。)
 # 编译教程
 暂时先参考udp2raw的这篇教程，几乎一样的过程。
 
