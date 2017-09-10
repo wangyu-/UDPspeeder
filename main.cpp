@@ -1,5 +1,6 @@
 #include "common.h"
 #include "log.h"
+#include "git_version.h"
 
 using  namespace std;
 
@@ -923,8 +924,12 @@ int event_loop()
 }
 void print_help()
 {
+	char git_version_buf[100]={0};
+	strncpy(git_version_buf,gitversion,10);
+
 	printf("UDPspeeder\n");
-	printf("version: %s %s\n",__DATE__,__TIME__);
+	printf("git version:%s    ",git_version_buf);
+	printf("build date:%s %s\n",__DATE__,__TIME__);
 	printf("repository: https://github.com/wangyu-/UDPspeeder\n");
 	printf("\n");
 	printf("usage:\n");
