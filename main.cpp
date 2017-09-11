@@ -49,6 +49,7 @@ u64_t packet_send_count=0;
 u64_t dup_packet_send_count=0;
 u64_t packet_recv_count=0;
 u64_t dup_packet_recv_count=0;
+int max_pending_packet=0;
 
 int random_between(u32_t a,u32_t b)
 {
@@ -61,7 +62,7 @@ int random_between(u32_t a,u32_t b)
 	else return a+get_true_random_number()%(b+1-a);
 }
 
-int max_pending_packet=0;
+
 int VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV;
 
 struct anti_replay_t
@@ -950,7 +951,9 @@ void print_help()
 	printf("    -t                    tmin:tmax       simliar to -t above,but delay randomly between tmin and tmax\n");
 	printf("    -j                    jmin:jmax       simliar to -j above,but create jitter randomly between jmin and jmax\n");
 	printf("    --random-drop         <number>        simulate packet loss ,unit 0.01%%\n");
-	printf("    -m                    <number>        max pending packets,to prevent the program from eating up all your memory.\n");
+	printf("    -m                    <number>        max pending packets,to prevent the program from eating up all your memory,\n");
+	printf("                                          default value:0(disabled).\n");
+	printf("    --disable-filter                      disable duplicate packet filter.\n");
 	printf("other options:\n");
 	printf("    --log-level           <number>        0:never    1:fatal   2:error   3:warn \n");
 	printf("                                          4:info (default)     5:debug   6:trace\n");
