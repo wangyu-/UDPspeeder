@@ -67,7 +67,7 @@ https://github.com/wangyu-/UDPspeeder/releases
 ### 命令选项
 ```
 UDPspeeder
-version: Aug  9 2017 18:13:09
+git version:b4bd385e88    build date:Sep 11 2017 10:29:25
 repository: https://github.com/wangyu-/UDPspeeder
 
 usage:
@@ -86,14 +86,16 @@ main options:
 advanced options:
     -t                    tmin:tmax       simliar to -t above,but delay randomly between tmin and tmax
     -j                    jmin:jmax       simliar to -j above,but create jitter randomly between jmin and jmax
-    --random-drop         <number>        simulate packet loss ,unit 0.01%
-    -m                    <number>        max pending packets,to prevent the program from eating up all your memory.
+    --random-drop         <number>        simulate packet loss ,unit:0.01%
+    --disable-filter                      disable duplicate packet filter.
+    -m                    <number>        max pending packets,to prevent the program from eating up all your memory,
+                                          default value:0(disabled).
 other options:
     --log-level           <number>        0:never    1:fatal   2:error   3:warn 
                                           4:info (default)     5:debug   6:trace
     --log-position                        enable file name,function name,line number in log
     --disable-color                       disable log color
-    --sock-buf            <number>        buf size for socket,>=10 and <=10240,unit:kbyte,default:512
+    --sock-buf            <number>        buf size for socket,>=10 and <=10240,unit:kbyte,default:1024
     -h,--help                             print this help message
 
 ```
