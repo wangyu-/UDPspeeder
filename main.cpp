@@ -951,9 +951,9 @@ void print_help()
 	printf("    -t                    tmin:tmax       simliar to -t above,but delay randomly between tmin and tmax\n");
 	printf("    -j                    jmin:jmax       simliar to -j above,but create jitter randomly between jmin and jmax\n");
 	printf("    --random-drop         <number>        simulate packet loss ,unit 0.01%%\n");
+	printf("    --disable-filter                      disable duplicate packet filter.\n");
 	printf("    -m                    <number>        max pending packets,to prevent the program from eating up all your memory,\n");
 	printf("                                          default value:0(disabled).\n");
-	printf("    --disable-filter                      disable duplicate packet filter.\n");
 	printf("other options:\n");
 	printf("    --log-level           <number>        0:never    1:fatal   2:error   3:warn \n");
 	printf("                                          4:info (default)     5:debug   6:trace\n");
