@@ -67,7 +67,7 @@ https://github.com/wangyu-/UDPspeeder/releases
 ### 命令选项
 ```
 UDPspeeder
-version: Aug  9 2017 18:13:09
+git version:b4bd385e88    build date:Sep 11 2017 10:29:25
 repository: https://github.com/wangyu-/UDPspeeder
 
 usage:
@@ -86,14 +86,16 @@ main options:
 advanced options:
     -t                    tmin:tmax       simliar to -t above,but delay randomly between tmin and tmax
     -j                    jmin:jmax       simliar to -j above,but create jitter randomly between jmin and jmax
-    --random-drop         <number>        simulate packet loss ,unit 0.01%
-    -m                    <number>        max pending packets,to prevent the program from eating up all your memory.
+    --random-drop         <number>        simulate packet loss ,unit:0.01%
+    --disable-filter                      disable duplicate packet filter.
+    -m                    <number>        max pending packets,to prevent the program from eating up all your memory,
+                                          default value:0(disabled).
 other options:
     --log-level           <number>        0:never    1:fatal   2:error   3:warn 
                                           4:info (default)     5:debug   6:trace
     --log-position                        enable file name,function name,line number in log
     --disable-color                       disable log color
-    --sock-buf            <number>        buf size for socket,>=10 and <=10240,unit:kbyte,default:512
+    --sock-buf            <number>        buf size for socket,>=10 and <=10240,unit:kbyte,default:1024
     -h,--help                             print this help message
 
 ```
@@ -101,7 +103,7 @@ other options:
 ##### -d 选项
 设置冗余包数量。
 ##### -t 选项
-为冗余包的发送，增加一个延迟.对中间路由buffer做优化，应对瞬时Buffer过长导致的连续丢包
+为冗余包的发送，增加一个延迟.对中间路由buffer做优化，应对瞬时Buffer过长导致的连续丢包.对于多个冗余包，依次在前一个包的基础上增加这个延迟。
 ##### -j 选项
 为原始数据的发送，增加一个延迟抖动值。这样上层应用计算出来的RTT方差会更大，以等待后续冗余包的到达，不至于发生在冗余包到达之前就触发重传的尴尬。配合-t选项使用。正常情况下跨国网络本身的延迟抖动就很大。可以不用设-j
 
