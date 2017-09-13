@@ -593,7 +593,7 @@ int create_new_udp(int &new_udp_fd)
 	mylog(log_debug, "created new udp_fd %d\n", new_udp_fd);
 	int ret = connect(new_udp_fd, (struct sockaddr *) &remote_addr_in, slen);
 	if (ret != 0) {
-		mylog(log_warn, "udp fd connect fail\n");
+		mylog(log_warn, "udp fd connect fail %d %s\n",ret,strerror(errno));
 		close(new_udp_fd);
 		return -1;
 	}
