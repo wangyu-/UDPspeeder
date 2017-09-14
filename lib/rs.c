@@ -35,7 +35,7 @@ int rs_decode(void *code,char *data[],int size)
 		return -1;
 	for(int i=0;i<n;i++)
 	{
-		if(k<count)
+		if(i<count)
 			data[i]=data[index[i]];
 		else
 			data[i]=0;
