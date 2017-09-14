@@ -6,19 +6,19 @@
  */
 #include "rs.h"
 
-void rs_encode(void *code,void *data[],int size)
+void rs_encode(void *code,char *data[],int size)
 {
 	int k=get_k(code);
 	int n=get_n(code);
 	for(int i=k;i<n;i++)
 	{
-		fec_encode(code, data, data[i],i, size);
+		fec_encode(code, (void **)data, data[i],i, size);
 	}
 
 	return ;
 }
 
-int rs_decode(void *code,void *data[],int size)
+int rs_decode(void *code,char *data[],int size)
 {
 	int k=get_k(code);
 	int n=get_n(code);
@@ -40,5 +40,5 @@ int rs_decode(void *code,void *data[],int size)
 		else
 			data[i]=0;
 	}
-	return fec_decode(code,data,index,size);
+	return fec_decode(code,(void**)data,index,size);
 }
