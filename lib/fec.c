@@ -127,7 +127,7 @@ typedef unsigned short gf;
  * Primitive polynomials - see Lin & Costello, Appendix A,
  * and  Lee & Messerschmitt, p. 453.
  */
-static char *allPp[] = {    /* GF_BITS	polynomial		*/
+static const char *allPp[] = {    /* GF_BITS	polynomial		*/
     NULL,		    /*  0	no code			*/
     NULL,		    /*  1	no code			*/
     "111",		    /*  2	1+x+x^2			*/
@@ -146,6 +146,7 @@ static char *allPp[] = {    /* GF_BITS	polynomial		*/
     "1100000000000001",	    /* 15	1+x+x^15		*/
     "11010000000010001"	    /* 16	1+x+x^3+x^12+x^16	*/
 };
+
 
 
 /*
@@ -239,7 +240,7 @@ gf_mul(x,y)
  * one place.
  */
 static void *
-my_malloc(int sz, char *err_string)
+my_malloc(int sz, const char *err_string)
 {
     void *p = malloc( sz );
     if (p == NULL) {
@@ -260,7 +261,7 @@ generate_gf(void)
 {
     int i;
     gf mask;
-    char *Pp =  allPp[GF_BITS] ;
+    const char *Pp =  allPp[GF_BITS] ;
 
     mask = 1;	/* x ** 0 = 1 */
     gf_exp[GF_BITS] = 0; /* will be updated at the end of the 1st loop */
@@ -427,9 +428,9 @@ invert_mat(gf *src, int k)
     int irow, icol, row, col, i, ix ;
 
     int error = 1 ;
-    int *indxc = my_malloc(k*sizeof(int), "indxc");
-    int *indxr = my_malloc(k*sizeof(int), "indxr");
-    int *ipiv = my_malloc(k*sizeof(int), "ipiv");
+    int *indxc = (int*)my_malloc(k*sizeof(int), "indxc");
+    int *indxr = (int*)my_malloc(k*sizeof(int), "indxr");
+    int *ipiv = (int*)my_malloc(k*sizeof(int), "ipiv");
     gf *id_row = NEW_GF_MATRIX(1, k);
     gf *temp_row = NEW_GF_MATRIX(1, k);
 
@@ -644,10 +645,11 @@ struct fec_parms {
 } ;
 
 void
-fec_free(struct fec_parms *p)
+fec_free(void *p0)
 {
+	struct fec_parms *p= (struct fec_parms *) p0;
     if (p==NULL ||
-       p->magic != ( ( (FEC_MAGIC ^ p->k) ^ p->n) ^ (int)(p->enc_matrix)) ) {
+       p->magic != ( ( (FEC_MAGIC ^ p->k) ^ p->n) ^ (int)((long)p->enc_matrix)) ) {
 	fprintf(stderr, "bad parameters to fec_free\n");
 	return ;
     }
@@ -675,11 +677,11 @@ fec_new(int k, int n)
 		k, n, GF_SIZE );
 	return NULL ;
     }
-    retval = my_malloc(sizeof(struct fec_parms), "new_code");
+    retval = (struct fec_parms *)my_malloc(sizeof(struct fec_parms), "new_code");
     retval->k = k ;
     retval->n = n ;
     retval->enc_matrix = NEW_GF_MATRIX(n, k);
-    retval->magic = ( ( FEC_MAGIC ^ k) ^ n) ^ (int)(retval->enc_matrix) ;
+    retval->magic = ( ( FEC_MAGIC ^ k) ^ n) ^ (int)((long)retval->enc_matrix) ;
     tmp_m = NEW_GF_MATRIX(n, k);
     /*
      * fill the matrix with powers of field elements, starting from 0.
@@ -722,8 +724,12 @@ fec_new(int k, int n)
  * with index "index".
  */
 void
-fec_encode(struct fec_parms *code, gf *src[], gf *fec, int index, int sz)
+fec_encode(void *code0, void *src0[], void *fec0, int index, int sz)
+//fec_encode(struct fec_parms *code0, gf *src[], gf *fec, int index, int sz)
 {
+	struct fec_parms * code= (struct fec_parms *)code0;
+	gf **src=(gf**) src0;
+	gf* fec=(gf*)fec0;
     int i, k = code->k ;
     gf *p ;
 
@@ -829,8 +835,11 @@ build_decode_matrix(struct fec_parms *code, gf *pkt[], int index[])
  *	sz:    size of each packet
  */
 int
-fec_decode(struct fec_parms *code, gf *pkt[], int index[], int sz)
+fec_decode(void *code0, void *pkt0[], int index[], int sz)
+//fec_decode(struct fec_parms *code, gf *pkt[], int index[], int sz)
 {
+	struct fec_parms * code=(struct fec_parms*)code0;
+	gf **pkt=(gf**)pkt0;
     gf *m_dec ; 
     gf **new_pkt ;
     int row, col , k = code->k ;
@@ -847,10 +856,10 @@ fec_decode(struct fec_parms *code, gf *pkt[], int index[], int sz)
     /*
      * do the actual decoding
      */
-    new_pkt = my_malloc (k * sizeof (gf * ), "new pkt pointers" );
+    new_pkt = (gf** )my_malloc (k * sizeof (gf * ), "new pkt pointers" );
     for (row = 0 ; row < k ; row++ ) {
 	if (index[row] >= k) {
-	    new_pkt[row] = my_malloc (sz * sizeof (gf), "new pkt buffer" );
+	    new_pkt[row] = (gf*)my_malloc (sz * sizeof (gf), "new pkt buffer" );
 	    bzero(new_pkt[row], sz * sizeof(gf) ) ;
 	    for (col = 0 ; col < k ; col++ )
 		addmul(new_pkt[row], pkt[col], m_dec[row*k + col], sz) ;

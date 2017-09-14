@@ -1,7 +1,7 @@
 #include "common.h"
 #include "log.h"
 #include "git_version.h"
-
+#include "lib/rs.h"
 using  namespace std;
 
 typedef unsigned long long u64_t;   //this works on most platform,avoid using the PRId64
