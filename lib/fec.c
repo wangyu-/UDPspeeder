@@ -46,6 +46,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef unsigned long u_long;
 /*
  * compatibility stuff
  */

@@ -923,6 +923,42 @@ int event_loop()
 	myexit(0);
 	return 0;
 }
+int unit_test()
+{
+	int i,j,k;
+	void *code=fec_new(3,6);
+	char arr[6][100]=
+	{
+		"aaa","bbb","ccc"
+		,"ddd","eee","fff"
+	};
+	char *data[6];
+	for(i=0;i<6;i++)
+	{
+		data[i]=arr[i];
+	}
+	rs_encode(code,data,3);
+	printf("%d %d",(int)(unsigned char)arr[5][0],(int)('a'^'b'^'c'^'d'^'e'));
+
+	for(i=0;i<6;i++)
+	{
+		printf("<%s>",data[i]);
+	}
+
+	data[0]=0;
+	data[1]=0;
+	data[2]=0;
+
+	int ret=rs_decode(code,data,3);
+	printf("ret:%d\n",ret);
+
+	for(i=0;i<6;i++)
+	{
+		printf("<%s>",data[i]);
+	}
+	fec_free(code);
+	return 0;
+}
 void print_help()
 {
 	char git_version_buf[100]={0};
@@ -985,6 +1021,14 @@ void process_arg(int argc, char *argv[])
 	{
 		print_help();
 		myexit( -1);
+	}
+	for (i = 0; i < argc; i++)
+	{
+		if(strcmp(argv[i],"--unit-test")==0)
+		{
+			unit_test();
+			myexit(0);
+		}
 	}
 	for (i = 0; i < argc; i++)
 	{
@@ -1232,6 +1276,7 @@ void process_arg(int argc, char *argv[])
 		myexit(-1);
 	}
 }
+
 int main(int argc, char *argv[])
 {
 	assert(sizeof(u64_t)==8);
