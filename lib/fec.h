@@ -44,10 +44,13 @@
 
 #define	GF_SIZE ((1 << GF_BITS) - 1)	/* powers of \alpha */
 void fec_free(void *p) ;
-void * fec_new(int k, int n) ;
+void * fec_new(int k, int n) ;//n>=k
 
 void init_fec() ;
 void fec_encode(void *code, void *src[], void *dst, int index, int sz) ;
 int fec_decode(void *code, void *pkt[], int index[], int sz) ;
+
+int get_k(void *code);
+int get_n(void *codev);
 
 /* end of file */

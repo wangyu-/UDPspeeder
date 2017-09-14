@@ -879,7 +879,16 @@ fec_decode(void *code0, void *pkt0[], int index[], int sz)
 
     return 0;
 }
-
+int get_n(void *code0)
+{
+	struct fec_parms * code= (struct fec_parms *)code0;
+	return code->n;
+}
+int get_k(void *code0)
+{
+	struct fec_parms * code= (struct fec_parms *)code0;
+	return code->k;
+}
 /*********** end of FEC code -- beginning of test code ************/
 
 #if (TEST || DEBUG)
