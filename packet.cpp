@@ -121,7 +121,7 @@ int remove_seq(char * data,int &data_len)
 	seq=ntoh64(seq);
 	if(anti_replay.is_vaild(seq)==0)
 	{
-		if(disable_replay_filter==1)
+		if(disable_replay_filter==1)  //todo inefficient code,why did i put it here???
 			return 0;
 		mylog(log_trace,"seq %llx dropped bc of replay-filter\n ",seq);
 		return -1;

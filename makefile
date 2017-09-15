@@ -8,7 +8,7 @@ cc_arm= /toolchains/arm-2014.05/bin/arm-none-linux-gnueabi-g++
 #cc_bcm2708=/home/wangyu/raspberry/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf-g++ 
 FLAGS= -std=c++11   -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers
 
-SOURCES=main.cpp log.cpp common.cpp lib/fec.c lib/rs.c packet.cpp conn_manager.cpp
+SOURCES=main.cpp log.cpp common.cpp lib/fec.c lib/rs.c packet.cpp conn_manager.cpp classic.cpp
 
 NAME=speeder
 TARGETS=amd64 arm mips24kc_be x86  mips24kc_le
@@ -59,5 +59,5 @@ clean:
 	rm -f git_version.h
 
 git_version:
-	    echo "const char *gitversion = \"$(shell git rev-parse HEAD)\";" > git_version.h
+	    echo "const char * const gitversion = \"$(shell git rev-parse HEAD)\";" > git_version.h
 	
