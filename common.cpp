@@ -329,3 +329,73 @@ void get_true_random_chars(char * s,int len)
 		exit(-1);
 	}
 }
+
+int random_between(u32_t a,u32_t b)
+{
+	if(a>b)
+	{
+		mylog(log_fatal,"min >max?? %d %d\n",a ,b);
+		myexit(1);
+	}
+	if(a==b)return a;
+	else return a+get_true_random_number()%(b+1-a);
+}
+
+
+int set_timer_ms(int epollfd,int &timer_fd,u32_t timer_interval)
+{
+	int ret;
+	epoll_event ev;
+
+	itimerspec its;
+	memset(&its,0,sizeof(its));
+
+	if((timer_fd=timerfd_create(CLOCK_MONOTONIC,TFD_NONBLOCK)) < 0)
+	{
+		mylog(log_fatal,"timer_fd create error\n");
+		myexit(1);
+	}
+	its.it_interval.tv_sec=(timer_interval/1000);
+	its.it_interval.tv_nsec=(timer_interval%1000)*1000ll*1000ll;
+	its.it_value.tv_nsec=1; //imidiately
+	timerfd_settime(timer_fd,0,&its,0);
+
+
+	ev.events = EPOLLIN;
+	ev.data.fd = timer_fd;
+
+	ret=epoll_ctl(epollfd, EPOLL_CTL_ADD, timer_fd, &ev);
+	if (ret < 0) {
+		mylog(log_fatal,"epoll_ctl return %d\n", ret);
+		myexit(-1);
+	}
+	return 0;
+}
+
+int create_new_udp(int &new_udp_fd,int remote_address_uint32,int remote_port)
+{
+	struct sockaddr_in remote_addr_in;
+
+	socklen_t slen = sizeof(sockaddr_in);
+	memset(&remote_addr_in, 0, sizeof(remote_addr_in));
+	remote_addr_in.sin_family = AF_INET;
+	remote_addr_in.sin_port = htons(remote_port);
+	remote_addr_in.sin_addr.s_addr = remote_address_uint32;
+
+	new_udp_fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (new_udp_fd < 0) {
+		mylog(log_warn, "create udp_fd error\n");
+		return -1;
+	}
+	setnonblocking(new_udp_fd);
+	set_buf_size(new_udp_fd);
+
+	mylog(log_debug, "created new udp_fd %d\n", new_udp_fd);
+	int ret = connect(new_udp_fd, (struct sockaddr *) &remote_addr_in, slen);
+	if (ret != 0) {
+		mylog(log_warn, "udp fd connect fail %d %s\n",ret,strerror(errno));
+		close(new_udp_fd);
+		return -1;
+	}
+	return 0;
+}

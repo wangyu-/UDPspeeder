@@ -46,7 +46,7 @@
 void fec_free(void *p) ;
 void * fec_new(int k, int n) ;//n>=k
 
-void init_fec() ;
+void init_fec() ;  //if you never called this,it will be automatically called in fec_new()
 void fec_encode(void *code, void *src[], void *dst, int index, int sz) ;
 int fec_decode(void *code, void *pkt[], int index[], int sz) ;
 

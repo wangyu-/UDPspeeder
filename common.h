@@ -157,5 +157,10 @@ int add_iptables_rule(char *);
 
 int clear_iptables_rule();
 void get_true_random_chars(char * s,int len);
+int random_between(u32_t a,u32_t b);
+
+int set_timer_ms(int epollfd,int &timer_fd,u32_t timer_interval);
+
+int create_new_udp(int &new_udp_fd,int remote_address_uint32,int remote_port);
 
 #endif /* COMMON_H_ */
