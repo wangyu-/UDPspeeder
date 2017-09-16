@@ -19,6 +19,8 @@ typedef u64_t anti_replay_seq_t;
 const u32_t anti_replay_buff_size=10000;
 int disable_replay_filter=0;
 
+int random_drop=0;
+
 char key_string[1000]= "secret key";
 
 struct anti_replay_t
@@ -188,3 +190,50 @@ int de_obscure(const char * input, int in_len,char *output,int &out_len)
 	dup_packet_recv_count++;
 	return 0;
 }
+
+
+int sendto_u64 (int fd,char * buf, int len,int flags, u64_t u64)
+{
+
+	if(is_server)
+	{
+		dup_packet_send_count++;
+	}
+	if(is_server&&random_drop!=0)
+	{
+		if(get_true_random_number()%10000<(u32_t)random_drop)
+		{
+			return 0;
+		}
+	}
+
+	sockaddr_in tmp_sockaddr;
+
+	memset(&tmp_sockaddr,0,sizeof(tmp_sockaddr));
+	tmp_sockaddr.sin_family = AF_INET;
+	tmp_sockaddr.sin_addr.s_addr = (u64 >> 32u);
+
+	tmp_sockaddr.sin_port = htons(uint16_t((u64 << 32u) >> 32u));
+
+	return sendto(fd, buf,
+			len , 0,
+			(struct sockaddr *) &tmp_sockaddr,
+			sizeof(tmp_sockaddr));
+}
+
+int send_fd (int fd,char * buf, int len,int flags)
+{
+	if(is_client)
+	{
+		dup_packet_send_count++;
+	}
+	if(is_client&&random_drop!=0)
+	{
+		if(get_true_random_number()%10000<(u32_t)random_drop)
+		{
+			return 0;
+		}
+	}
+	return send(fd,buf,len,flags);
+}
+

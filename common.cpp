@@ -15,8 +15,11 @@ int about_to_exit=0;
 raw_mode_t raw_mode=mode_faketcp;
 unordered_map<int, const char*> raw_mode_tostring = {{mode_faketcp, "faketcp"}, {mode_udp, "udp"}, {mode_icmp, "icmp"}};
 int socket_buf_size=1024*1024;
+int max_pending_packet=0;
 static int random_number_fd=-1;
 char iptables_rule[200]="";
+int is_client = 0, is_server = 0;
+
 program_mode_t program_mode=unset_mode;//0 unset; 1client 2server
 
 u64_t get_current_time()

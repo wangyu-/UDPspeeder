@@ -49,6 +49,7 @@
 
 #include<unordered_map>
 #include<unordered_set>
+#include<map>
 #include<list>
 using  namespace std;
 
@@ -59,6 +60,7 @@ typedef long long i64_t;
 typedef unsigned int u32_t;
 typedef int i32_t;
 
+typedef u64_t my_time_t;
 
 const int max_data_len=1600;
 const int buf_len=max_data_len+200;
@@ -114,6 +116,9 @@ enum program_mode_t {unset_mode=0,client_mode,server_mode};
 extern program_mode_t program_mode;
 extern unordered_map<int, const char*> raw_mode_tostring ;
 extern int socket_buf_size;
+extern int max_pending_packet;
+extern int is_client, is_server;
+
 
 typedef u32_t id_t;
 

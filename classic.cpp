@@ -14,7 +14,6 @@
 namespace classic
 {
 
-
 using  namespace std;
 
 typedef unsigned long long u64_t;   //this works on most platform,avoid using the PRId64
@@ -97,14 +96,13 @@ struct anti_replay_t
 	}
 	void prepare()
 	{
-		st.rehash(anti_replay_buff_size*10);
 		anti_replay_seq=get_true_random_number();//random first seq
 		const_id=get_true_random_number_nz();
 	}
 	anti_replay_t()
 	{
 		memset(replay_buffer,0,sizeof(replay_buffer));
-
+		st.rehash(anti_replay_buff_size*10);
 		max_packet_received=0;
 		index=0;
 	}
@@ -1271,4 +1269,6 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
-}
+
+
+}//namespace end

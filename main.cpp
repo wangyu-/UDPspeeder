@@ -5,6 +5,7 @@
 #include "packet.h"
 #include "conn_manager.h"
 #include "classic.h"
+
 using  namespace std;
 
 typedef unsigned long long u64_t;   //this works on most platform,avoid using the PRId64
@@ -27,7 +28,7 @@ int random_number_fd=-1;
 
 int remote_fd=-1;
 int local_fd=-1;
-int is_client = 0, is_server = 0;
+
 int local_listen_fd=-1;
 
 
@@ -41,13 +42,13 @@ int multi_process_mode=0;
 
 
 
-int random_drop=0;
+
 
 u64_t last_report_time=0;
 int report_interval=0;
 
 
-int max_pending_packet=0;
+
 
 conn_manager_t conn_manager;
 
@@ -57,7 +58,7 @@ int VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 
 
 
-typedef u64_t my_time_t;
+
 
 struct delay_data
 {
@@ -69,50 +70,6 @@ struct delay_data
 };
 int delay_timer_fd;
 
-int sendto_u64 (int fd,char * buf, int len,int flags, u64_t u64)
-{
-
-	if(is_server)
-	{
-		dup_packet_send_count++;
-	}
-	if(is_server&&random_drop!=0)
-	{
-		if(get_true_random_number()%10000<(u32_t)random_drop)
-		{
-			return 0;
-		}
-	}
-
-	sockaddr_in tmp_sockaddr;
-
-	memset(&tmp_sockaddr,0,sizeof(tmp_sockaddr));
-	tmp_sockaddr.sin_family = AF_INET;
-	tmp_sockaddr.sin_addr.s_addr = (u64 >> 32u);
-
-	tmp_sockaddr.sin_port = htons(uint16_t((u64 << 32u) >> 32u));
-
-	return sendto(fd, buf,
-			len , 0,
-			(struct sockaddr *) &tmp_sockaddr,
-			sizeof(tmp_sockaddr));
-}
-
-int send_fd (int fd,char * buf, int len,int flags)
-{
-	if(is_client)
-	{
-		dup_packet_send_count++;
-	}
-	if(is_client&&random_drop!=0)
-	{
-		if(get_true_random_number()%10000<(u32_t)random_drop)
-		{
-			return 0;
-		}
-	}
-	return send(fd,buf,len,flags);
-}
 
 multimap<my_time_t,delay_data> delay_mp;
 
@@ -893,6 +850,16 @@ void process_arg(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
+	if(argc==1||argc==0)
+	{
+		printf("this_program classic\n");
+		printf("this_program fec\n");
+		return 0;
+	}
+	if(argc==2&&strcmp(argv[1],"fec")!=0)
+	{
+		return classic::main(argc,argv);
+	}
 	assert(sizeof(u64_t)==8);
 	assert(sizeof(i64_t)==8);
 	assert(sizeof(u32_t)==4);
