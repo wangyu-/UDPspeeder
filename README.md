@@ -62,7 +62,7 @@ https://github.com/wangyu-/UDPspeeder/releases
 
 -k 指定一个字符串，server/client间所有收发的包都会被异或，改变协议特征，防止UDPspeeder的协议被运营商针对。
 
-### MTU
+### MTU设置(重要)
 
 不论你用udpspeeder来加速kcptun还是vpn,都需要设置合理的MTU（在kcptun/vpn里设置，而不是在udpspeeder里），建议把MTU设置成1200。client和server端都要设置。
 
