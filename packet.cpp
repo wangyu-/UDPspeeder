@@ -23,6 +23,8 @@ int random_drop=0;
 
 char key_string[1000]= "secret key";
 
+int local_listen_fd=-1;
+
 struct anti_replay_t
 {
 	u64_t max_packet_received;
@@ -192,9 +194,10 @@ int de_obscure(const char * input, int in_len,char *output,int &out_len)
 }
 
 
-int sendto_u64 (int fd,char * buf, int len,int flags, u64_t u64)
+int sendto_fd_u64 (int fd,u64_t u64,char * buf, int len,int flags)
 {
 
+	/*
 	if(is_server)
 	{
 		dup_packet_send_count++;
@@ -205,7 +208,7 @@ int sendto_u64 (int fd,char * buf, int len,int flags, u64_t u64)
 		{
 			return 0;
 		}
-	}
+	}*/
 
 	sockaddr_in tmp_sockaddr;
 
@@ -220,9 +223,13 @@ int sendto_u64 (int fd,char * buf, int len,int flags, u64_t u64)
 			(struct sockaddr *) &tmp_sockaddr,
 			sizeof(tmp_sockaddr));
 }
-
+int sendto_u64 (u64_t u64,char * buf, int len,int flags)
+{
+	return sendto_fd_u64(local_listen_fd,u64,buf,len,flags);
+}
 int send_fd (int fd,char * buf, int len,int flags)
 {
+	/*
 	if(is_client)
 	{
 		dup_packet_send_count++;
@@ -233,7 +240,7 @@ int send_fd (int fd,char * buf, int len,int flags)
 		{
 			return 0;
 		}
-	}
+	}*/
 	return send(fd,buf,len,flags);
 }
 

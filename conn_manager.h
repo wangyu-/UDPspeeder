@@ -13,7 +13,7 @@
 
 extern int disable_conv_clear;
 
-struct conn_manager_t  //TODO change map to unordered map
+struct conn_manager_t_not_used  //TODO change map to unordered map
 {
 	//typedef hash_map map;
 	unordered_map<u64_t,u32_t> u64_to_fd;  //conv and u64 are both supposed to be uniq
@@ -29,9 +29,9 @@ struct conn_manager_t  //TODO change map to unordered map
 	//void (*clear_function)(uint64_t u64) ;
 
 	long long last_clear_time;
-	list<int> clear_list;
-	conn_manager_t();
-	~conn_manager_t();
+	//list<int> clear_list;
+	conn_manager_t_not_used();
+	~conn_manager_t_not_used();
 	int get_size();
 	void rehash();
 	void clear();
@@ -42,7 +42,7 @@ struct conn_manager_t  //TODO change map to unordered map
 	int update_active_time(u32_t fd);
 	int insert_fd(u32_t fd,u64_t u64);
 	int erase_fd(u32_t fd);
-	void check_clear_list();
+	//void check_clear_list();
 	int clear_inactive();
 	int clear_inactive0();
 

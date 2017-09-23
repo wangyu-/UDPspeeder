@@ -9,24 +9,24 @@
 
 int disable_conv_clear=0;
 
-conn_manager_t::conn_manager_t() {
+conn_manager_t_not_used::conn_manager_t_not_used() {
 	clear_it = fd_last_active_time.begin();
 	long long last_clear_time = 0;
 	rehash();
 	//clear_function=0;
 }
-conn_manager_t::~conn_manager_t() {
+conn_manager_t_not_used::~conn_manager_t_not_used() {
 	clear();
 }
-int conn_manager_t::get_size() {
+int conn_manager_t_not_used::get_size() {
 	return fd_to_u64.size();
 }
-void conn_manager_t::rehash() {
+void conn_manager_t_not_used::rehash() {
 	u64_to_fd.rehash(10007);
 	fd_to_u64.rehash(10007);
 	fd_last_active_time.rehash(10007);
 }
-void conn_manager_t::clear() {
+void conn_manager_t_not_used::clear() {
 	if (disable_conv_clear)
 		return;
 
@@ -41,28 +41,28 @@ void conn_manager_t::clear() {
 	clear_it = fd_last_active_time.begin();
 
 }
-int conn_manager_t::exist_fd(u32_t fd) {
+int conn_manager_t_not_used::exist_fd(u32_t fd) {
 	return fd_to_u64.find(fd) != fd_to_u64.end();
 }
-int conn_manager_t::exist_u64(u64_t u64) {
+int conn_manager_t_not_used::exist_u64(u64_t u64) {
 	return u64_to_fd.find(u64) != u64_to_fd.end();
 }
-u32_t conn_manager_t::find_fd_by_u64(u64_t u64) {
+u32_t conn_manager_t_not_used::find_fd_by_u64(u64_t u64) {
 	return u64_to_fd[u64];
 }
-u64_t conn_manager_t::find_u64_by_fd(u32_t fd) {
+u64_t conn_manager_t_not_used::find_u64_by_fd(u32_t fd) {
 	return fd_to_u64[fd];
 }
-int conn_manager_t::update_active_time(u32_t fd) {
+int conn_manager_t_not_used::update_active_time(u32_t fd) {
 	return fd_last_active_time[fd] = get_current_time();
 }
-int conn_manager_t::insert_fd(u32_t fd, u64_t u64) {
+int conn_manager_t_not_used::insert_fd(u32_t fd, u64_t u64) {
 	u64_to_fd[u64] = fd;
 	fd_to_u64[fd] = u64;
 	fd_last_active_time[fd] = get_current_time();
 	return 0;
 }
-int conn_manager_t::erase_fd(u32_t fd) {
+int conn_manager_t_not_used::erase_fd(u32_t fd) {
 	if (disable_conv_clear)
 		return 0;
 	u64_t u64 = fd_to_u64[fd];
@@ -81,21 +81,22 @@ int conn_manager_t::erase_fd(u32_t fd) {
 	fd_last_active_time.erase(fd);
 	return 0;
 }
+/*
 void conn_manager_t::check_clear_list() {
 	while (!clear_list.empty()) {
 		int fd = *clear_list.begin();
 		clear_list.pop_front();
 		erase_fd(fd);
 	}
-}
-int conn_manager_t::clear_inactive() {
+}*/
+int conn_manager_t_not_used::clear_inactive() {
 	if (get_current_time() - last_clear_time > conv_clear_interval) {
 		last_clear_time = get_current_time();
 		return clear_inactive0();
 	}
 	return 0;
 }
-int conn_manager_t::clear_inactive0() {
+int conn_manager_t_not_used::clear_inactive0() {
 	if (disable_conv_clear)
 		return 0;
 

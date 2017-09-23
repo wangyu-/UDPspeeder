@@ -69,7 +69,8 @@ const u32_t conv_clear_interval=200;
 const u32_t timer_interval=400;
 const int conv_clear_ratio=40;
 const int conv_clear_min=5;
-const u32_t conv_timeout=20000;
+////const u32_t conv_timeout=180000;
+const u32_t conv_timeout=40000;//for test
 const int max_conv_num=10000;
 
 /*
