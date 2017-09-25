@@ -14,9 +14,10 @@ extern int disable_anti_replay;
 #include "common.h"
 #include "log.h"
 #include "delay_manager.h"
+#include "fd_manager.h"
 
 
-
+/*
 struct anti_replay_t  //its for anti replay attack,similar to openvpn/ipsec 's anti replay window
 {
 	u64_t max_packet_received;
@@ -28,7 +29,7 @@ struct anti_replay_t  //its for anti replay attack,similar to openvpn/ipsec 's a
 
 	int is_vaild(u64_t seq);
 };//anti_replay;
-
+*/
 
 struct conv_manager_t  // manage the udp connections
 {
@@ -68,7 +69,9 @@ struct conn_info_t     //stores info for a raw connection.for client ,there is o
 //handle multiple clients
 {
 	conv_manager_t conv_manager;
-	anti_replay_t anti_replay;
+	//anti_replay_t anti_replay;
+	fd64_t timer_fd;
+	ip_port_t ip_port;
 };//g_conn_info;
 
 struct conn_manager_t  //manager for connections. for client,we dont need conn_manager since there is only one connection.for server we use one conn_manager for all connections
@@ -76,31 +79,22 @@ struct conn_manager_t  //manager for connections. for client,we dont need conn_m
 
  u32_t ready_num;
 
- unordered_map<int,conn_info_t *> udp_fd_mp;  //a bit dirty to used pointer,but can void unordered_map search
- unordered_map<int,conn_info_t *> timer_fd_mp;//we can use pointer here since unordered_map.rehash() uses shallow copy
-
- unordered_map<id_t,conn_info_t *> const_id_mp;
-
- unordered_map<u64_t,conn_info_t*> mp; //put it at end so that it de-consturcts first
+ unordered_map<fd64_t,u64_t> fd64_mp;
+ unordered_map<u64_t,conn_info_t*> mp;//<ip,port> to conn_info_t;
+ 	 	 	 	 	 	 	 	 	  //put it at end so that it de-consturcts first
 
  unordered_map<u64_t,conn_info_t*>::iterator clear_it;
 
  long long last_clear_time;
 
  conn_manager_t();
- int exist(u32_t ip,uint16_t port);
- /*
- int insert(uint32_t ip,uint16_t port)
- {
-	 uint64_t u64=0;
-	 u64=ip;
-	 u64<<=32u;
-	 u64|=port;
-	 mp[u64];
-	 return 0;
- }*/
- conn_info_t *& find_insert_p(u32_t ip,uint16_t port);  //be aware,the adress may change after rehash
- conn_info_t & find_insert(u32_t ip,uint16_t port) ; //be aware,the adress may change after rehash
+ int exist_ip_port(ip_port_t);
+ conn_info_t *& find_insert_p(ip_port_t);  //be aware,the adress may change after rehash
+ conn_info_t & find_insert(ip_port_t) ; //be aware,the adress may change after rehash
+ int exist_fd64(fd64_t fd64);
+ void insert_fd64(fd64_t fd64,ip_port_t);
+ ip_port_t find_by_fd64(fd64_t fd64);
+
 
  int erase(unordered_map<u64_t,conn_info_t*>::iterator erase_it);
 int clear_inactive();

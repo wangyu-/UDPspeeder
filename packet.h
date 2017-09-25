@@ -31,6 +31,16 @@ struct ip_port_t
 {
 	u32_t ip;
 	int port;
+	void from_u64(u64_t u64)
+	{
+		ip=get_u64_h(u64);
+		port=get_u64_l(u64);
+	}
+	u64_t to_u64()
+	{
+		return pack_u64(ip,port);
+	}
+
 };
 union inner_t
 {
@@ -56,5 +66,8 @@ int de_obscure(const char * input, int in_len,char *output,int &out_len);
 //int sendto_fd_u64 (int fd,u64_t u64,char * buf, int len,int flags);
 int sendto_ip_port (u32_t ip,int port,char * buf, int len,int flags);
 int send_fd (int fd,char * buf, int len,int flags);
+
+int put_conv(u32_t conv,char * input,int len_in,char *&output,int &len_out);
+int get_conv(u32_t &conv,char *input,int len_in,char *&output,int &len_out );
 
 #endif /* PACKET_H_ */

@@ -162,25 +162,17 @@ conv_manager_t::~conv_manager_t()
 		}
 		return 0;
 	}
-
-	conn_manager_t::conn_manager_t()
+ conn_manager_t::conn_manager_t()
  {
 	 ready_num=0;
-	 mp.reserve(10007);
+	 mp.reserve(100007);
+	 fd64_mp.reserve(100007);
 	 clear_it=mp.begin();
-	 timer_fd_mp.reserve(10007);
-	 const_id_mp.reserve(10007);
-	 udp_fd_mp.reserve(100007);
 	 last_clear_time=0;
-	 //current_ready_ip=0;
-	// current_ready_port=0;
  }
- int conn_manager_t::exist(u32_t ip,uint16_t port)
+ int conn_manager_t::exist_ip_port(ip_port_t ip_port)
  {
-	 u64_t u64=0;
-	 u64=ip;
-	 u64<<=32u;
-	 u64|=port;
+	 u64_t u64=ip_port.to_u64();
 	 if(mp.find(u64)!=mp.end())
 	 {
 		 return 1;
@@ -197,12 +189,9 @@ conv_manager_t::~conv_manager_t()
 	 mp[u64];
 	 return 0;
  }*/
- conn_info_t *& conn_manager_t::find_insert_p(u32_t ip,uint16_t port)  //be aware,the adress may change after rehash
+ conn_info_t *& conn_manager_t::find_insert_p(ip_port_t ip_port)  //be aware,the adress may change after rehash
  {
-	 u64_t u64=0;
-	 u64=ip;
-	 u64<<=32u;
-	 u64|=port;
+	 u64_t u64=ip_port.to_u64();
 	 unordered_map<u64_t,conn_info_t*>::iterator it=mp.find(u64);
 	 if(it==mp.end())
 	 {
@@ -210,12 +199,9 @@ conv_manager_t::~conv_manager_t()
 	 }
 	 return mp[u64];
  }
- conn_info_t & conn_manager_t::find_insert(u32_t ip,uint16_t port)  //be aware,the adress may change after rehash
+ conn_info_t & conn_manager_t::find_insert(ip_port_t ip_port)  //be aware,the adress may change after rehash
  {
-	 u64_t u64=0;
-	 u64=ip;
-	 u64<<=32u;
-	 u64|=port;
+	 u64_t u64=ip_port.to_u64();
 	 unordered_map<u64_t,conn_info_t*>::iterator it=mp.find(u64);
 	 if(it==mp.end())
 	 {
@@ -223,8 +209,26 @@ conv_manager_t::~conv_manager_t()
 	 }
 	 return *mp[u64];
  }
+ int conn_manager_t::exist_fd64(fd64_t fd64)
+ {
+	 return fd64_mp.find(fd64)!=fd64_mp.end();
+ }
+ void conn_manager_t::insert_fd64(fd64_t fd64,ip_port_t ip_port)
+ {
+	 assert(exist_ip_port(ip_port));
+	 u64_t u64=ip_port.to_u64();
+	 fd64_mp[fd64]=u64;
+ }
+ ip_port_t conn_manager_t::find_by_fd64(fd64_t fd64)
+ {
+	 assert(exist_fd64(fd64));
+	 ip_port_t res;
+	 res.from_u64(fd64_mp[fd64]);
+	 return res;
+ }
  int conn_manager_t::erase(unordered_map<u64_t,conn_info_t*>::iterator erase_it)
  {
+	 /*
 		if(erase_it->second->state.server_current_state==server_ready)
 		{
 			ready_num--;
@@ -241,14 +245,10 @@ conv_manager_t::~conv_manager_t()
 			delete(erase_it->second);
 			mp.erase(erase_it->first);
 		}
-		else
-		{
-			assert(erase_it->second->blob==0);
-			assert(erase_it->second->timer_fd ==0);
-			assert(erase_it->second->oppsite_const_id==0);
-			delete(erase_it->second);
-			mp.erase(erase_it->first);
-		}
+		else*/
+	 ////////todo  close and erase timer_fd ,check fd64 empty
+		delete(erase_it->second);
+		mp.erase(erase_it->first);
 		return 0;
  }
 int conn_manager_t::clear_inactive()
@@ -288,22 +288,13 @@ int conn_manager_t::clear_inactive0()
 			it=mp.begin();
 		}
 
-		if(it->second->state.server_current_state==server_ready &&current_time - it->second->last_hb_recv_time  <=server_conn_timeout)
+		else if(it->second->conv_manager.get_size() >0)
 		{
-				it++;
-		}
-		else if(it->second->state.server_current_state!=server_ready&& current_time - it->second->last_state_time  <=server_handshake_timeout )
-		{
-			it++;
-		}
-		else if(it->second->blob!=0&&it->second->blob->conv_manager.get_size() >0)
-		{
-			assert(it->second->state.server_current_state==server_ready);
 			it++;
 		}
 		else
 		{
-			mylog(log_info,"[%s:%d]inactive conn cleared \n",my_ntoa(it->second->raw_info.recv_info.src_ip),it->second->raw_info.recv_info.src_port);
+			mylog(log_info,"[%s:%d]inactive conn cleared \n",my_ntoa(get_u64_h(it->first)),get_u64_l(it->first));
 			old_it=it;
 			it++;
 			erase(old_it);
@@ -317,29 +308,19 @@ int conn_manager_t::clear_inactive0()
 void server_clear_function(u64_t u64)//used in conv_manager in server mode.for server we have to use one udp fd for one conv(udp connection),
 //so we have to close the fd when conv expires
 {
-	int fd=int(u64);
+	int fd64=u64;
 	int ret;
-	assert(fd!=0);
-	/*
-	epoll_event ev;
+	assert(fd_manager.fd64_exist(fd64));
+	int fd=fd_manager.fd64_to_fd(fd64);
 
-	ev.events = EPOLLIN;
-	ev.data.u64 = u64;
-
-	ret = epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, &ev);
-	if (ret!=0)
-	{
-		mylog(log_fatal,"fd:%d epoll delete failed!!!!\n",fd);
-		myexit(-1);   //this shouldnt happen
-	}*/                //no need
+	fd_manager.remove_fd64(fd64);
 	ret= close(fd);  //closed fd should be auto removed from epoll
-
 	if (ret!=0)
 	{
 		mylog(log_fatal,"close fd %d failed !!!!\n",fd);
 		myexit(-1);  //this shouldnt happen
 	}
 	//mylog(log_fatal,"size:%d !!!!\n",conn_manager.udp_fd_mp.size());
-	assert(conn_manager.udp_fd_mp.find(fd)!=conn_manager.udp_fd_mp.end());
-	conn_manager.udp_fd_mp.erase(fd);
+	assert(conn_manager.fd64_mp.find(fd)!=conn_manager.fd64_mp.end());
+	conn_manager.fd64_mp.erase(fd);
 }

@@ -88,10 +88,10 @@ int new_connected_socket(int &fd,u32_t ip,int port)
 		mylog(log_warn, "[%s]create udp_fd error\n", ip_port);
 		return -1;
 	}
-	setnonblocking(new_udp_fd);
+	setnonblocking(fd);
 	set_buf_size(fd, socket_buf_size);
 
-	mylog(log_debug, "[%s]created new udp_fd %d\n", ip_port, new_udp_fd);
+	mylog(log_debug, "[%s]created new udp_fd %d\n", ip_port, fd);
 	int ret = connect(fd, (struct sockaddr *) &remote_addr_in, slen);
 	if (ret != 0) {
 		mylog(log_warn, "[%s]fd connect fail\n",ip_port);
@@ -185,7 +185,7 @@ int client_event_loop()
 				int new_len;
 				get_conv(conv,data,data_len,new_data,new_len);
 				if(!conn_info.conv_manager.is_conv_used(conv))continue;
-				u64_t u64=conn_info.conv_manager.conv_to_u64(conv);
+				u64_t u64=conn_info.conv_manager.find_conv_by_u64(conv);
 				u32_t ip=get_u64_h(u64);
 				int port=get_u64_l(u64);
 				dest_t dest;
@@ -221,7 +221,7 @@ int client_event_loop()
 
 				if(data_len>=mtu_warn)
 				{
-					mylog(log_warn,"huge packet,data len=%d (>=%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",recv_len,mtu_warn);
+					mylog(log_warn,"huge packet,data len=%d (>=%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",data_len,mtu_warn);
 				}
 				mylog(log_trace,"Received packet from %s:%d,len: %d\n", inet_ntoa(udp_new_addr_in.sin_addr),
 						ntohs(udp_new_addr_in.sin_port),data_len);
@@ -343,19 +343,20 @@ int server_event_loop()
 
 				if(data_len>=mtu_warn)
 				{
-					mylog(log_warn,"huge packet,data len=%d (>=%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",recv_len,mtu_warn);
+					mylog(log_warn,"huge packet,data len=%d (>=%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",data_len,mtu_warn);
 				}
 				mylog(log_trace,"Received packet from %s:%d,len: %d\n", inet_ntoa(udp_new_addr_in.sin_addr),
 						ntohs(udp_new_addr_in.sin_port),data_len);
 
-				uint32_t ip=udp_new_addr_in.sin_addr.s_addr;
-				int port=udp_new_addr_in.sin_port;
-				if(!conn_manager.exist(ip,port))
+				ip_port_t ip_port;
+				ip_port.ip=udp_new_addr_in.sin_addr.s_addr;
+				ip_port.port=udp_new_addr_in.sin_port;
+				if(!conn_manager.exist_ip_port(ip_port))
 				{
-					conn_info_t &conn_info=conn_manager.find_insert(ip,port);
+					conn_info_t &conn_info=conn_manager.find_insert(ip_port);
 					conn_info.conv_manager.reserve();
 				}
-				conn_info_t &conn_info=conn_manager.find_insert(ip,port);
+				conn_info_t &conn_info=conn_manager.find_insert(ip_port);
 
 				u32_t conv;
 				char *new_data;
@@ -373,7 +374,7 @@ int server_event_loop()
 					new_connected_socket(new_udp_fd,remote_ip_uint32,remote_port);
 
 					if (ret != 0) {
-						mylog(log_warn, "[%s:%d]add udp_fd error\n",my_ntoa(ip),port);
+						mylog(log_warn, "[%s:%d]add udp_fd error\n",my_ntoa(ip_port.ip),ip_port.port);
 						close(new_udp_fd);
 						return -1;
 					}
@@ -384,9 +385,9 @@ int server_event_loop()
 					ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, new_udp_fd, &ev);
 
 					conn_info.conv_manager.insert_conv(conv, fd64);
-					assert(conn_manager.udp_fd_mp.find(new_udp_fd)==conn_manager.udp_fd_mp.end());
+					assert(!conn_manager.exist_fd64(fd64));
 
-					conn_manager.udp_fd_mp[new_udp_fd] = &conn_info;
+					conn_manager.insert_fd64(fd64,ip_port);
 				}
 				fd64_t fd64= conn_info.conv_manager.find_u64_by_conv(conv);
 				//int fd=fd_manager.fd64_to_fd(fd64);
@@ -434,22 +435,24 @@ int server_event_loop()
 			}*/
 			else if (events[idx].data.u64 >u32_t(-1))
 			{
-				//uint32_t conv_id=events[n].data.u64>>32u;
-
-				int fd=int((events[idx].data.u64<<32u)>>32u);
-
-				if(conn_manager.udp_fd_mp.find(fd)==conn_manager.udp_fd_mp.end()) //this can happen,when fd is a just closed fd
+				char data[buf_len];
+				int data_len;
+				fd64_t fd64=events[idx].data.u64;
+				if(!fd_manager.fd64_exist(fd64))
 				{
-					mylog(log_debug,"fd no longer exists in udp_fd_mp,udp fd %d\n",fd);
+					continue;
+				}
+				int fd=fd_manager.fd64_to_fd(fd64);
+				if(!conn_manager.exist_fd64(fd64)) //this can happen,when fd is a just closed fd
+				{
+					mylog(log_debug,"fd no longer exists in udp_fd_mp,udp fd64 %lld\n",fd64);
 					recv(fd,0,0,0);
 					continue;
 				}
-				conn_info_t* p_conn_info=conn_manager.udp_fd_mp[fd];
+				ip_port_t ip_port=conn_manager.find_by_fd64(fd64);
+				conn_info_t* p_conn_info=conn_manager.find_insert_p(ip_port);
 
-				u64_t u64=conn_manager.udp_fd_mp[fd];
-				u32_t ip=get_u64_h(u64);
-				u32_t port=get_u64_l(u64);
-				if(!conn_manager.exist(ip,port))//TODO remove this for peformance
+				if(!conn_manager.exist_ip_port(ip_port))//TODO remove this for peformance
 				{
 					mylog(log_fatal,"ip port no longer exits 2!!!this shouldnt happen\n");
 					myexit(-1);
@@ -466,20 +469,20 @@ int server_event_loop()
 
 				u32_t conv_id=conn_info.conv_manager.find_conv_by_u64(fd);
 
-				int recv_len=recv(fd,buf,max_data_len,0);
+				data_len=recv(fd,data,max_data_len,0);
 
-				mylog(log_trace,"received a packet from udp_fd,len:%d\n",recv_len);
+				mylog(log_trace,"received a packet from udp_fd,len:%d\n",data_len);
 
-				if(recv_len<0)
+				if(data_len<0)
 				{
 					mylog(log_debug,"udp fd,recv_len<0 continue,%s\n",strerror(errno));
 
 					continue;
 				}
 
-				if(recv_len>=mtu_warn)
+				if(data_len>=mtu_warn)
 				{
-					mylog(log_warn,"huge packet,data len=%d (>=%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",recv_len,mtu_warn);
+					mylog(log_warn,"huge packet,data len=%d (>=%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",data_len,mtu_warn);
 				}
 
 				////////todo send data

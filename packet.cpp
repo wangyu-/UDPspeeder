@@ -238,16 +238,22 @@ int my_send(dest_t &dest,char *data,int len)
 	switch(dest.type)
 	{
 		case type_ip_port:
+		{
 			return sendto_ip_port(dest.inner.ip_port.ip,dest.inner.ip_port.port,data,len,0);
 			break;
+		}
 		case type_fd64:
+		{
 			if(!fd_manager.fd64_exist(dest.inner.fd64)) return -1;
 			int fd=fd_manager.fd64_to_fd(dest.inner.fd64);
 			return send_fd(fd,data,len,0);
 			break;
+		}
 		case type_fd:
+		{
 			send_fd(dest.inner.fd,data,len,0);
 			break;
+		}
 		default:
 			assert(0==1);
 	}

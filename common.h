@@ -7,7 +7,7 @@
 
 #ifndef COMMON_H_
 #define COMMON_H_
-#define __STDC_FORMAT_MACROS 1
+//#define __STDC_FORMAT_MACROS 1
 #include <inttypes.h>
 
 #include<stdio.h>
@@ -64,9 +64,7 @@ const int max_data_len=1600;
 const int buf_len=max_data_len+200;
 
 const u32_t conv_clear_interval=200;
-const u32_t timer_interval=400;
-const int conv_clear_ratio=40;
-const int conv_clear_min=5;
+//const u32_t timer_interval=400;
 ////const u32_t conv_timeout=180000;
 const u32_t conv_timeout=40000;//for test
 const int max_conv_num=10000;
@@ -80,7 +78,7 @@ const u32_t max_ready_conn_num=1000;
 const u32_t client_handshake_timeout=5000;
 const u32_t client_retry_interval=1000;
 
-const u32_t server_handshake_timeout=10000;// this should be much longer than clients. client retry initially ,server retry passtively
+const u32_t server_handshake_timeout=10000;// this should be much longer than clients. client retry initially ,server retry passtively*/
 
 const int conv_clear_ratio=10;  //conv grabage collecter check 1/10 of all conv one time
 const int conn_clear_ratio=10;
@@ -98,14 +96,14 @@ const u32_t heartbeat_interval=1000;
 const u32_t timer_interval=400;//this should be smaller than heartbeat_interval and retry interval;
 
 //const uint32_t conv_timeout=120000; //120 second
-const u32_t conv_timeout=120000; //for test
+//const u32_t conv_timeout=120000; //for test
 
 const u32_t client_conn_timeout=10000;
 const u32_t client_conn_uplink_timeout=client_conn_timeout+2000;
 
 //const uint32_t server_conn_timeout=conv_timeout+60000;//this should be 60s+ longer than conv_timeout,so that conv_manager can destruct convs gradually,to avoid latency glicth
 const u32_t server_conn_timeout=conv_timeout+60000;//for test
-*/
+
 
 extern int about_to_exit;
 
