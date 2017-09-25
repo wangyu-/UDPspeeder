@@ -8,6 +8,7 @@
 
 #include "common.h"
 #include "log.h"
+#include "packet.h"
 
 int iv_min=2;
 int iv_max=16;//< 256;
@@ -194,38 +195,25 @@ int de_obscure(const char * input, int in_len,char *output,int &out_len)
 }
 
 
-int sendto_fd_u64 (int fd,u64_t u64,char * buf, int len,int flags)
+int sendto_fd_ip_port (int fd,u32_t ip,int port,char * buf, int len,int flags)
 {
-
-	/*
-	if(is_server)
-	{
-		dup_packet_send_count++;
-	}
-	if(is_server&&random_drop!=0)
-	{
-		if(get_true_random_number()%10000<(u32_t)random_drop)
-		{
-			return 0;
-		}
-	}*/
 
 	sockaddr_in tmp_sockaddr;
 
 	memset(&tmp_sockaddr,0,sizeof(tmp_sockaddr));
 	tmp_sockaddr.sin_family = AF_INET;
-	tmp_sockaddr.sin_addr.s_addr = (u64 >> 32u);
+	tmp_sockaddr.sin_addr.s_addr = ip;
 
-	tmp_sockaddr.sin_port = htons(uint16_t((u64 << 32u) >> 32u));
+	tmp_sockaddr.sin_port = htons(uint16_t(port));
 
 	return sendto(fd, buf,
 			len , 0,
 			(struct sockaddr *) &tmp_sockaddr,
 			sizeof(tmp_sockaddr));
 }
-int sendto_u64 (u64_t u64,char * buf, int len,int flags)
+int sendto_ip_port (u32_t ip,int port,char * buf, int len,int flags)
 {
-	return sendto_fd_u64(local_listen_fd,u64,buf,len,flags);
+	return sendto_fd_ip_port(local_listen_fd,ip,port,buf,len,flags);
 }
 int send_fd (int fd,char * buf, int len,int flags)
 {
@@ -243,4 +231,46 @@ int send_fd (int fd,char * buf, int len,int flags)
 	}*/
 	return send(fd,buf,len,flags);
 }
+//enum delay_type_t {none=0,enum_sendto_u64,enum_send_fd,client_to_local,client_to_remote,server_to_local,server_to_remote};
 
+int my_send(dest_t &dest,char *data,int len)
+{
+	switch(dest.type)
+	{
+		case type_ip_port:
+			return sendto_ip_port(dest.inner.ip_port.ip,dest.inner.ip_port.port,data,len,0);
+			break;
+		case type_fd64:
+			if(!fd_manager.fd64_exist(dest.inner.fd64)) return -1;
+			int fd=fd_manager.fd64_to_fd(dest.inner.fd64);
+			return send_fd(fd,data,len,0);
+			break;
+		case type_fd:
+			send_fd(dest.inner.fd,data,len,0);
+			break;
+		default:
+			assert(0==1);
+	}
+	return 0;
+}
+
+int put_conv(u32_t conv,char * input,int len_in,char *&output,int &len_out)
+{
+	static char buf[buf_len];
+	output=buf;
+	u32_t n_conv=htonl(conv);
+	memcpy(output,&n_conv,sizeof(n_conv));
+	memcpy(output+sizeof(n_conv),input,len_in);
+	len_out=len_in+(int)(sizeof(n_conv));
+	return 0;
+}
+int get_conv(u32_t &conv,char *input,int len_in,char *&output,int &len_out )
+{
+	u32_t n_conv;
+	memcpy(&n_conv,input,sizeof(n_conv));
+	conv=ntohl(n_conv);
+	output=input+sizeof(n_conv);
+	len_out=len_in-(int)(sizeof(n_conv));
+	if(len_out<0) return -1;
+	return 0;
+}

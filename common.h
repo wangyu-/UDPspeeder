@@ -45,8 +45,6 @@
 #include <linux/if_packet.h>
 
 
-
-
 #include<unordered_map>
 #include<unordered_set>
 #include<map>
@@ -116,9 +114,8 @@ extern raw_mode_t raw_mode;
 enum program_mode_t {unset_mode=0,client_mode,server_mode};
 extern program_mode_t program_mode;
 extern unordered_map<int, const char*> raw_mode_tostring ;
-extern int socket_buf_size;
+
 extern int max_pending_packet;
-extern int is_client, is_server;
 
 
 typedef u32_t id_t;
@@ -149,7 +146,7 @@ u64_t hton64(u64_t a);
 bool larger_than_u16(uint16_t a,uint16_t b);
 bool larger_than_u32(u32_t a,u32_t b);
 void setnonblocking(int sock);
-int set_buf_size(int fd,int size=socket_buf_size);
+int set_buf_size(int fd,int socket_buf_size,int force_socket_buf=0);
 
 unsigned short csum(const unsigned short *ptr,int nbytes);
 
@@ -167,6 +164,8 @@ int random_between(u32_t a,u32_t b);
 
 int set_timer_ms(int epollfd,int &timer_fd,u32_t timer_interval);
 
+/*
 int create_new_udp(int &new_udp_fd,int remote_address_uint32,int remote_port);
+*/
 
 #endif /* COMMON_H_ */
