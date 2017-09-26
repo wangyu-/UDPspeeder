@@ -124,6 +124,37 @@ typedef u64_t padding_t;
 
 typedef u64_t anti_replay_seq_t;
 
+typedef u64_t fd64_t;
+
+enum dest_type{none=0,type_ip_port,type_fd64,type_fd};
+
+
+struct ip_port_t
+{
+	u32_t ip;
+	int port;
+	void from_u64(u64_t u64);
+	u64_t to_u64();
+};
+
+union inner_t
+{
+	ip_port_t ip_port;
+	int fd;
+	fd64_t fd64;
+};
+struct dest_t
+{
+	dest_type type;
+	inner_t inner;
+};
+
+struct fd_info_t
+{
+	ip_port_t ip_port;
+};
+
+
 u64_t get_current_time();
 u64_t get_current_time_us();
 u64_t pack_u64(u32_t a,u32_t b);

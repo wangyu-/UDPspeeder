@@ -26,6 +26,8 @@ char key_string[1000]= "secret key";
 
 int local_listen_fd=-1;
 
+
+
 struct anti_replay_t
 {
 	u64_t max_packet_received;
@@ -244,8 +246,8 @@ int my_send(dest_t &dest,char *data,int len)
 		}
 		case type_fd64:
 		{
-			if(!fd_manager.fd64_exist(dest.inner.fd64)) return -1;
-			int fd=fd_manager.fd64_to_fd(dest.inner.fd64);
+			if(!fd_manager.exist(dest.inner.fd64)) return -1;
+			int fd=fd_manager.to_fd(dest.inner.fd64);
 			return send_fd(fd,data,len,0);
 			break;
 		}

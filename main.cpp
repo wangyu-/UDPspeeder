@@ -186,16 +186,10 @@ int client_event_loop()
 				get_conv(conv,data,data_len,new_data,new_len);
 				if(!conn_info.conv_manager.is_conv_used(conv))continue;
 				u64_t u64=conn_info.conv_manager.find_conv_by_u64(conv);
-				u32_t ip=get_u64_h(u64);
-				int port=get_u64_l(u64);
 				dest_t dest;
+				dest.inner.ip_port.from_u64(u64);
 				dest.type=type_ip_port;
-				dest.inner.ip_port.ip=ip;
-				dest.inner.ip_port.port=port;
 				my_send(dest,new_data,new_len);
-				//sendto_ip_port(ip,port,new_data,new_len,0);
-
-				//////////////////todo
 			}
 			/*
 			else if(events[idx].data.u64 ==(u64_t)timer_fd)
@@ -226,7 +220,10 @@ int client_event_loop()
 				mylog(log_trace,"Received packet from %s:%d,len: %d\n", inet_ntoa(udp_new_addr_in.sin_addr),
 						ntohs(udp_new_addr_in.sin_port),data_len);
 
-				u64_t u64=((u64_t(udp_new_addr_in.sin_addr.s_addr))<<32u)+ntohs(udp_new_addr_in.sin_port);
+				ip_port_t ip_port;
+				ip_port.ip=udp_new_addr_in.sin_addr.s_addr;
+				ip_port.port=udp_new_addr_in.sin_port;
+				u64_t u64=ip_port.to_u64();
 				u32_t conv;
 
 				if(!conn_info.conv_manager.is_u64_used(u64))
@@ -244,7 +241,6 @@ int client_event_loop()
 				{
 					conv=conn_info.conv_manager.find_conv_by_u64(u64);
 				}
-
 				conn_info.conv_manager.update_active_time(conv);
 
 				char *new_data;
@@ -371,23 +367,23 @@ int server_event_loop()
 				if (!conn_info.conv_manager.is_conv_used(conv))
 				{
 					int new_udp_fd;
-					new_connected_socket(new_udp_fd,remote_ip_uint32,remote_port);
+					ret=new_connected_socket(new_udp_fd,remote_ip_uint32,remote_port);
 
 					if (ret != 0) {
-						mylog(log_warn, "[%s:%d]add udp_fd error\n",my_ntoa(ip_port.ip),ip_port.port);
-						close(new_udp_fd);
-						return -1;
+						mylog(log_warn, "[%s:%d]new_connected_socket failed\n",my_ntoa(ip_port.ip),ip_port.port);
+						continue;
 					}
 
-					fd64_t fd64 = fd_manager.insert_fd(new_udp_fd);
+					fd64_t fd64 = fd_manager.create(new_udp_fd);
 					ev.events = EPOLLIN;
 					ev.data.u64 = fd64;
 					ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, new_udp_fd, &ev);
 
 					conn_info.conv_manager.insert_conv(conv, fd64);
-					assert(!conn_manager.exist_fd64(fd64));
+					fd_manager.get_info(fd64).ip_port=ip_port;
+					//assert(!conn_manager.exist_fd64(fd64));
 
-					conn_manager.insert_fd64(fd64,ip_port);
+					//conn_manager.insert_fd64(fd64,ip_port);
 				}
 				fd64_t fd64= conn_info.conv_manager.find_u64_by_conv(conv);
 				//int fd=fd_manager.fd64_to_fd(fd64);
@@ -438,37 +434,27 @@ int server_event_loop()
 				char data[buf_len];
 				int data_len;
 				fd64_t fd64=events[idx].data.u64;
-				if(!fd_manager.fd64_exist(fd64))
+				if(!fd_manager.exist(fd64))   //fd64 has been closed
 				{
 					continue;
 				}
-				int fd=fd_manager.fd64_to_fd(fd64);
-				if(!conn_manager.exist_fd64(fd64)) //this can happen,when fd is a just closed fd
-				{
-					mylog(log_debug,"fd no longer exists in udp_fd_mp,udp fd64 %lld\n",fd64);
-					recv(fd,0,0,0);
-					continue;
-				}
-				ip_port_t ip_port=conn_manager.find_by_fd64(fd64);
-				conn_info_t* p_conn_info=conn_manager.find_insert_p(ip_port);
 
-				if(!conn_manager.exist_ip_port(ip_port))//TODO remove this for peformance
-				{
-					mylog(log_fatal,"ip port no longer exits 2!!!this shouldnt happen\n");
-					myexit(-1);
-				}
+				//assert(conn_manager.exist_fd64(fd64));
+
+				assert(fd_manager.exist_info(fd64));
+				ip_port_t ip_port=fd_manager.get_info(fd64).ip_port;
+
+				assert(conn_manager.exist_ip_port(ip_port));
+
+				conn_info_t* p_conn_info=conn_manager.find_insert_p(ip_port);
 
 				conn_info_t &conn_info=*p_conn_info;
 
-				if(!conn_info.conv_manager.is_u64_used(fd))
-				{
-					mylog(log_debug,"conv no longer exists,udp fd %d\n",fd);
-					int recv_len=recv(fd,0,0,0); ///////////TODO ,delete this
-					continue;
-				}
+				assert(conn_info.conv_manager.is_u64_used(fd64));
 
-				u32_t conv_id=conn_info.conv_manager.find_conv_by_u64(fd);
+				u32_t conv=conn_info.conv_manager.find_conv_by_u64(fd64);
 
+				int fd=fd_manager.to_fd(fd64);
 				data_len=recv(fd,data,max_data_len,0);
 
 				mylog(log_trace,"received a packet from udp_fd,len:%d\n",data_len);
@@ -485,6 +471,13 @@ int server_event_loop()
 					mylog(log_warn,"huge packet,data len=%d (>=%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",data_len,mtu_warn);
 				}
 
+				char *new_data;
+				int new_len;
+				put_conv(conv,data,data_len,new_data,new_len);
+				dest_t dest;
+				dest.type=type_ip_port;
+				dest.inner.ip_port=ip_port;
+				my_send(dest,new_data,new_len);
 				////////todo send data
 			}
 			else

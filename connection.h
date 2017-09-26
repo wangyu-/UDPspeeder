@@ -79,7 +79,7 @@ struct conn_manager_t  //manager for connections. for client,we dont need conn_m
 
  u32_t ready_num;
 
- unordered_map<fd64_t,u64_t> fd64_mp;
+// unordered_map<fd64_t,u64_t> fd64_mp;
  unordered_map<u64_t,conn_info_t*> mp;//<ip,port> to conn_info_t;
  	 	 	 	 	 	 	 	 	  //put it at end so that it de-consturcts first
 
@@ -91,9 +91,10 @@ struct conn_manager_t  //manager for connections. for client,we dont need conn_m
  int exist_ip_port(ip_port_t);
  conn_info_t *& find_insert_p(ip_port_t);  //be aware,the adress may change after rehash
  conn_info_t & find_insert(ip_port_t) ; //be aware,the adress may change after rehash
+ /*
  int exist_fd64(fd64_t fd64);
  void insert_fd64(fd64_t fd64,ip_port_t);
- ip_port_t find_by_fd64(fd64_t fd64);
+ ip_port_t find_by_fd64(fd64_t fd64);*/
 
 
  int erase(unordered_map<u64_t,conn_info_t*>::iterator erase_it);

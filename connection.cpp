@@ -166,7 +166,7 @@ conv_manager_t::~conv_manager_t()
  {
 	 ready_num=0;
 	 mp.reserve(100007);
-	 fd64_mp.reserve(100007);
+	 //fd64_mp.reserve(100007);
 	 clear_it=mp.begin();
 	 last_clear_time=0;
  }
@@ -209,6 +209,7 @@ conv_manager_t::~conv_manager_t()
 	 }
 	 return *mp[u64];
  }
+ /*
  int conn_manager_t::exist_fd64(fd64_t fd64)
  {
 	 return fd64_mp.find(fd64)!=fd64_mp.end();
@@ -225,7 +226,7 @@ conv_manager_t::~conv_manager_t()
 	 ip_port_t res;
 	 res.from_u64(fd64_mp[fd64]);
 	 return res;
- }
+ }*/
  int conn_manager_t::erase(unordered_map<u64_t,conn_info_t*>::iterator erase_it)
  {
 	 /*
@@ -310,17 +311,8 @@ void server_clear_function(u64_t u64)//used in conv_manager in server mode.for s
 {
 	int fd64=u64;
 	int ret;
-	assert(fd_manager.fd64_exist(fd64));
-	int fd=fd_manager.fd64_to_fd(fd64);
+	assert(fd_manager.exist(fd64));
+	int fd=fd_manager.to_fd(fd64);
 
-	fd_manager.remove_fd64(fd64);
-	ret= close(fd);  //closed fd should be auto removed from epoll
-	if (ret!=0)
-	{
-		mylog(log_fatal,"close fd %d failed !!!!\n",fd);
-		myexit(-1);  //this shouldnt happen
-	}
-	//mylog(log_fatal,"size:%d !!!!\n",conn_manager.udp_fd_mp.size());
-	assert(conn_manager.fd64_mp.find(fd)!=conn_manager.fd64_mp.end());
-	conn_manager.fd64_mp.erase(fd);
+	fd_manager.close(fd64);
 }

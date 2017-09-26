@@ -24,36 +24,6 @@ extern int random_drop;
 extern int local_listen_fd;
 
 
-enum dest_type{none=0,type_ip_port,type_fd64,type_fd};
-
-
-struct ip_port_t
-{
-	u32_t ip;
-	int port;
-	void from_u64(u64_t u64)
-	{
-		ip=get_u64_h(u64);
-		port=get_u64_l(u64);
-	}
-	u64_t to_u64()
-	{
-		return pack_u64(ip,port);
-	}
-
-};
-union inner_t
-{
-	ip_port_t ip_port;
-	int fd;
-	fd64_t fd64;
-};
-struct dest_t
-{
-	dest_type type;
-	inner_t inner;
-};
-
 int my_send(dest_t &dest,char *data,int len);
 
 void encrypt_0(char * input,int &len,char *key);
