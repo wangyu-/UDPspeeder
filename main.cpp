@@ -107,6 +107,7 @@ int client_event_loop()
 	int yes = 1;
 	int epoll_fd;
 	int remote_fd;
+	fd64_t remote_fd64;
 
     conn_info_t conn_info;
 
@@ -130,10 +131,10 @@ int client_event_loop()
 	}
 
 	assert(new_connected_socket(remote_fd,remote_ip_uint32,remote_port)==0);
-
+	remote_fd64=fd_manager.create(remote_fd);
 
 	ev.events = EPOLLIN;
-	ev.data.u64 = remote_fd;
+	ev.data.u64 = remote_fd64;
 
 	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, remote_fd, &ev);
 	if (ret!= 0) {
@@ -160,48 +161,7 @@ int client_event_loop()
 		}
 		int idx;
 		for (idx = 0; idx < nfds; ++idx) {
-			if (events[idx].data.u64 == (u64_t)remote_fd)
-			{
-				char data[buf_len];
-				int data_len =recv(remote_fd,data,max_data_len,0);
-				mylog(log_trace, "received data from udp fd %d, len=%d\n", remote_fd,data_len);
-				if(data_len<0)
-				{
-					if(errno==ECONNREFUSED)
-					{
-						//conn_manager.clear_list.push_back(udp_fd);
-						mylog(log_debug, "recv failed %d ,udp_fd%d,errno:%s\n", data_len,remote_fd,strerror(errno));
-					}
-
-					mylog(log_warn, "recv failed %d ,udp_fd%d,errno:%s\n", data_len,remote_fd,strerror(errno));
-					continue;
-				}
-				if(data_len>mtu_warn)
-				{
-					mylog(log_warn,"huge packet,data len=%d (>%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",data_len,mtu_warn);
-				}
-				u32_t conv;
-				char *new_data;
-				int new_len;
-				get_conv(conv,data,data_len,new_data,new_len);
-				if(!conn_info.conv_manager.is_conv_used(conv))continue;
-				u64_t u64=conn_info.conv_manager.find_conv_by_u64(conv);
-				dest_t dest;
-				dest.inner.ip_port.from_u64(u64);
-				dest.type=type_ip_port;
-				my_send(dest,new_data,new_len);
-			}
-			/*
-			else if(events[idx].data.u64 ==(u64_t)timer_fd)
-			{
-				u64_t value;
-				read(timer_fd, &value, 8);
-				client_on_timer(conn_info);
-
-				mylog(log_trace,"epoll_trigger_counter:  %d \n",epoll_trigger_counter);
-				epoll_trigger_counter=0;
-			}*/
-			else if (events[idx].data.u64 == (u64_t)local_listen_fd)
+		    if (events[idx].data.u64 == (u64_t)local_listen_fd)
 			{
 				char data[buf_len];
 				int data_len;
@@ -222,7 +182,7 @@ int client_event_loop()
 
 				ip_port_t ip_port;
 				ip_port.ip=udp_new_addr_in.sin_addr.s_addr;
-				ip_port.port=udp_new_addr_in.sin_port;
+				ip_port.port=ntohs(udp_new_addr_in.sin_port);
 				u64_t u64=ip_port.to_u64();
 				u32_t conv;
 
@@ -243,16 +203,65 @@ int client_event_loop()
 				}
 				conn_info.conv_manager.update_active_time(conv);
 
+
+				dest_t dest;
+				dest.type=type_fd64_conv;
+				dest.inner.fd64=remote_fd64;
+				dest.conv=conv;
+				my_send(dest,data,data_len);
+			}
+			else if (events[idx].data.u64 == remote_fd64)
+			{
+				char data[buf_len];
+				if(!fd_manager.exist(remote_fd64))   //fd64 has been closed
+				{
+					continue;
+				}
+				int fd=fd_manager.to_fd(remote_fd64);
+				int data_len =recv(fd,data,max_data_len,0);
+				mylog(log_trace, "received data from udp fd %d, len=%d\n", remote_fd,data_len);
+				if(data_len<0)
+				{
+					if(errno==ECONNREFUSED)
+					{
+						//conn_manager.clear_list.push_back(udp_fd);
+						mylog(log_debug, "recv failed %d ,udp_fd%d,errno:%s\n", data_len,remote_fd,strerror(errno));
+					}
+
+					mylog(log_warn, "recv failed %d ,udp_fd%d,errno:%s\n", data_len,remote_fd,strerror(errno));
+					continue;
+				}
+				if(data_len>mtu_warn)
+				{
+					mylog(log_warn,"huge packet,data len=%d (>%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",data_len,mtu_warn);
+				}
+				u32_t conv;
 				char *new_data;
 				int new_len;
-				put_conv(conv,data,data_len,new_data,new_len);
+				if(get_conv(conv,data,data_len,new_data,new_len)!=0)
+					continue;
+				if(!conn_info.conv_manager.is_conv_used(conv))continue;
+				u64_t u64=conn_info.conv_manager.find_u64_by_conv(conv);
 				dest_t dest;
-				dest.type=type_fd;
-				dest.inner.fd=remote_fd;
+				dest.inner.ip_port.from_u64(u64);
+				dest.type=type_ip_port;
 				my_send(dest,new_data,new_len);
-				//send_fd(remote_fd,new_data,new_len,0);
-				//send_data_safer(conn_info,buf,recv_len,conv);
-				///////////////////todo
+				mylog(log_trace,"[%s] send packet\n",dest.inner.ip_port.to_s());
+			}
+			/*
+			else if(events[idx].data.u64 ==(u64_t)timer_fd)
+			{
+				u64_t value;
+				read(timer_fd, &value, 8);
+				client_on_timer(conn_info);
+
+				mylog(log_trace,"epoll_trigger_counter:  %d \n",epoll_trigger_counter);
+				epoll_trigger_counter=0;
+			}*/
+
+			else if(events[idx].data.u64>u32_t(-1) )
+			{
+				assert(!fd_manager.exist(events[idx].data.u64));//this fd64 has been closed
 			}
 			else
 			{
@@ -346,7 +355,7 @@ int server_event_loop()
 
 				ip_port_t ip_port;
 				ip_port.ip=udp_new_addr_in.sin_addr.s_addr;
-				ip_port.port=udp_new_addr_in.sin_port;
+				ip_port.port=ntohs(udp_new_addr_in.sin_port);
 				if(!conn_manager.exist_ip_port(ip_port))
 				{
 					conn_info_t &conn_info=conn_manager.find_insert(ip_port);
@@ -357,7 +366,8 @@ int server_event_loop()
 				u32_t conv;
 				char *new_data;
 				int new_len;
-				get_conv(conv,data,data_len,new_data,new_len);
+				if(get_conv(conv,data,data_len,new_data,new_len)!=0)
+					continue;
 
 				/*
 				id_t tmp_conv_id;
@@ -391,6 +401,8 @@ int server_event_loop()
 				dest.type=type_fd64;
 				dest.inner.fd64=fd64;
 				my_send(dest,new_data,new_len);
+
+
 				//int fd = int((u64 << 32u) >> 32u);
 				//////////////////////////////todo
 
@@ -466,19 +478,19 @@ int server_event_loop()
 					continue;
 				}
 
+
 				if(data_len>=mtu_warn)
 				{
 					mylog(log_warn,"huge packet,data len=%d (>=%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",data_len,mtu_warn);
 				}
 
-				char *new_data;
-				int new_len;
-				put_conv(conv,data,data_len,new_data,new_len);
 				dest_t dest;
-				dest.type=type_ip_port;
+				dest.type=type_ip_port_conv;
+				dest.conv=conv;
 				dest.inner.ip_port=ip_port;
-				my_send(dest,new_data,new_len);
-				////////todo send data
+				my_send(dest,data,data_len);
+				mylog(log_trace,"[%s] send packet\n",ip_port.to_s());
+
 			}
 			else
 			{

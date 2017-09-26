@@ -425,3 +425,9 @@ u64_t ip_port_t::to_u64()
 {
 	return pack_u64(ip,port);
 }
+char * ip_port_t::to_s()
+{
+	static char res[40];
+	sprintf(res,"%s:%d",my_ntoa(ip),port);
+	return res;
+}

@@ -126,7 +126,7 @@ typedef u64_t anti_replay_seq_t;
 
 typedef u64_t fd64_t;
 
-enum dest_type{none=0,type_ip_port,type_fd64,type_fd};
+enum dest_type{none=0,type_ip_port,type_fd64,type_ip_port_conv,type_fd64_conv/*,type_fd*/};
 
 
 struct ip_port_t
@@ -135,18 +135,20 @@ struct ip_port_t
 	int port;
 	void from_u64(u64_t u64);
 	u64_t to_u64();
+	char * to_s();
 };
 
 union inner_t
 {
 	ip_port_t ip_port;
-	int fd;
+	//int fd;
 	fd64_t fd64;
 };
 struct dest_t
 {
 	dest_type type;
 	inner_t inner;
+	u32_t conv;
 };
 
 struct fd_info_t
