@@ -100,6 +100,21 @@ int new_connected_socket(int &fd,u32_t ip,int port)
 	}
 	return 0;
 }
+int delay_send(my_time_t delay,const dest_t &dest,char *data,int len)
+{
+	return delay_manager.add(delay,dest,data,len);;
+}
+int from_normal_to_fec(const dest_t &dest,char *data,int len)
+{
+	delay_send(0,dest,data,len);
+	delay_send(1000*1000,dest,data,len);
+	return 0;
+}
+int from_fec_to_normal(const dest_t &dest,char *data,int len)
+{
+	my_send(dest,data,len);
+	return 0;
+}
 int client_event_loop()
 {
 	//char buf[buf_len];
@@ -139,6 +154,14 @@ int client_event_loop()
 	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, remote_fd, &ev);
 	if (ret!= 0) {
 		mylog(log_fatal,"add raw_fd error\n");
+		myexit(-1);
+	}
+
+	ev.events = EPOLLIN;
+	ev.data.u64 = delay_manager.get_timer_fd();
+	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, delay_manager.get_timer_fd(), &ev);
+	if (ret!= 0) {
+		mylog(log_fatal,"add delay_manager.get_timer_fd() error\n");
 		myexit(-1);
 	}
 
@@ -208,7 +231,14 @@ int client_event_loop()
 				dest.type=type_fd64_conv;
 				dest.inner.fd64=remote_fd64;
 				dest.conv=conv;
-				my_send(dest,data,data_len);
+				from_normal_to_fec(dest,data,data_len);
+				//my_send(dest,data,data_len);
+			}
+		    else if (events[idx].data.u64 == (u64_t)delay_manager.get_timer_fd()) {
+				uint64_t value;
+				read(delay_manager.get_timer_fd(), &value, 8);
+				//printf("<timerfd_triggered, %d>",delay_mp.size());
+				//fflush(stdout);
 			}
 			else if(events[idx].data.u64>u32_t(-1) )
 			{
@@ -246,9 +276,11 @@ int client_event_loop()
 				dest_t dest;
 				dest.inner.ip_port.from_u64(u64);
 				dest.type=type_ip_port;
-				my_send(dest,new_data,new_len);
+				from_fec_to_normal(dest,new_data,new_len);
 				mylog(log_trace,"[%s] send packet\n",dest.inner.ip_port.to_s());
 			}
+
+
 			/*
 			else if(events[idx].data.u64 ==(u64_t)timer_fd)
 			{
@@ -265,6 +297,7 @@ int client_event_loop()
 				myexit(-1);
 			}
 		}
+		delay_manager.check();
 	}
 	return 0;
 }
@@ -298,6 +331,13 @@ int server_event_loop()
 		myexit(-1);
 	}
 
+	ev.events = EPOLLIN;
+	ev.data.u64 = delay_manager.get_timer_fd();
+	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, delay_manager.get_timer_fd(), &ev);
+	if (ret!= 0) {
+		mylog(log_fatal,"add delay_manager.get_timer_fd() error\n");
+		myexit(-1);
+	}
 
 	mylog(log_info,"now listening at %s:%d\n",my_ntoa(local_ip_uint32),local_port);
 	while(1)////////////////////////
@@ -352,12 +392,13 @@ int server_event_loop()
 				ip_port_t ip_port;
 				ip_port.ip=udp_new_addr_in.sin_addr.s_addr;
 				ip_port.port=ntohs(udp_new_addr_in.sin_port);
-				if(!conn_manager.exist_ip_port(ip_port))
+				if(!conn_manager.exist(ip_port))
 				{
-					conn_info_t &conn_info=conn_manager.find_insert(ip_port);
+					conn_manager.insert(ip_port);
+					conn_info_t &conn_info=conn_manager.find(ip_port);
 					conn_info.conv_manager.reserve();
 				}
-				conn_info_t &conn_info=conn_manager.find_insert(ip_port);
+				conn_info_t &conn_info=conn_manager.find(ip_port);
 
 				u32_t conv;
 				char *new_data;
@@ -396,8 +437,7 @@ int server_event_loop()
 				dest_t dest;
 				dest.type=type_fd64;
 				dest.inner.fd64=fd64;
-				my_send(dest,new_data,new_len);
-
+				from_fec_to_normal(dest,new_data,new_len);
 
 				//int fd = int((u64 << 32u) >> 32u);
 				//////////////////////////////todo
@@ -437,6 +477,12 @@ int server_event_loop()
 					mylog(log_debug,"(events[idx].data.u64 >>32u) == 2u ,%llu,%llu,%llu  \n",begin_time,end_time,end_time-begin_time);
 				}
 			}*/
+		    else if (events[idx].data.u64 == (u64_t)delay_manager.get_timer_fd()) {
+				uint64_t value;
+				read(delay_manager.get_timer_fd(), &value, 8);
+				//printf("<timerfd_triggered, %d>",delay_mp.size());
+				//fflush(stdout);
+			}
 			else if (events[idx].data.u64 >u32_t(-1))
 			{
 				char data[buf_len];
@@ -452,11 +498,11 @@ int server_event_loop()
 				assert(fd_manager.exist_info(fd64));
 				ip_port_t ip_port=fd_manager.get_info(fd64).ip_port;
 
-				assert(conn_manager.exist_ip_port(ip_port));
+				assert(conn_manager.exist(ip_port));
 
-				conn_info_t* p_conn_info=conn_manager.find_insert_p(ip_port);
+				//conn_info_t* p_conn_info=conn_manager.find_insert_p(ip_port);
 
-				conn_info_t &conn_info=*p_conn_info;
+				conn_info_t &conn_info=conn_manager.find(ip_port);
 
 				assert(conn_info.conv_manager.is_u64_used(fd64));
 
@@ -484,7 +530,7 @@ int server_event_loop()
 				dest.type=type_ip_port_conv;
 				dest.conv=conv;
 				dest.inner.ip_port=ip_port;
-				my_send(dest,data,data_len);
+				from_normal_to_fec(dest,data,data_len);
 				mylog(log_trace,"[%s] send packet\n",ip_port.to_s());
 
 			}
@@ -495,6 +541,7 @@ int server_event_loop()
 			}
 
 		}
+		delay_manager.check();
 	}
 	return 0;
 }
@@ -514,7 +561,7 @@ int unit_test()
 	{
 		data[i]=arr[i];
 	}
-	rs_encode(code,data,3);
+	rs_encode2(3,6,data,3);
 	//printf("%d %d",(int)(unsigned char)arr[5][0],(int)('a'^'b'^'c'^'d'^'e'));
 
 	for(i=0;i<6;i++)
@@ -526,7 +573,7 @@ int unit_test()
 	//data[1]=0;
 	//data[5]=0;
 
-	int ret=rs_decode(code,data,3);
+	int ret=rs_decode2(3,6,data,3);
 	printf("ret:%d\n",ret);
 
 	for(i=0;i<6;i++)
@@ -891,7 +938,7 @@ int main(int argc, char *argv[])
 
 	local_ip_uint32=inet_addr(local_ip);
 	remote_ip_uint32=inet_addr(remote_ip);
-
+	fd_manager.reserve(10007);
 
 	if(program_mode==client_mode)
 	{

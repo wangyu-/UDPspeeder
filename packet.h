@@ -24,7 +24,7 @@ extern int random_drop;
 extern int local_listen_fd;
 
 
-int my_send(dest_t &dest,char *data,int len);
+int my_send(const dest_t &dest,char *data,int len);
 
 void encrypt_0(char * input,int &len,char *key);
 void decrypt_0(char * input,int &len,char *key);

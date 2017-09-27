@@ -92,9 +92,13 @@ conv_manager_t::~conv_manager_t()
 	}
 	int conv_manager_t::insert_conv(u32_t conv,u64_t u64)//////todo add capacity
 	{
+		int bucket_size_before=conv_last_active_time.bucket_count();
 		u64_to_conv[u64]=conv;
 		conv_to_u64[conv]=u64;
 		conv_last_active_time[conv]=get_current_time();
+		int bucket_size_after=conv_last_active_time.bucket_count();
+		if(bucket_size_after!=bucket_size_before)
+			clear_it=conv_last_active_time.begin();
 		return 0;
 	}
 	int conv_manager_t::erase_conv(u32_t conv)
@@ -168,13 +172,13 @@ conv_manager_t::~conv_manager_t()
 	}
  conn_manager_t::conn_manager_t()
  {
-	 ready_num=0;
+	 //ready_num=0;
 	 mp.reserve(100007);
 	 //fd64_mp.reserve(100007);
 	 clear_it=mp.begin();
 	 last_clear_time=0;
  }
- int conn_manager_t::exist_ip_port(ip_port_t ip_port)
+ int conn_manager_t::exist(ip_port_t ip_port)
  {
 	 u64_t u64=ip_port.to_u64();
 	 if(mp.find(u64)!=mp.end())
@@ -193,26 +197,29 @@ conv_manager_t::~conv_manager_t()
 	 mp[u64];
 	 return 0;
  }*/
- conn_info_t *& conn_manager_t::find_insert_p(ip_port_t ip_port) //todo capacity
+
+ conn_info_t *& conn_manager_t::find_p(ip_port_t ip_port) //todo capacity
  //be aware,the adress may change after rehash
  {
+	 assert(exist(ip_port));
 	 u64_t u64=ip_port.to_u64();
-	 unordered_map<u64_t,conn_info_t*>::iterator it=mp.find(u64);
-	 if(it==mp.end())
-	 {
-		 mp[u64]=new conn_info_t;
-	 }
 	 return mp[u64];
  }
- conn_info_t & conn_manager_t::find_insert(ip_port_t ip_port)  //be aware,the adress may change after rehash
+ conn_info_t & conn_manager_t::find(ip_port_t ip_port)  //be aware,the adress may change after rehash
  {
+	 assert(exist(ip_port));
 	 u64_t u64=ip_port.to_u64();
-	 unordered_map<u64_t,conn_info_t*>::iterator it=mp.find(u64);
-	 if(it==mp.end())
-	 {
-		 mp[u64]=new conn_info_t;
-	 }
 	 return *mp[u64];
+ }
+ int conn_manager_t::insert(ip_port_t ip_port)
+ {
+	    assert(!exist(ip_port));
+	    int bucket_size_before=mp.bucket_count();
+	    mp[ip_port.to_u64()]=new conn_info_t;
+		int bucket_size_after=mp.bucket_count();
+		if(bucket_size_after!=bucket_size_before)
+			clear_it=mp.begin();
+		return 0;
  }
  /*
  int conn_manager_t::exist_fd64(fd64_t fd64)

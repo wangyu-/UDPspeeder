@@ -34,14 +34,19 @@ delay_manager_t::~delay_manager_t()
 {
 	//TODO ,we currently dont need to deconstruct it
 }
-/*
+
 int delay_manager_t::get_timer_fd()
 {
-	return delay_timer_fd;
-}*/
-
-int delay_manager_t::add(my_time_t delay,delay_data_t &delay_data)
+	return timer_fd;
+}
+//int add(my_time_t delay,const dest_t &dest,const char *data,int len);
+int delay_manager_t::add(my_time_t delay,const dest_t &dest,char *data,int len)
 {
+	delay_data_t delay_data;
+	delay_data.dest=dest;
+	delay_data.data=data;
+	delay_data.len=len;
+
 	if(capacity!=0&&int(delay_mp.size()) >=capacity)
 	{
 		mylog(log_warn,"max pending packet reached,ignored\n");

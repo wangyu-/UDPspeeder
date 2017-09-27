@@ -48,12 +48,11 @@ void fd_manager_t::close(fd64_t fd64)
 	close(fd);
 	//return 0;
 }
-void fd_manager_t::reserve()
+void fd_manager_t::reserve(int n)
 {
-	fd_to_fd64_mp.reserve(10007);
-	fd64_to_fd_mp.reserve(10007);
-	fd_info_mp.reserve(10007);
-	//return 0;
+	fd_to_fd64_mp.reserve(n);
+	fd64_to_fd_mp.reserve(n);
+	fd_info_mp.reserve(n);
 }
 u64_t fd_manager_t::create(int fd)
 {
@@ -67,7 +66,7 @@ u64_t fd_manager_t::create(int fd)
 fd_manager_t::fd_manager_t()
 {
 	counter=u32_t(-1);
-	counter+=2;
+	counter+=10;
 }
 fd_info_t & fd_manager_t::get_info(fd64_t fd64)
 {

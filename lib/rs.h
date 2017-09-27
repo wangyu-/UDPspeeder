@@ -40,6 +40,10 @@ void rs_encode(void *code,char *data[],int size);
 int rs_decode(void *code,char *data[],int size);
 
 
+void rs_encode2(int k,int n,char *data[],int size);
+
+int rs_decode2(int k,int n,char *data[],int size);
+
 
 
 

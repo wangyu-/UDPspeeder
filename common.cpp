@@ -22,7 +22,7 @@ char iptables_rule[200]="";
 
 program_mode_t program_mode=unset_mode;//0 unset; 1client 2server
 
-u64_t get_current_time()
+u64_t get_current_time()//ms
 {
 	timespec tmp_time;
 	clock_gettime(CLOCK_MONOTONIC, &tmp_time);

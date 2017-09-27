@@ -43,9 +43,9 @@ struct delay_manager_t
 	multimap<my_time_t,delay_data_t> delay_mp;  //unit us,1 us=0.001ms
 	delay_manager_t();
 	~delay_manager_t();
-	//int get_timer_fd();
+	int get_timer_fd();
 	int check();
-	int add(my_time_t delay,delay_data_t &delay_data);
+	int add(my_time_t delay,const dest_t &dest,char *data,int len);
 };
 
 #endif /* DELAY_MANAGER_H_ */

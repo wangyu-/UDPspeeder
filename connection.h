@@ -75,27 +75,21 @@ struct conn_info_t     //stores info for a raw connection.for client ,there is o
 struct conn_manager_t  //manager for connections. for client,we dont need conn_manager since there is only one connection.for server we use one conn_manager for all connections
 {
 
- u32_t ready_num;
-
-// unordered_map<fd64_t,u64_t> fd64_mp;
  unordered_map<u64_t,conn_info_t*> mp;//<ip,port> to conn_info_t;
- 	 	 	 	 	 	 	 	 	  //put it at end so that it de-consturcts first
-
  unordered_map<u64_t,conn_info_t*>::iterator clear_it;
-
  long long last_clear_time;
 
  conn_manager_t();
- int exist_ip_port(ip_port_t);
- conn_info_t *& find_insert_p(ip_port_t);  //be aware,the adress may change after rehash
- conn_info_t & find_insert(ip_port_t) ; //be aware,the adress may change after rehash
+ int exist(ip_port_t);
+ conn_info_t *& find_p(ip_port_t);  //be aware,the adress may change after rehash
+ conn_info_t & find(ip_port_t) ; //be aware,the adress may change after rehash
+ int insert(ip_port_t);
  /*
  int exist_fd64(fd64_t fd64);
  void insert_fd64(fd64_t fd64,ip_port_t);
  ip_port_t find_by_fd64(fd64_t fd64);*/
 
-
- int erase(unordered_map<u64_t,conn_info_t*>::iterator erase_it);
+int erase(unordered_map<u64_t,conn_info_t*>::iterator erase_it);
 int clear_inactive();
 int clear_inactive0();
 

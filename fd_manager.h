@@ -21,7 +21,7 @@ struct fd_manager_t   //conver fd to a uniq 64bit number,avoid fd value conflict
 	int exist(fd64_t fd64);
 	int to_fd(fd64_t);
 	void close(fd64_t fd64);
-	void reserve();
+	void reserve(int n);
 	u64_t create(int fd);
 	fd_manager_t();
 private:

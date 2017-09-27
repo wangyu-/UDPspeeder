@@ -5,6 +5,8 @@
  *      Author: root
  */
 #include "rs.h"
+#include "stdlib.h"
+#include "string.h"
 
 void rs_encode(void *code,char *data[],int size)
 {
@@ -41,4 +43,30 @@ int rs_decode(void *code,char *data[],int size)
 			data[i]=0;
 	}
 	return fec_decode(code,(void**)data,index,size);
+}
+
+static void * (*table)[256]=0;
+void* get_code(int k,int n)
+{
+	if (table==0)
+	{
+		table=(void* (*)[256]) malloc(sizeof(void*)*256*256);
+		memset(table,0,sizeof(void*)*256*256);
+	}
+	if(table[k][n]==0)
+	{
+		table[k][n]=fec_new(k,n);
+	}
+	return table[k][n];
+}
+void rs_encode2(int k,int n,char *data[],int size)
+{
+	void* code=get_code(k,n);
+	rs_encode(code,data,size);
+}
+
+int rs_decode2(int k,int n,char *data[],int size)
+{
+	void* code=get_code(k,n);
+	return rs_decode(code,data,size);
 }

@@ -234,7 +234,7 @@ int send_fd (int fd,char * buf, int len,int flags)
 }
 //enum delay_type_t {none=0,enum_sendto_u64,enum_send_fd,client_to_local,client_to_remote,server_to_local,server_to_remote};
 
-int my_send(dest_t &dest,char *data,int len)
+int my_send(const dest_t &dest,char *data,int len)
 {
 	switch(dest.type)
 	{
