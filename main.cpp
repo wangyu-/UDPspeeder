@@ -198,9 +198,15 @@ struct conn_manager_t  //TODO change map to unordered map
 	}
 	int insert_fd(u32_t fd,u64_t u64)
 	{
+		int before=fd_last_active_time.bucket_count();
 		u64_to_fd[u64]=fd;
 		fd_to_u64[fd]=u64;
 		fd_last_active_time[fd]=get_current_time();
+		int after=fd_last_active_time.bucket_count();
+		if(after!=before)//rehash happens!
+		{
+			clear_it=fd_last_active_time.begin();
+		}
 		return 0;
 	}
 	int erase_fd(u32_t fd)
@@ -422,7 +428,7 @@ int remove_seq(char * data,int &data_len)
 	seq=ntoh64(seq);
 	if(anti_replay.is_vaild(seq)==0)
 	{
-		if(disable_replay_filter==1)
+		if(disable_replay_filter==1) // inefficient, to make packet_recv_count++ work for only non-dup packet
 			return 0;
 		mylog(log_trace,"seq %llx dropped bc of replay-filter\n ",seq);
 		return -1;
@@ -773,7 +779,18 @@ int event_loop()
 						if (ret < 0) {
 							mylog(log_warn, "send returned %d ,errno:%s\n", ret,strerror(errno));
 						}
-						add_and_new(new_udp_fd, dup_num - 1,random_between(dup_delay_min,dup_delay_max), data, data_len,u64);
+						if(dup_delay_max!=0)
+						{
+							add_and_new(new_udp_fd, dup_num - 1,random_between(dup_delay_min,dup_delay_max), data, data_len,u64);
+						}
+						else
+						{
+							for(int i=0;i<dup_num - 1;i++)
+							{
+								do_obscure(data, data_len, new_data, new_len);
+								ret = send_fd(new_udp_fd, new_data,new_len, 0);
+							}
+						}
 					}
 					else
 					{
@@ -889,7 +906,18 @@ int event_loop()
 						do_obscure(data, data_len, new_data, new_len);
 						ret = sendto_u64(local_listen_fd, new_data,
 								new_len , 0,u64);
+						if(dup_delay_max!=0)
+						{
 							add_and_new(udp_fd, dup_num - 1,random_between(dup_delay_min,dup_delay_max), data, data_len,u64);
+						}
+						else
+						{
+							for(int i=0;i<dup_num-1;i++)
+							{
+								do_obscure(data, data_len, new_data, new_len);
+								ret = sendto_u64(local_listen_fd, new_data,new_len , 0,u64);
+							}
+						}
 						if (ret < 0) {
 							mylog(log_warn, "sento returned %d,%s\n", ret,strerror(errno));
 							//perror("ret<0");
