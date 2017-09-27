@@ -36,11 +36,9 @@ struct conv_manager_t  // manage the udp connections
 	//typedef hash_map map;
 	unordered_map<u64_t,u32_t> u64_to_conv;  //conv and u64 are both supposed to be uniq
 	unordered_map<u32_t,u64_t> conv_to_u64;
-
 	unordered_map<u32_t,u64_t> conv_last_active_time;
 
 	unordered_map<u32_t,u64_t>::iterator clear_it;
-
 	unordered_map<u32_t,u64_t>::iterator it;
 	unordered_map<u32_t,u64_t>::iterator old_it;
 

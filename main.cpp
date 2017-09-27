@@ -210,13 +210,14 @@ int client_event_loop()
 				dest.conv=conv;
 				my_send(dest,data,data_len);
 			}
-			else if (events[idx].data.u64 == remote_fd64)
+			else if(events[idx].data.u64>u32_t(-1) )
 			{
 				char data[buf_len];
-				if(!fd_manager.exist(remote_fd64))   //fd64 has been closed
+				if(!fd_manager.exist(events[idx].data.u64))   //fd64 has been closed
 				{
 					continue;
 				}
+				assert(events[idx].data.u64==remote_fd64);
 				int fd=fd_manager.to_fd(remote_fd64);
 				int data_len =recv(fd,data,max_data_len,0);
 				mylog(log_trace, "received data from udp fd %d, len=%d\n", remote_fd,data_len);
@@ -258,11 +259,6 @@ int client_event_loop()
 				mylog(log_trace,"epoll_trigger_counter:  %d \n",epoll_trigger_counter);
 				epoll_trigger_counter=0;
 			}*/
-
-			else if(events[idx].data.u64>u32_t(-1) )
-			{
-				assert(!fd_manager.exist(events[idx].data.u64));//this fd64 has been closed
-			}
 			else
 			{
 				mylog(log_fatal,"unknown fd,this should never happen\n");

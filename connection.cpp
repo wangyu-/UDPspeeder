@@ -15,13 +15,18 @@ const int disable_conn_clear=0;//a raw connection is called conn.
 
 conn_manager_t conn_manager;
 
-void server_clear_function(u64_t u64);
+void server_clear_function(u64_t u64)//used in conv_manager in server mode.for server we have to use one udp fd for one conv(udp connection),
+//so we have to close the fd when conv expires
+{
+	int fd64=u64;
+	assert(fd_manager.exist(fd64));
+	fd_manager.close(fd64);
+}
 
 conv_manager_t::conv_manager_t()
 	{
 		clear_it=conv_last_active_time.begin();
 		long long last_clear_time=0;
-		//clear_function=0;
 	}
 conv_manager_t::~conv_manager_t()
 	{
@@ -85,7 +90,7 @@ conv_manager_t::~conv_manager_t()
 	{
 		return conv_last_active_time[conv]=get_current_time();
 	}
-	int conv_manager_t::insert_conv(u32_t conv,u64_t u64)
+	int conv_manager_t::insert_conv(u32_t conv,u64_t u64)//////todo add capacity
 	{
 		u64_to_conv[u64]=conv;
 		conv_to_u64[conv]=u64;
@@ -117,7 +122,6 @@ conv_manager_t::~conv_manager_t()
 	int conv_manager_t::clear_inactive0(char * ip_port)
 	{
 		if(disable_conv_clear) return 0;
-
 
 		//map<uint32_t,uint64_t>::iterator it;
 		int cnt=0;
@@ -189,7 +193,8 @@ conv_manager_t::~conv_manager_t()
 	 mp[u64];
 	 return 0;
  }*/
- conn_info_t *& conn_manager_t::find_insert_p(ip_port_t ip_port)  //be aware,the adress may change after rehash
+ conn_info_t *& conn_manager_t::find_insert_p(ip_port_t ip_port) //todo capacity
+ //be aware,the adress may change after rehash
  {
 	 u64_t u64=ip_port.to_u64();
 	 unordered_map<u64_t,conn_info_t*>::iterator it=mp.find(u64);
@@ -305,14 +310,3 @@ int conn_manager_t::clear_inactive0()
 	return 0;
 }
 
-
-void server_clear_function(u64_t u64)//used in conv_manager in server mode.for server we have to use one udp fd for one conv(udp connection),
-//so we have to close the fd when conv expires
-{
-	int fd64=u64;
-	int ret;
-	assert(fd_manager.exist(fd64));
-	int fd=fd_manager.to_fd(fd64);
-
-	fd_manager.close(fd64);
-}
