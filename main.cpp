@@ -29,7 +29,7 @@ int local_fd=-1;
 int is_client = 0, is_server = 0;
 int local_listen_fd=-1;
 
-int disable_conv_clear=0;
+int disable_conn_clear=0;
 int mtu_warn=1350;
 u32_t remote_address_uint32=0;
 
@@ -162,7 +162,7 @@ struct conn_manager_t  //TODO change map to unordered map
 	}
 	void clear()
 	{
-		if(disable_conv_clear) return ;
+		if(disable_conn_clear) return ;
 
 		for(it=fd_to_u64.begin();it!=fd_to_u64.end();it++)
 		{
@@ -211,7 +211,7 @@ struct conn_manager_t  //TODO change map to unordered map
 	}
 	int erase_fd(u32_t fd)
 	{
-		if(disable_conv_clear) return 0;
+		if(disable_conn_clear) return 0;
 		u64_t u64=fd_to_u64[fd];
 
 		u32_t ip= (u64 >> 32u);
@@ -247,7 +247,7 @@ struct conn_manager_t  //TODO change map to unordered map
 	}
 	int clear_inactive0()
 	{
-		if(disable_conv_clear) return 0;
+		if(disable_conn_clear) return 0;
 
 
 		//map<uint32_t,uint64_t>::iterator it;
