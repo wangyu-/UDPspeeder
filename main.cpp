@@ -1127,7 +1127,7 @@ void process_arg(int argc, char *argv[])
 				sscanf(optarg,"%d:%d\n",&dup_delay_min,&dup_delay_max);
 				if(dup_delay_min<0 ||dup_delay_max<0||dup_delay_min>dup_delay_max)
 				{
-					mylog(log_fatal," must satisfy  0<=dmin<=dmax\n");
+					mylog(log_fatal," must satisfy  0<=tmin<=tmax\n");
 					myexit(-1);
 				}
 			}
