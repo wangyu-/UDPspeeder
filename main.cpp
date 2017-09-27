@@ -1115,9 +1115,9 @@ void process_arg(int argc, char *argv[])
 			{
 				int dup_delay=-1;
 				sscanf(optarg,"%d\n",&dup_delay);
-				if(dup_delay<1||dup_delay>1000*100)
+				if(dup_delay<0||dup_delay>1000*100)
 				{
-					mylog(log_fatal,"dup_delay must be between 1 and 100,000(10 second)\n");
+					mylog(log_fatal,"dup_delay must be between 0 and 100,000(10 second)\n");
 					myexit(-1);
 				}
 				dup_delay_min=dup_delay_max=dup_delay;
@@ -1125,9 +1125,9 @@ void process_arg(int argc, char *argv[])
 			else
 			{
 				sscanf(optarg,"%d:%d\n",&dup_delay_min,&dup_delay_max);
-				if(dup_delay_min<1 ||dup_delay_max<1||dup_delay_min>dup_delay_max)
+				if(dup_delay_min<0 ||dup_delay_max<0||dup_delay_min>dup_delay_max)
 				{
-					mylog(log_fatal," must satisfy  1<=dmin<=dmax\n");
+					mylog(log_fatal," must satisfy  0<=dmin<=dmax\n");
 					myexit(-1);
 				}
 			}
