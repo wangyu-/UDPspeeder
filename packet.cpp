@@ -17,7 +17,6 @@ u64_t dup_packet_send_count=0;
 u64_t packet_recv_count=0;
 u64_t dup_packet_recv_count=0;
 typedef u64_t anti_replay_seq_t;
-const u32_t anti_replay_buff_size=10000;
 int disable_replay_filter=0;
 
 int random_drop=0;
@@ -26,68 +25,6 @@ char key_string[1000]= "secret key";
 
 int local_listen_fd=-1;
 
-
-
-struct anti_replay_t
-{
-	u64_t max_packet_received;
-
-	u64_t replay_buffer[anti_replay_buff_size];
-	unordered_set<u64_t> st;
-	u32_t const_id;
-	u32_t anti_replay_seq;
-	int index;
-	anti_replay_seq_t get_new_seq_for_send()
-	{
-		if(const_id==0) prepare();
-		anti_replay_seq_t res=const_id;
-		res<<=32u;
-		anti_replay_seq++;
-		res|=anti_replay_seq;
-		const_id=0;
-		return res;
-	}
-	void prepare()
-	{
-		anti_replay_seq=get_true_random_number();//random first seq
-		const_id=get_true_random_number_nz();
-	}
-	anti_replay_t()
-	{
-		memset(replay_buffer,0,sizeof(replay_buffer));
-		st.rehash(anti_replay_buff_size*10);
-		max_packet_received=0;
-		index=0;
-	}
-
-	int is_vaild(u64_t seq)
-	{
-		if(const_id==0) prepare();
-		//if(disable_replay_filter) return 1;
-		if(seq==0)
-		{
-			mylog(log_debug,"seq=0\n");
-			return 0;
-		}
-		if(st.find(seq)!=st.end() )
-		{
-			mylog(log_trace,"seq %llx exist\n",seq);
-			return 0;
-		}
-
-		if(replay_buffer[index]!=0)
-		{
-			assert(st.find(replay_buffer[index])!=st.end());
-			st.erase(replay_buffer[index]);
-		}
-		replay_buffer[index]=seq;
-		st.insert(seq);
-		index++;
-		if(index==int(anti_replay_buff_size)) index=0;
-
-		return 1; //for complier check
-	}
-}anti_replay;
 
 void encrypt_0(char * input,int &len,char *key)
 {
@@ -109,32 +46,6 @@ void decrypt_0(char * input,int &len,char *key)
 		if(key[j]==0)j=0;
 		input[i]^=key[j];
 	}
-}
-int add_seq(char * data,int &data_len )
-{
-	if(data_len<0) return -1;
-	anti_replay_seq_t seq=anti_replay.get_new_seq_for_send();
-	seq=hton64(seq);
-	memcpy(data+data_len,&seq,sizeof(seq));
-	data_len+=sizeof(seq);
-	return 0;
-}
-int remove_seq(char * data,int &data_len)
-{
-	anti_replay_seq_t seq;
-	if(data_len<int(sizeof(seq))) return -1;
-	data_len-=sizeof(seq);
-	memcpy(&seq,data+data_len,sizeof(seq));
-	seq=ntoh64(seq);
-	if(anti_replay.is_vaild(seq)==0)
-	{
-		if(disable_replay_filter==1)  //todo inefficient code,why did i put it here???
-			return 0;
-		mylog(log_trace,"seq %llx dropped bc of replay-filter\n ",seq);
-		return -1;
-	}
-	packet_recv_count++;
-	return 0;
 }
 int do_obscure(const char * input, int in_len,char *output,int &out_len)
 {
@@ -305,7 +216,7 @@ unsigned int crc32h(unsigned char *message,int len) {
    return ~crc;
 }
 
-int put_conv(u32_t conv,char * input,int len_in,char *&output,int &len_out)
+int put_conv(u32_t conv,const char * input,int len_in,char *&output,int &len_out)
 {
 	static char buf[buf_len];
 	output=buf;
@@ -318,12 +229,12 @@ int put_conv(u32_t conv,char * input,int len_in,char *&output,int &len_out)
 	memcpy(output+len_in+(int)(sizeof(n_conv)),&crc32_n,sizeof(crc32_n));
 	return 0;
 }
-int get_conv(u32_t &conv,char *input,int len_in,char *&output,int &len_out )
+int get_conv(u32_t &conv,const char *input,int len_in,char *&output,int &len_out )
 {
 	u32_t n_conv;
 	memcpy(&n_conv,input,sizeof(n_conv));
 	conv=ntohl(n_conv);
-	output=input+sizeof(n_conv);
+	output=(char *)input+sizeof(n_conv);
 	u32_t crc32_n;
 	len_out=len_in-(int)sizeof(n_conv)-(int)sizeof(crc32_n);
 	if(len_out<0)

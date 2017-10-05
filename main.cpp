@@ -6,6 +6,7 @@
 #include "connection.h"
 #include "fd_manager.h"
 #include "delay_manager.h"
+#include "fec_manager.h"
 
 using  namespace std;
 
@@ -539,7 +540,6 @@ int server_event_loop()
 				mylog(log_fatal,"unknown fd,this should never happen\n");
 				myexit(-1);
 			}
-
 		}
 		delay_manager.check();
 	}
@@ -581,6 +581,48 @@ int unit_test()
 		printf("<%s>",data[i]);
 	}
 	fec_free(code);
+
+
+	char arr2[6][100]=
+	{
+		"aaa11111","","ccc333333333"
+		,"ddd444","eee5555","ff6666"
+	};
+	blob_encode_t blob_encode;
+	for(int i=0;i<6;i++)
+		blob_encode.input(arr2[i],strlen(arr2[i]));
+
+	char **output;
+	int shard_len;
+	blob_encode.output(7,output,shard_len);
+
+
+	printf("<shard_len:%d>",shard_len);
+	blob_decode_t blob_decode;
+	for(int i=0;i<7;i++)
+	{
+		blob_decode.input(output[i],shard_len);
+	}
+
+	char **decode_output;
+	int * len_arr;
+	int num;
+
+
+	ret=blob_decode.output(num,decode_output,len_arr);
+
+	printf("<num:%d,ret:%d>\n",num,ret);
+	for(int i=0;i<num;i++)
+	{
+		char buf[1000]={0};
+		memcpy(buf,decode_output[i],len_arr[i]);
+		printf("<%d:%s>",len_arr[i],buf);
+	}
+	printf("\n");
+
+	fec_encode_manager_t fec_encode_manager;
+	fec_decode_manager_t fec_decode_manager;
+
 	return 0;
 }
 void print_help()

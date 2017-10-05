@@ -52,6 +52,47 @@ u32_t get_u64_l(u64_t a)
 	return (a<<32u)>>32u;
 }
 
+void write_u16(char * p,u16_t w)
+{
+	*(unsigned char*)(p + 1) = (w & 0xff);
+	*(unsigned char*)(p + 0) = (w >> 8);
+}
+u16_t read_u16(char * p)
+{
+	u16_t res;
+	res = *(const unsigned char*)(p + 0);
+	res = *(const unsigned char*)(p + 1) + (res << 8);
+	return res;
+}
+
+void write_u32(char * p,u32_t l)
+{
+	*(unsigned char*)(p + 3) = (unsigned char)((l >>  0) & 0xff);
+	*(unsigned char*)(p + 2) = (unsigned char)((l >>  8) & 0xff);
+	*(unsigned char*)(p + 1) = (unsigned char)((l >> 16) & 0xff);
+	*(unsigned char*)(p + 0) = (unsigned char)((l >> 24) & 0xff);
+}
+u32_t read_u32(char * p)
+{
+	u32_t res;
+	res = *(const unsigned char*)(p + 0);
+	res = *(const unsigned char*)(p + 1) + (res << 8);
+	res = *(const unsigned char*)(p + 2) + (res << 8);
+	res = *(const unsigned char*)(p + 3) + (res << 8);
+	return res;
+}
+
+void write_u64(char * s,u64_t a)
+{
+	assert(0==1);
+}
+u64_t read_u64(char * s)
+{
+	assert(0==1);
+	return 0;
+}
+
+
 char * my_ntoa(u32_t ip)
 {
 	in_addr a;
@@ -430,4 +471,9 @@ char * ip_port_t::to_s()
 	static char res[40];
 	sprintf(res,"%s:%d",my_ntoa(ip),port);
 	return res;
+}
+
+int round_up_div(int a,int b)
+{
+	return (a+b-1)/b;
 }

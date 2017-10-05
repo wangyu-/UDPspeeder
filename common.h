@@ -58,6 +58,9 @@ typedef long long i64_t;
 typedef unsigned int u32_t;
 typedef int i32_t;
 
+typedef unsigned short u16_t;
+typedef short i16_t;
+
 typedef u64_t my_time_t;
 
 const int max_data_len=1600;
@@ -165,6 +168,15 @@ u32_t get_u64_h(u64_t a);
 
 u32_t get_u64_l(u64_t a);
 
+void write_u16(char *,u16_t a);
+u16_t read_u16(char *);
+
+void write_u32(char *,u32_t a);
+u32_t read_u32(char *);
+
+void write_u64(char *,u64_t a);
+u64_t read_uu64(char *);
+
 char * my_ntoa(u32_t ip);
 
 void myexit(int a);
@@ -194,6 +206,8 @@ void get_true_random_chars(char * s,int len);
 int random_between(u32_t a,u32_t b);
 
 int set_timer_ms(int epollfd,int &timer_fd,u32_t timer_interval);
+
+int round_up_div(int a,int b);
 
 /*
 int create_new_udp(int &new_udp_fd,int remote_address_uint32,int remote_port);
