@@ -251,3 +251,28 @@ int get_conv(u32_t &conv,const char *input,int len_in,char *&output,int &len_out
 	}
 	return 0;
 }
+
+int put_conv1(u32_t conv,const char * input,int len_in,char *&output,int &len_out)
+{
+	static char buf[buf_len];
+	output=buf;
+	u32_t n_conv=htonl(conv);
+	memcpy(output,&n_conv,sizeof(n_conv));
+	memcpy(output+sizeof(n_conv),input,len_in);
+	len_out=len_in+(int)(sizeof(n_conv));
+	return 0;
+}
+int get_conv1(u32_t &conv,const char *input,int len_in,char *&output,int &len_out )
+{
+	u32_t n_conv;
+	memcpy(&n_conv,input,sizeof(n_conv));
+	conv=ntohl(n_conv);
+	output=(char *)input+sizeof(n_conv);
+	len_out=len_in-(int)sizeof(n_conv);
+	if(len_out<0)
+	{
+		mylog(log_debug,"len_out<0\n");
+		return -1;
+	}
+	return 0;
+}

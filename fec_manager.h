@@ -12,8 +12,8 @@
 #include "log.h"
 #include "lib/rs.h"
 
-const int max_packet_num=1000;
-
+const int max_normal_packet_num=1000;
+const int max_fec_packet_num=255;
 const u32_t anti_replay_buff_size=30000;
 const u32_t fec_buff_size=3000;
 
@@ -58,9 +58,12 @@ struct anti_replay_t
 
 struct blob_encode_t
 {
-	char buf[(256+5)*buf_len];
+	char buf[(max_fec_packet_num+5)*buf_len];
 	int current_len;
 	int counter;
+
+
+	char *output_arr[max_fec_packet_num+100];
 
 	blob_encode_t();
 
@@ -76,10 +79,13 @@ struct blob_encode_t
 
 struct blob_decode_t
 {
-	char buf[(256+5)*buf_len];
+	char buf[(max_fec_packet_num+5)*buf_len];
 	int current_len;
 	int last_len;
 	int counter;
+
+	char *s_buf[max_normal_packet_num+100];
+	int len_buf[max_normal_packet_num+100];
 
 	blob_decode_t();
 	int clear();
@@ -91,17 +97,23 @@ class fec_encode_manager_t
 {
 	int fec_data_num,fec_redundant_num;
 	int fec_mtu;
-	char buf[256+5][buf_len+100];
-	char *output_buf[256+5];
+	int fec_pending_num;
+	int fec_pending_time;
+	char buf[max_fec_packet_num+5][buf_len+100];
+	char *output_buf[max_fec_packet_num+5];
 	int output_len;
 	int ready_for_output;
 	u32_t seq;
 	int counter;
+	int timer_fd;
+	u64_t timer_fd64;
 
 	blob_encode_t blob_encode;
 public:
 	fec_encode_manager_t();
-	int re_init(int data_num,int redundant_num,int mtu);
+
+	u64_t get_timer_fd64();
+	int re_init(int data_num,int redundant_num,int mtu,int pending_num,int pending_time);
 	int input(char *s,int len/*,int &is_first_packet*/);
 	int output(int &n,char ** &s_arr,int &len);
 };
@@ -123,6 +135,7 @@ class fec_decode_manager_t
 	int index;
 	unordered_map<u32_t, map<int,int> > mp;
 	blob_decode_t blob_decode;
+
 
 	int output_n;
 	char ** output_s_arr;

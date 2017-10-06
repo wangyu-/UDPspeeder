@@ -9,7 +9,7 @@
 #include "log.h"
 #include "common.h"
 #include "lib/rs.h"
-
+#include "fd_manager.h"
 
 blob_encode_t::blob_encode_t()
 {
@@ -38,10 +38,10 @@ int blob_encode_t::get_shard_len(int n,int next_packet_len)
 
 int blob_encode_t::input(char *s,int len)
 {
-	assert(current_len+len+sizeof(u16_t) <=256*buf_len);
+	assert(current_len+len+sizeof(u16_t) <=max_fec_packet_num*buf_len);
 	assert(len<=65535&&len>=0);
 	counter++;
-	assert(counter<=max_packet_num);
+	assert(counter<=max_normal_packet_num);
 	write_u16(buf+current_len,len);
 	current_len+=sizeof(u16_t);
 	memcpy(buf+current_len,s,len);
@@ -51,7 +51,6 @@ int blob_encode_t::input(char *s,int len)
 
 int blob_encode_t::output(int n,char ** &s_arr,int & len)
 {
-	static char *output_arr[256+100];
 	len=round_up_div(current_len,n);
 	write_u32(buf,counter);
 	for(int i=0;i<n;i++)
@@ -79,7 +78,7 @@ int blob_decode_t::input(char *s,int len)
 		assert(last_len==len);
 	}
 	counter++;
-	assert(counter<=256);
+	assert(counter<=max_fec_packet_num);
 	last_len=len;
 	assert(current_len+len+100<(int)sizeof(buf));
 	memcpy(buf+current_len,s,len);
@@ -88,15 +87,13 @@ int blob_decode_t::input(char *s,int len)
 }
 int blob_decode_t::output(int &n,char ** &s_arr,int *&len_arr)
 {
-	static char *s_buf[max_packet_num+100];
-	static int len_buf[max_packet_num+100];
 
 	int parser_pos=0;
 
 	if(parser_pos+(int)sizeof(u32_t)>current_len) return -1;
 
 	n=(int)read_u32(buf+parser_pos);
-	if(n>max_packet_num) {mylog(log_info,"failed 1\n");return -1;}
+	if(n>max_normal_packet_num) {mylog(log_info,"failed 1\n");return -1;}
 	s_arr=s_buf;
 	len_arr=len_buf;
 
@@ -115,23 +112,46 @@ int blob_decode_t::output(int &n,char ** &s_arr,int *&len_arr)
 
 fec_encode_manager_t::fec_encode_manager_t()
 {
-	re_init(4,2,1200);
+	//int timer_fd;
+	if ((timer_fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)) < 0)
+	{
+		mylog(log_fatal,"timer_fd create error");
+		myexit(1);
+	}
+	timer_fd64=fd_manager.create(timer_fd);
+
+	re_init(4,2,1200,100,10000);
 }
-int fec_encode_manager_t::re_init(int data_num,int redundant_num,int mtu)
+fec_encode_manager_t::~fec_encode_manager_t()
+{
+	fd_manager.close(timer_fd64);
+}
+u64_t fec_encode_manager_t::get_timer_fd64()
+{
+	return timer_fd64;
+}
+int fec_encode_manager_t::re_init(int data_num,int redundant_num,int mtu,int pending_num,int pending_time)
 {
 	fec_data_num=data_num;
 	fec_redundant_num=redundant_num;
 	fec_mtu=mtu;
+	fec_pending_num=pending_num;
 
 	counter=0;
 	blob_encode.clear();
 	ready_for_output=0;
 	seq=0;
+
+	itimerspec zero_its;
+	memset(&zero_its, 0, sizeof(zero_its));
+
+	timerfd_settime(timer_fd, TFD_TIMER_ABSTIME, &zero_its, 0);
+
 	return 0;
 }
 int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 {
-    if(s==0 ||blob_encode.get_shard_len(fec_data_num,len)>=fec_mtu)
+    if(s==0 ||blob_encode.get_shard_len(fec_data_num,len)>=fec_mtu||counter>=fec_pending_num)
 	{
     	char ** blob_output;
     	int blob_len;
@@ -226,7 +246,7 @@ int fec_decode_manager_t::input(char *s,int len)
 	{
 		return -1;
 	}
-	if(data_num+redundant_num>255)
+	if(data_num+redundant_num>max_fec_packet_num)
 	{
 		return -1;
 	}
@@ -277,7 +297,7 @@ int fec_decode_manager_t::input(char *s,int len)
 	if((int)inner_mp.size()==data_num)
 	{
 
-		char *fec_tmp_arr[256+5]={0};
+		char *fec_tmp_arr[max_fec_packet_num+5]={0};
 		for(auto it=inner_mp.begin();it!=inner_mp.end();it++)
 		{
 			fec_tmp_arr[it->first]=fec_data[it->second].buf;
