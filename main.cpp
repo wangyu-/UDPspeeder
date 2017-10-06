@@ -26,6 +26,11 @@ int jitter_max=0;
 //int random_number_fd=-1;
 
 int mtu_warn=1350;
+
+int fec_data_num=3;
+int fec_redundant_num=2;
+int fec_mtu=30;
+
 u32_t local_ip_uint32,remote_ip_uint32=0;
 char local_ip[100], remote_ip[100];
 int local_port = -1, remote_port = -1;
@@ -105,15 +110,45 @@ int delay_send(my_time_t delay,const dest_t &dest,char *data,int len)
 {
 	return delay_manager.add(delay,dest,data,len);;
 }
-int from_normal_to_fec(const dest_t &dest,char *data,int len)
+int from_normal_to_fec(conn_info_t & conn_info,const dest_t &dest,char *data,int len)
 {
-	delay_send(0,dest,data,len);
-	delay_send(1000*1000,dest,data,len);
+	static int counter=0;
+	counter++;
+
+	conn_info.fec_encode_manager.input(data,len);
+	//if(counter%5==0)
+		//conn_info.fec_encode_manager.input(0,0);
+
+	int n;
+	char **s_arr;
+	int s_arr_len;
+
+	conn_info.fec_encode_manager.output(n,s_arr,s_arr_len);
+
+	for(int i=0;i<n;i++)
+	{
+		delay_send(0,dest,s_arr[i],s_arr_len);
+	}
+	//delay_send(0,dest,data,len);
+	//delay_send(1000*1000,dest,data,len);
 	return 0;
 }
-int from_fec_to_normal(const dest_t &dest,char *data,int len)
+int from_fec_to_normal(conn_info_t & conn_info,const dest_t &dest,char *data,int len)
 {
-	my_send(dest,data,len);
+	conn_info.fec_decode_manager.input(data,len);
+
+	int n;char ** s_arr;int* len_arr;
+	conn_info.fec_decode_manager.output(n,s_arr,len_arr);
+
+
+//	printf("<n:%d>",n);
+	for(int i=0;i<n;i++)
+	{
+		delay_send(0,dest,s_arr[i],len_arr[i]);
+		//s_arr[i][len_arr[i]]=0;
+		//printf("<%s>\n",s_arr[i]);
+	}
+	//my_send(dest,data,len);
 	return 0;
 }
 int client_event_loop()
@@ -125,9 +160,11 @@ int client_event_loop()
 	int remote_fd;
 	fd64_t remote_fd64;
 
-    conn_info_t conn_info;
-
+    conn_info_t *conn_info_p=new conn_info_t;
+    conn_info_t &conn_info=*conn_info_p;  //huge size of conn_info,do not allocate on stack
 	init_listen_socket();
+
+	conn_info.fec_encode_manager.re_init(fec_data_num,fec_redundant_num,fec_mtu);
 
 	epoll_fd = epoll_create1(0);
 
@@ -231,8 +268,12 @@ int client_event_loop()
 				dest_t dest;
 				dest.type=type_fd64_conv;
 				dest.inner.fd64=remote_fd64;
+
+				//char * new_data;
+				//int new_len;
+				//put_conv(conv,data,data_len,new_data,new_len);
 				dest.conv=conv;
-				from_normal_to_fec(dest,data,data_len);
+				from_normal_to_fec(conn_info,dest,data,data_len);
 				//my_send(dest,data,data_len);
 			}
 		    else if (events[idx].data.u64 == (u64_t)delay_manager.get_timer_fd()) {
@@ -277,7 +318,7 @@ int client_event_loop()
 				dest_t dest;
 				dest.inner.ip_port.from_u64(u64);
 				dest.type=type_ip_port;
-				from_fec_to_normal(dest,new_data,new_len);
+				from_fec_to_normal(conn_info,dest,new_data,new_len);
 				mylog(log_trace,"[%s] send packet\n",dest.inner.ip_port.to_s());
 			}
 
@@ -311,7 +352,7 @@ int server_event_loop()
 	int epoll_fd;
 	int remote_fd;
 
-    conn_info_t conn_info;
+//    conn_info_t conn_info;
 
 	init_listen_socket();
 
@@ -397,9 +438,11 @@ int server_event_loop()
 				{
 					conn_manager.insert(ip_port);
 					conn_info_t &conn_info=conn_manager.find(ip_port);
+					conn_info.fec_encode_manager.re_init(fec_data_num,fec_redundant_num,fec_mtu);
 					conn_info.conv_manager.reserve();
 				}
 				conn_info_t &conn_info=conn_manager.find(ip_port);
+
 
 				u32_t conv;
 				char *new_data;
@@ -438,7 +481,7 @@ int server_event_loop()
 				dest_t dest;
 				dest.type=type_fd64;
 				dest.inner.fd64=fd64;
-				from_fec_to_normal(dest,new_data,new_len);
+				from_fec_to_normal(conn_info,dest,new_data,new_len);
 
 				//int fd = int((u64 << 32u) >> 32u);
 				//////////////////////////////todo
@@ -531,7 +574,12 @@ int server_event_loop()
 				dest.type=type_ip_port_conv;
 				dest.conv=conv;
 				dest.inner.ip_port=ip_port;
-				from_normal_to_fec(dest,data,data_len);
+
+				//char * new_data;
+				//int new_len;
+				//put_conv(conv,data,data_len,new_data,new_len);
+
+				from_normal_to_fec(conn_info,dest,data,data_len);
 				mylog(log_trace,"[%s] send packet\n",ip_port.to_s());
 
 			}
@@ -619,9 +667,83 @@ int unit_test()
 		printf("<%d:%s>",len_arr[i],buf);
 	}
 	printf("\n");
+	static fec_encode_manager_t fec_encode_manager;
+	static fec_decode_manager_t fec_decode_manager;
 
-	fec_encode_manager_t fec_encode_manager;
-	fec_decode_manager_t fec_decode_manager;
+	{
+
+		string a = "11111";
+		string b = "22";
+		string c = "33333333";
+
+		fec_encode_manager.input((char *) a.c_str(), a.length());
+		fec_encode_manager.input((char *) b.c_str(), b.length());
+		fec_encode_manager.input((char *) c.c_str(), c.length());
+		fec_encode_manager.input(0, 0);
+
+		int n;
+		char **s_arr;
+		int len;
+
+
+		fec_encode_manager.output(n,s_arr,len);
+		printf("<n:%d,len:%d>",n,len);
+
+		for(int i=0;i<n;i++)
+		{
+			fec_decode_manager.input(s_arr[i],len);
+		}
+
+		{
+			int n;char ** s_arr;int* len_arr;
+			fec_decode_manager.output(n,s_arr,len_arr);
+			printf("<n:%d>",n);
+			for(int i=0;i<n;i++)
+			{
+				s_arr[i][len_arr[i]]=0;
+				printf("<%s>\n",s_arr[i]);
+			}
+		}
+
+
+	}
+
+	{
+		string a = "aaaaaaa";
+		string b = "bbbbbbbbbbbbb";
+		string c = "ccc";
+
+		fec_encode_manager.input((char *) a.c_str(), a.length());
+		fec_encode_manager.input((char *) b.c_str(), b.length());
+		fec_encode_manager.input((char *) c.c_str(), c.length());
+		fec_encode_manager.input(0, 0);
+
+		int n;
+		char **s_arr;
+		int len;
+
+
+		fec_encode_manager.output(n,s_arr,len);
+		printf("<n:%d,len:%d>",n,len);
+
+		for(int i=0;i<n;i++)
+		{
+			if(i==1||i==3||i==5||i==0)
+			fec_decode_manager.input(s_arr[i],len);
+		}
+
+		{
+			int n;char ** s_arr;int* len_arr;
+			fec_decode_manager.output(n,s_arr,len_arr);
+			printf("<n:%d>",n);
+			for(int i=0;i<n;i++)
+			{
+				s_arr[i][len_arr[i]]=0;
+				printf("<%s>\n",s_arr[i]);
+			}
+		}
+	}
+
 
 	return 0;
 }

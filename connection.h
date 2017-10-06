@@ -15,6 +15,7 @@ extern int disable_anti_replay;
 #include "log.h"
 #include "delay_manager.h"
 #include "fd_manager.h"
+#include "fec_manager.h"
 
 
 /*
@@ -67,7 +68,8 @@ struct conn_info_t     //stores info for a raw connection.for client ,there is o
 //handle multiple clients
 {
 	conv_manager_t conv_manager;
-	//anti_replay_t anti_replay;
+	fec_encode_manager_t fec_encode_manager;
+	fec_decode_manager_t fec_decode_manager;
 	fd64_t timer_fd;
 	ip_port_t ip_port;
 };//g_conn_info;

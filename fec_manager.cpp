@@ -9,8 +9,6 @@
 #include "log.h"
 #include "common.h"
 #include "lib/rs.h"
-u32_t seq=0;
-
 
 
 blob_encode_t::blob_encode_t()
@@ -66,7 +64,6 @@ int blob_encode_t::output(int n,char ** &s_arr,int & len)
 blob_decode_t::blob_decode_t()
 {
 	clear();
-
 }
 int blob_decode_t::clear()
 {
@@ -118,46 +115,50 @@ int blob_decode_t::output(int &n,char ** &s_arr,int *&len_arr)
 
 fec_encode_manager_t::fec_encode_manager_t()
 {
-	re_init();
+	re_init(4,2,1200);
 }
-int fec_encode_manager_t::re_init()
+int fec_encode_manager_t::re_init(int data_num,int redundant_num,int mtu)
 {
-	fec_data_num=4;
-	fec_redundant_num=2;
-	fec_mtu=1200;
+	fec_data_num=data_num;
+	fec_redundant_num=redundant_num;
+	fec_mtu=mtu;
 
 	counter=0;
 	blob_encode.clear();
 	ready_for_output=0;
+	seq=0;
 	return 0;
 }
-int fec_encode_manager_t::input(char *s,int len,int &is_first_packet)
+int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 {
-	is_first_packet=0;
     if(s==0 ||blob_encode.get_shard_len(fec_data_num,len)>=fec_mtu)
 	{
     	char ** blob_output;
     	int blob_len;
-    	assert(counter!=0);
+    	if(counter==0)
+    	{
+    		if(s==0) return 0;//relax this restriction temporarily
+    		else mylog(log_warn,"message too long,ignored\n");
+    	}
     	blob_encode.output(fec_data_num,blob_output,blob_len);
     	for(int i=0;i<fec_data_num+fec_redundant_num;i++)
     	{
     		int tmp_idx=0;
     		write_u32(buf[i]+tmp_idx,seq);
     		tmp_idx+=sizeof(u32_t);
+    		buf[i][tmp_idx++]=(unsigned char)0;
     		buf[i][tmp_idx++]=(unsigned char)fec_data_num;
     		buf[i][tmp_idx++]=(unsigned char)fec_redundant_num;
     		buf[i][tmp_idx++]=(unsigned char)i;
-    		buf[i][tmp_idx++]=(unsigned char)0;
+    		output_buf[i]=buf[i]+tmp_idx;
     		if(i<fec_data_num)
     		{
     			memcpy(buf[i]+tmp_idx,blob_output[i],blob_len);
     			tmp_idx+=blob_len;
     		}
-    		output_buf[i]=buf[i]+sizeof(u32_t)+3*sizeof(char);
-
     	}
-    	output_len=blob_len+sizeof(u32_t)+3*sizeof(char);
+    	output_len=blob_len+sizeof(u32_t)+4*sizeof(char);/////remember to change this 4,if modified the protocol
+
 		rs_encode2(fec_data_num,fec_data_num+fec_redundant_num,output_buf,blob_len);
 		for(int i=0;i<fec_data_num+fec_redundant_num;i++)
 		{
@@ -169,10 +170,9 @@ int fec_encode_manager_t::input(char *s,int len,int &is_first_packet)
     	counter=0;
     	blob_encode.clear();
 	}
-
     if(s!=0)
     {
-    	if(counter==0) is_first_packet=1;
+    	//if(counter==0) is_first_packet=1;
     	blob_encode.input(s,len);
     	counter++;
     }
@@ -198,14 +198,117 @@ int fec_encode_manager_t::output(int &n,char ** &s_arr,int &len)
 	return 0;
 }
 
-/*
-int fec_decode_manager_t::input(char *s,int l)
+fec_decode_manager_t::fec_decode_manager_t()
 {
+	re_init();
+}
+
+int fec_decode_manager_t::re_init()
+{
+	for(int i=0;i<(int)fec_buff_size;i++)
+		fec_data[i].used=0;
+	ready_for_output=0;
 	return 0;
 }
 
-int fec_decode_manager_t::output(int &n,char ** &s_arr,int* &l_arr)
+int fec_decode_manager_t::input(char *s,int len)
 {
-	return 0;
-}*/
+	assert(s!=0);
+	int tmp_idx=0;
+	u32_t seq=read_u32(s+tmp_idx);
+	tmp_idx+=sizeof(u32_t);
+	int type=(unsigned char)s[tmp_idx++];
+	int data_num=(unsigned char)s[tmp_idx++];
+	int redundant_num=(unsigned char)s[tmp_idx++];
+	int inner_index=(unsigned char)s[tmp_idx++];
+	len=len-tmp_idx;
+	if(len<0)
+	{
+		return -1;
+	}
+	if(data_num+redundant_num>255)
+	{
+		return -1;
+	}
+	if(!anti_replay.is_vaild(seq))
+	{
+		return 0;
+	}
+	if(!mp[seq].empty())
+	{
+		int first_idx=mp[seq].begin()->second;
+		int ok=1;
+		if(fec_data[first_idx].data_num!=data_num)
+			ok=0;
+		if(fec_data[first_idx].redundant_num!=redundant_num)
+			ok=0;
+		if(fec_data[first_idx].len!=len)
+			ok=0;
+		if(ok==0)
+		{
+			return 0;
+		}
+	}
+	if(fec_data[index].used!=0)
+	{
+		int tmp_seq=fec_data[index].seq;
+		anti_replay.set_invaild(tmp_seq);
+		if(mp.find(tmp_seq)!=mp.end())
+		{
+			mp.erase(tmp_seq);
+		}
+	}
 
+	fec_data[index].used=1;
+	fec_data[index].seq=seq;
+	fec_data[index].type=type;
+	fec_data[index].data_num=data_num;
+	fec_data[index].redundant_num=redundant_num;
+	fec_data[index].idx=inner_index;
+	fec_data[index].len=len;
+	memcpy(fec_data[index].buf,s+tmp_idx,len);
+	mp[seq][inner_index]=index;
+
+	index++;
+	if(index==int(anti_replay_buff_size)) index=0;
+
+	map<int,int> &inner_mp=mp[seq];
+	assert((int)inner_mp.size()<=data_num);
+	if((int)inner_mp.size()==data_num)
+	{
+
+		char *fec_tmp_arr[256+5]={0};
+		for(auto it=inner_mp.begin();it!=inner_mp.end();it++)
+		{
+			fec_tmp_arr[it->first]=fec_data[it->second].buf;
+		}
+		rs_decode2(data_num,data_num+redundant_num,fec_tmp_arr,len); //the input data has been modified in-place
+		blob_decode.clear();
+		for(int i=0;i<data_num;i++)
+		{
+			blob_decode.input(fec_tmp_arr[i],len);
+		}
+		blob_decode.output(output_n,output_s_arr,output_len_arr);
+		ready_for_output=1;
+		anti_replay.set_invaild(seq);
+	}
+
+	return 0;
+}
+int fec_decode_manager_t::output(int &n,char ** &s_arr,int* &len_arr)
+{
+	if(!ready_for_output)
+	{
+		n=-1;
+		s_arr=0;
+		len_arr=0;
+	}
+	else
+	{
+		ready_for_output=0;
+		n=output_n;
+		s_arr=output_s_arr;
+		len_arr=output_len_arr;
+	}
+	return 0;
+}
