@@ -111,6 +111,7 @@ class fec_encode_manager_t
 	blob_encode_t blob_encode;
 public:
 	fec_encode_manager_t();
+	~fec_encode_manager_t();
 
 	u64_t get_timer_fd64();
 	int re_init(int data_num,int redundant_num,int mtu,int pending_num,int pending_time);

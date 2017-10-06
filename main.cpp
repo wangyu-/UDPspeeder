@@ -31,7 +31,7 @@ int fec_data_num=3;
 int fec_redundant_num=2;
 int fec_mtu=30;
 int fec_pending_num=5;
-int fec_pending_time=10000;
+int fec_pending_time=2000000;
 u32_t local_ip_uint32,remote_ip_uint32=0;
 char local_ip[100], remote_ip[100];
 int local_port = -1, remote_port = -1;
@@ -259,6 +259,10 @@ int client_event_loop()
 	ev.events = EPOLLIN;
 	ev.data.u64 = fd64;
 	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd_manager.to_fd(fd64), &ev);
+	if (ret!= 0) {
+		mylog(log_fatal,"add fec_encode_manager.get_timer_fd64() error\n");
+		myexit(-1);
+	}
 
 	while(1)////////////////////////
 	{
@@ -279,30 +283,60 @@ int client_event_loop()
 		}
 		int idx;
 		for (idx = 0; idx < nfds; ++idx) {
-		    if (events[idx].data.u64 == (u64_t)local_listen_fd)
+		    if (events[idx].data.u64 == (u64_t)local_listen_fd||events[idx].data.u64 == conn_info.fec_encode_manager.get_timer_fd64())
 			{
 				char data[buf_len];
 				int data_len;
-				struct sockaddr_in udp_new_addr_in={0};
-				socklen_t udp_new_addr_len = sizeof(sockaddr_in);
-				if ((data_len = recvfrom(local_listen_fd, data, max_data_len, 0,
-						(struct sockaddr *) &udp_new_addr_in, &udp_new_addr_len)) == -1) {
-					mylog(log_error,"recv_from error,this shouldnt happen at client\n");
-					myexit(1);
-				};
-
-				if(data_len>=mtu_warn)
-				{
-					mylog(log_warn,"huge packet,data len=%d (>=%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",data_len,mtu_warn);
-				}
-				mylog(log_trace,"Received packet from %s:%d,len: %d\n", inet_ntoa(udp_new_addr_in.sin_addr),
-						ntohs(udp_new_addr_in.sin_port),data_len);
-
 				ip_port_t ip_port;
-				ip_port.ip=udp_new_addr_in.sin_addr.s_addr;
-				ip_port.port=ntohs(udp_new_addr_in.sin_port);
-				u64_t u64=ip_port.to_u64();
 				u32_t conv;
+				int  out_n;char **out_arr;int *out_len;int *out_delay;
+				dest_t dest;
+				dest.type=type_fd64;
+				dest.inner.fd64=remote_fd64;
+
+				if(events[idx].data.u64 == conn_info.fec_encode_manager.get_timer_fd64())
+				{
+					mylog(log_info,"timer!!!\n");
+					uint64_t value;
+					if(!fd_manager.exist(fd64))   //fd64 has been closed
+					{
+						continue;
+					}
+					if(read(fd_manager.to_fd(fd64), &value, 8)!=8)
+					{
+						mylog(log_info,"unknow!!!\n");
+						continue;
+					}
+					if(value==0)
+					{
+						mylog(log_info,"cancel!!!\n");
+						continue;
+					}
+					assert(value==1);
+					from_normal_to_fec(conn_info,0,0,out_n,out_arr,out_len,out_delay);
+					//from_normal_to_fec(conn_info,0,0,out_n,out_arr,out_len,out_delay);
+				}
+				else
+				{
+					struct sockaddr_in udp_new_addr_in={0};
+					socklen_t udp_new_addr_len = sizeof(sockaddr_in);
+					if ((data_len = recvfrom(local_listen_fd, data, max_data_len, 0,
+							(struct sockaddr *) &udp_new_addr_in, &udp_new_addr_len)) == -1) {
+						mylog(log_error,"recv_from error,this shouldnt happen at client\n");
+						myexit(1);
+					};
+
+					if(data_len>=mtu_warn)
+					{
+						mylog(log_warn,"huge packet,data len=%d (>=%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",data_len,mtu_warn);
+					}
+					mylog(log_trace,"Received packet from %s:%d,len: %d\n", inet_ntoa(udp_new_addr_in.sin_addr),
+							ntohs(udp_new_addr_in.sin_port),data_len);
+					ip_port.ip=udp_new_addr_in.sin_addr.s_addr;
+					ip_port.port=ntohs(udp_new_addr_in.sin_port);
+
+				u64_t u64=ip_port.to_u64();
+
 
 				if(!conn_info.conv_manager.is_u64_used(u64))
 				{
@@ -320,19 +354,16 @@ int client_event_loop()
 					conv=conn_info.conv_manager.find_conv_by_u64(u64);
 				}
 				conn_info.conv_manager.update_active_time(conv);
-
-
-				dest_t dest;
-				dest.type=type_fd64;
-				dest.inner.fd64=remote_fd64;
-
 				char * new_data;
 				int new_len;
 				put_conv(conv,data,data_len,new_data,new_len);
 
-				int  out_n;char **out_arr;int *out_len;int *out_delay;
+
 				//dest.conv=conv;
 				from_normal_to_fec(conn_info,new_data,new_len,out_n,out_arr,out_len,out_delay);
+
+				}
+
 				for(int i=0;i<out_n;i++)
 				{
 					delay_send(out_delay[i],dest,out_arr[i],out_len[i]);
@@ -635,6 +666,30 @@ int server_event_loop()
 
 				conn_info_t &conn_info=conn_manager.find(ip_port);
 
+				int  out_n;char **out_arr;int *out_len;int *out_delay;
+				dest_t dest;
+				dest.type=type_ip_port;
+				//dest.conv=conv;
+				dest.inner.ip_port=ip_port;
+
+				if(fd64==conn_info.fec_encode_manager.get_timer_fd64())
+				{
+					mylog(log_info,"timer!!!\n");
+					uint64_t value;
+					if(read(fd_manager.to_fd(fd64), &value, 8)!=8)
+					{
+						continue;
+					}
+					if(value==0)
+					{
+						continue;
+					}
+					assert(value==1);
+					from_normal_to_fec(conn_info,0,0,out_n,out_arr,out_len,out_delay);
+				}
+				else
+				{
+
 				assert(conn_info.conv_manager.is_u64_used(fd64));
 
 				conv=conn_info.conv_manager.find_conv_by_u64(fd64);
@@ -657,18 +712,17 @@ int server_event_loop()
 					mylog(log_warn,"huge packet,data len=%d (>=%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",data_len,mtu_warn);
 				}
 
-				dest_t dest;
-				dest.type=type_ip_port;
-				//dest.conv=conv;
-				dest.inner.ip_port=ip_port;
+
 
 				char * new_data;
 				int new_len;
 				put_conv(conv,data,data_len,new_data,new_len);
 
-				int  out_n;char **out_arr;int *out_len;int *out_delay;
+
 
 				from_normal_to_fec(conn_info,new_data,new_len,out_n,out_arr,out_len,out_delay);
+				}
+
 				for(int i=0;i<out_n;i++)
 				{
 					delay_send(out_delay[i],dest,out_arr[i],out_len[i]);

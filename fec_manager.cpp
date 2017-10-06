@@ -136,6 +136,7 @@ int fec_encode_manager_t::re_init(int data_num,int redundant_num,int mtu,int pen
 	fec_redundant_num=redundant_num;
 	fec_mtu=mtu;
 	fec_pending_num=pending_num;
+	fec_pending_time=pending_time;
 
 	counter=0;
 	blob_encode.clear();
@@ -180,6 +181,7 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     	output_len=blob_len+sizeof(u32_t)+4*sizeof(char);/////remember to change this 4,if modified the protocol
 
 		rs_encode2(fec_data_num,fec_data_num+fec_redundant_num,output_buf,blob_len);
+
 		for(int i=0;i<fec_data_num+fec_redundant_num;i++)
 		{
 			output_buf[i]=buf[i];
@@ -192,7 +194,15 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 	}
     if(s!=0)
     {
-    	//if(counter==0) is_first_packet=1;
+    	if(counter==0)
+    	{
+			itimerspec its;
+			memset(&its.it_interval,0,sizeof(its.it_interval));
+			my_time_t tmp_time=fec_pending_time+get_current_time_us();
+			its.it_value.tv_sec=tmp_time/1000000llu;
+			its.it_value.tv_nsec=(tmp_time%1000000llu)*1000llu;
+			timerfd_settime(timer_fd,TFD_TIMER_ABSTIME,&its,0);
+    	}
     	blob_encode.input(s,len);
     	counter++;
     }
