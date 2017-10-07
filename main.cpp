@@ -27,11 +27,12 @@ int jitter_max=0;
 
 int mtu_warn=1350;
 
-int fec_data_num=3;
-int fec_redundant_num=2;
-int fec_mtu=30;
-int fec_pending_num=5;
-int fec_pending_time=2000000;
+int fec_data_num=30;
+int fec_redundant_num=20;
+int fec_mtu=1200;
+int fec_pending_num=200;
+int fec_pending_time=50000;
+
 u32_t local_ip_uint32,remote_ip_uint32=0;
 char local_ip[100], remote_ip[100];
 int local_port = -1, remote_port = -1;
@@ -109,6 +110,13 @@ int new_connected_socket(int &fd,u32_t ip,int port)
 }
 int delay_send(my_time_t delay,const dest_t &dest,char *data,int len)
 {
+	int rand=random()%100;
+	//mylog(log_info,"rand = %d\n",rand);
+	if(rand>=80)
+	{
+		return 0;
+		//mylog(log_info,"dropped!\n");
+	}
 	return delay_manager.add(delay,dest,data,len);;
 }
 int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,int *&out_delay)
@@ -149,7 +157,7 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 	for(int i=0;i<out_n;i++)
 	{
 		out_len_buf[i]=tmp_out_len;
-		out_delay_buf[i]=100000*i;
+		//out_delay_buf[i]=100*i;
 	}
 
 	}
@@ -187,7 +195,7 @@ int from_fec_to_normal(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 	conn_info.fec_decode_manager.output(out_n,out_arr,out_len);
 	for(int i=0;i<out_n;i++)
 	{
-		out_delay_buf[i]=100000*i;
+		//out_delay_buf[i]=100*i;
 	}
 
 	}
@@ -364,6 +372,10 @@ int client_event_loop()
 
 				}
 
+				if(out_n!=-1)
+				{
+					mylog(log_debug,"n=%d\n",out_n);
+				}
 				for(int i=0;i<out_n;i++)
 				{
 					delay_send(out_delay[i],dest,out_arr[i],out_len[i]);

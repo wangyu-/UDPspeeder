@@ -92,7 +92,7 @@ int delay_manager_t::check()
 			{
 				ret=it->second.handle();
 				if (ret != 0) {
-					mylog(log_debug, "handle() return %d\n", ret);
+					mylog(log_trace, "handle() return %d\n", ret);
 				}
 				free(it->second.data);
 				delay_mp.erase(it);

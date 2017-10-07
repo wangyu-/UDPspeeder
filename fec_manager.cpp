@@ -156,6 +156,7 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 	{
     	char ** blob_output;
     	int blob_len;
+    	mylog(log_debug,"counter=%d\n",counter);
     	if(counter==0)
     	{
     		if(s==0) return 0;//relax this restriction temporarily

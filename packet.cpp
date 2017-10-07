@@ -216,7 +216,7 @@ unsigned int crc32h(unsigned char *message,int len) {
    return ~crc;
 }
 
-int put_conv(u32_t conv,const char * input,int len_in,char *&output,int &len_out)
+int put_conv0(u32_t conv,const char * input,int len_in,char *&output,int &len_out)
 {
 	static char buf[buf_len];
 	output=buf;
@@ -229,7 +229,7 @@ int put_conv(u32_t conv,const char * input,int len_in,char *&output,int &len_out
 	memcpy(output+len_in+(int)(sizeof(n_conv)),&crc32_n,sizeof(crc32_n));
 	return 0;
 }
-int get_conv(u32_t &conv,const char *input,int len_in,char *&output,int &len_out )
+int get_conv0(u32_t &conv,const char *input,int len_in,char *&output,int &len_out )
 {
 	u32_t n_conv;
 	memcpy(&n_conv,input,sizeof(n_conv));
@@ -252,7 +252,7 @@ int get_conv(u32_t &conv,const char *input,int len_in,char *&output,int &len_out
 	return 0;
 }
 
-int put_conv1(u32_t conv,const char * input,int len_in,char *&output,int &len_out)
+int put_conv(u32_t conv,const char * input,int len_in,char *&output,int &len_out)
 {
 	static char buf[buf_len];
 	output=buf;
@@ -262,7 +262,7 @@ int put_conv1(u32_t conv,const char * input,int len_in,char *&output,int &len_ou
 	len_out=len_in+(int)(sizeof(n_conv));
 	return 0;
 }
-int get_conv1(u32_t &conv,const char *input,int len_in,char *&output,int &len_out )
+int get_conv(u32_t &conv,const char *input,int len_in,char *&output,int &len_out )
 {
 	u32_t n_conv;
 	memcpy(&n_conv,input,sizeof(n_conv));
