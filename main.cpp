@@ -343,32 +343,32 @@ int client_event_loop()
 					ip_port.ip=udp_new_addr_in.sin_addr.s_addr;
 					ip_port.port=ntohs(udp_new_addr_in.sin_port);
 
-				u64_t u64=ip_port.to_u64();
+					u64_t u64=ip_port.to_u64();
 
 
-				if(!conn_info.conv_manager.is_u64_used(u64))
-				{
-					if(conn_info.conv_manager.get_size() >=max_conv_num)
+					if(!conn_info.conv_manager.is_u64_used(u64))
 					{
-						mylog(log_warn,"ignored new udp connect bc max_conv_num exceed\n");
-						continue;
+						if(conn_info.conv_manager.get_size() >=max_conv_num)
+						{
+							mylog(log_warn,"ignored new udp connect bc max_conv_num exceed\n");
+							continue;
+						}
+						conv=conn_info.conv_manager.get_new_conv();
+						conn_info.conv_manager.insert_conv(conv,u64);
+						mylog(log_info,"new packet from %s:%d,conv_id=%x\n",inet_ntoa(udp_new_addr_in.sin_addr),ntohs(udp_new_addr_in.sin_port),conv);
 					}
-					conv=conn_info.conv_manager.get_new_conv();
-					conn_info.conv_manager.insert_conv(conv,u64);
-					mylog(log_info,"new packet from %s:%d,conv_id=%x\n",inet_ntoa(udp_new_addr_in.sin_addr),ntohs(udp_new_addr_in.sin_port),conv);
-				}
-				else
-				{
-					conv=conn_info.conv_manager.find_conv_by_u64(u64);
-				}
-				conn_info.conv_manager.update_active_time(conv);
-				char * new_data;
-				int new_len;
-				put_conv(conv,data,data_len,new_data,new_len);
+					else
+					{
+						conv=conn_info.conv_manager.find_conv_by_u64(u64);
+					}
+					conn_info.conv_manager.update_active_time(conv);
+					char * new_data;
+					int new_len;
+					put_conv(conv,data,data_len,new_data,new_len);
 
 
-				//dest.conv=conv;
-				from_normal_to_fec(conn_info,new_data,new_len,out_n,out_arr,out_len,out_delay);
+					//dest.conv=conv;
+					from_normal_to_fec(conn_info,new_data,new_len,out_n,out_arr,out_len,out_delay);
 
 				}
 
@@ -702,37 +702,37 @@ int server_event_loop()
 				else
 				{
 
-				assert(conn_info.conv_manager.is_u64_used(fd64));
+					assert(conn_info.conv_manager.is_u64_used(fd64));
 
-				conv=conn_info.conv_manager.find_conv_by_u64(fd64);
+					conv=conn_info.conv_manager.find_conv_by_u64(fd64);
 
-				int fd=fd_manager.to_fd(fd64);
-				data_len=recv(fd,data,max_data_len,0);
+					int fd=fd_manager.to_fd(fd64);
+					data_len=recv(fd,data,max_data_len,0);
 
-				mylog(log_trace,"received a packet from udp_fd,len:%d\n",data_len);
+					mylog(log_trace,"received a packet from udp_fd,len:%d\n",data_len);
 
-				if(data_len<0)
-				{
-					mylog(log_debug,"udp fd,recv_len<0 continue,%s\n",strerror(errno));
+					if(data_len<0)
+					{
+						mylog(log_debug,"udp fd,recv_len<0 continue,%s\n",strerror(errno));
 
-					continue;
-				}
-
-
-				if(data_len>=mtu_warn)
-				{
-					mylog(log_warn,"huge packet,data len=%d (>=%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",data_len,mtu_warn);
-				}
+						continue;
+					}
 
 
-
-				char * new_data;
-				int new_len;
-				put_conv(conv,data,data_len,new_data,new_len);
+					if(data_len>=mtu_warn)
+					{
+						mylog(log_warn,"huge packet,data len=%d (>=%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",data_len,mtu_warn);
+					}
 
 
 
-				from_normal_to_fec(conn_info,new_data,new_len,out_n,out_arr,out_len,out_delay);
+					char * new_data;
+					int new_len;
+					put_conv(conv,data,data_len,new_data,new_len);
+
+
+
+					from_normal_to_fec(conn_info,new_data,new_len,out_n,out_arr,out_len,out_delay);
 				}
 
 				for(int i=0;i<out_n;i++)
