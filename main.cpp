@@ -140,25 +140,25 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 	}
 	else
 	{
-	counter++;
+		counter++;
 
-	conn_info.fec_encode_manager.input(data,len);
+		conn_info.fec_encode_manager.input(data,len);
 
-	//if(counter%5==0)
-		//conn_info.fec_encode_manager.input(0,0);
+		//if(counter%5==0)
+			//conn_info.fec_encode_manager.input(0,0);
 
-	//int n;
-	//char **s_arr;
-	//int s_len;
+		//int n;
+		//char **s_arr;
+		//int s_len;
 
-	int tmp_out_len;
-	conn_info.fec_encode_manager.output(out_n,out_arr,tmp_out_len);
+		int tmp_out_len;
+		conn_info.fec_encode_manager.output(out_n,out_arr,tmp_out_len);
 
-	for(int i=0;i<out_n;i++)
-	{
-		out_len_buf[i]=tmp_out_len;
-		//out_delay_buf[i]=100*i;
-	}
+		for(int i=0;i<out_n;i++)
+		{
+			out_len_buf[i]=tmp_out_len;
+			//out_delay_buf[i]=100*i;
+		}
 
 	}
 
@@ -189,14 +189,14 @@ int from_fec_to_normal(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 	else
 	{
 
-	conn_info.fec_decode_manager.input(data,len);
+		conn_info.fec_decode_manager.input(data,len);
 
-	//int n;char ** s_arr;int* len_arr;
-	conn_info.fec_decode_manager.output(out_n,out_arr,out_len);
-	for(int i=0;i<out_n;i++)
-	{
-		//out_delay_buf[i]=100*i;
-	}
+		//int n;char ** s_arr;int* len_arr;
+		conn_info.fec_decode_manager.output(out_n,out_arr,out_len);
+		for(int i=0;i<out_n;i++)
+		{
+			//out_delay_buf[i]=100*i;
+		}
 
 	}
 
