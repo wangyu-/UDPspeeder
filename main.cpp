@@ -442,6 +442,9 @@ int client_event_loop()
 					if(get_conv(conv,out_arr[i],out_len[i],new_data,new_len)!=0)
 						continue;
 					if(!conn_info.conv_manager.is_conv_used(conv))continue;
+
+					conn_info.conv_manager.update_active_time(conv);
+
 					u64_t u64=conn_info.conv_manager.find_u64_by_conv(conv);
 					dest_t dest;
 					dest.inner.ip_port.from_u64(u64);
@@ -605,6 +608,8 @@ int server_event_loop()
 					u64_t timer_fd64=conn_info.timer.get_timer_fd64();
 					fd_manager.get_info(timer_fd64).ip_port=ip_port;
 
+					mylog(log_info,"new connection from %s\n",ip_port.to_s());
+
 				}
 				conn_info_t &conn_info=conn_manager.find(ip_port);
 
@@ -641,10 +646,14 @@ int server_event_loop()
 
 						conn_info.conv_manager.insert_conv(conv, fd64);
 						fd_manager.get_info(fd64).ip_port=ip_port;
+
+
+						mylog(log_info,"[%s]new conv %x,fd %d created\n",ip_port.to_s(),conv,new_udp_fd);
 						//assert(!conn_manager.exist_fd64(fd64));
 
 						//conn_manager.insert_fd64(fd64,ip_port);
 					}
+					conn_info.conv_manager.update_active_time(conv);
 					fd64_t fd64= conn_info.conv_manager.find_u64_by_conv(conv);
 					//int fd=fd_manager.fd64_to_fd(fd64);
 					dest_t dest;
@@ -755,6 +764,7 @@ int server_event_loop()
 					assert(conn_info.conv_manager.is_u64_used(fd64));
 
 					conv=conn_info.conv_manager.find_conv_by_u64(fd64);
+					conn_info.conv_manager.update_active_time(conv);
 
 					int fd=fd_manager.to_fd(fd64);
 					data_len=recv(fd,data,max_data_len,0);

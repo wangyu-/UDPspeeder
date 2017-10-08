@@ -170,6 +170,7 @@ int conv_manager_t::clear_inactive0(char * ip_port)
 		}
 		cnt++;
 	}
+	clear_it=it;
 	return 0;
 }
 
@@ -178,7 +179,7 @@ int conv_manager_t::clear_inactive0(char * ip_port)
  conn_manager_t::conn_manager_t()
  {
 	 //ready_num=0;
-	 mp.reserve(100007);
+	 mp.reserve(10007);
 	 //fd64_mp.reserve(100007);
 	 clear_it=mp.begin();
 	 last_clear_time=0;
@@ -280,6 +281,7 @@ int conn_manager_t::clear_inactive()
 }
 int conn_manager_t::clear_inactive0()
 {
+mylog(log_info,"called\n");
 	 unordered_map<u64_t,conn_info_t*>::iterator it;
 	 unordered_map<u64_t,conn_info_t*>::iterator old_it;
 
@@ -287,7 +289,7 @@ int conn_manager_t::clear_inactive0()
 
 	//map<uint32_t,uint64_t>::iterator it;
 	int cnt=0;
-	it=clear_it;
+	it=clear_it;//TODO,write it back
 	int size=mp.size();
 	int num_to_clean=size/conn_clear_ratio+conn_clear_min;   //clear 1/10 each time,to avoid latency glitch
 
@@ -296,18 +298,19 @@ int conn_manager_t::clear_inactive0()
 	num_to_clean=min(num_to_clean,(int)mp.size());
 	u64_t current_time=get_current_time();
 
+	mylog(log_info,"here size=%d\n",(int)mp.size());
 	for(;;)
 	{
 		if(cnt>=num_to_clean) break;
 		if(mp.begin()==mp.end()) break;
-
 		if(it==mp.end())
 		{
 			it=mp.begin();
 		}
 
-		else if(it->second->conv_manager.get_size() >0)
+		if(it->second->conv_manager.get_size() >0)
 		{
+			mylog(log_info,"[%s:%d]size %d \n",my_ntoa(get_u64_h(it->first)),get_u64_l(it->first),(int)it->second->conv_manager.get_size());
 			it++;
 		}
 		else
@@ -319,6 +322,7 @@ int conn_manager_t::clear_inactive0()
 		}
 		cnt++;
 	}
+	clear_it=it;
 	return 0;
 }
 

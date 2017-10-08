@@ -117,6 +117,10 @@ struct delay_manager_t
 	int capacity;
 	multimap<my_time_t,delay_data_t> delay_mp;  //unit us,1 us=0.001ms
 	delay_manager_t();
+	delay_manager_t(delay_manager_t &b)
+	{
+		assert(0==1);
+	}
 	~delay_manager_t();
 	int get_timer_fd();
 	int check();
