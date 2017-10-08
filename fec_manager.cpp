@@ -124,7 +124,7 @@ fec_encode_manager_t::fec_encode_manager_t()
 }
 fec_encode_manager_t::~fec_encode_manager_t()
 {
-	fd_manager.close(timer_fd64);
+	fd_manager.fd64_close(timer_fd64);
 }
 u64_t fec_encode_manager_t::get_timer_fd64()
 {

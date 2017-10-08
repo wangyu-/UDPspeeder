@@ -27,8 +27,8 @@ int jitter_max=0;
 
 int mtu_warn=1350;
 
-int fec_data_num=30;
-int fec_redundant_num=20;
+int fec_data_num=20;
+int fec_redundant_num=8;
 int fec_mtu=1200;
 int fec_pending_num=200;
 int fec_pending_time=50000;
@@ -54,7 +54,6 @@ int VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 int init_listen_socket()
 {
 	local_listen_fd =socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
 
 
 	int yes = 1;
@@ -114,7 +113,7 @@ int delay_send(my_time_t delay,const dest_t &dest,char *data,int len)
 	//mylog(log_info,"rand = %d\n",rand);
 	if(rand>=80)
 	{
-		return 0;
+		//return 0;
 		//mylog(log_info,"dropped!\n");
 	}
 	return delay_manager.add(delay,dest,data,len);;
@@ -157,7 +156,7 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 		for(int i=0;i<out_n;i++)
 		{
 			out_len_buf[i]=tmp_out_len;
-			//out_delay_buf[i]=100*i;
+		//	out_delay_buf[i]=100*i;
 		}
 
 	}
@@ -222,9 +221,10 @@ int client_event_loop()
 
     conn_info_t *conn_info_p=new conn_info_t;
     conn_info_t &conn_info=*conn_info_p;  //huge size of conn_info,do not allocate on stack
-	init_listen_socket();
-
+    conn_info.conv_manager.reserve();
 	conn_info.fec_encode_manager.re_init(fec_data_num,fec_redundant_num,fec_mtu,fec_pending_num,fec_pending_time);
+
+	init_listen_socket();
 
 	epoll_fd = epoll_create1(0);
 
@@ -272,6 +272,10 @@ int client_event_loop()
 		myexit(-1);
 	}
 
+	//my_timer_t timer;
+	conn_info.timer.add_fd_to_epoll(epoll_fd);
+	conn_info.timer.set_timer_repeat_us(timer_interval*1000);
+
 	while(1)////////////////////////
 	{
 		if(about_to_exit) myexit(0);
@@ -291,7 +295,13 @@ int client_event_loop()
 		}
 		int idx;
 		for (idx = 0; idx < nfds; ++idx) {
-		    if (events[idx].data.u64 == (u64_t)local_listen_fd||events[idx].data.u64 == conn_info.fec_encode_manager.get_timer_fd64())
+			if(events[idx].data.u64==(u64_t)conn_info.timer.get_timer_fd())
+			{
+				uint64_t value;
+				read(conn_info.timer.get_timer_fd(), &value, 8);
+				conn_info.conv_manager.clear_inactive();
+			}
+			else if (events[idx].data.u64 == (u64_t)local_listen_fd||events[idx].data.u64 == conn_info.fec_encode_manager.get_timer_fd64())
 			{
 				char data[buf_len];
 				int data_len;
@@ -301,6 +311,7 @@ int client_event_loop()
 				dest_t dest;
 				dest.type=type_fd64;
 				dest.inner.fd64=remote_fd64;
+				dest.cook=1;
 
 				if(events[idx].data.u64 == conn_info.fec_encode_manager.get_timer_fd64())
 				{
@@ -415,6 +426,10 @@ int client_event_loop()
 					mylog(log_warn,"huge packet,data len=%d (>%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",data_len,mtu_warn);
 				}
 
+				if(rm_crc32(data,data_len)!=0)
+				{
+					mylog(log_debug,"crc32 check error");
+				}
 
 				int  out_n;char **out_arr;int *out_len;int *out_delay;
 				from_fec_to_normal(conn_info,data,data_len,out_n,out_arr,out_len,out_delay);
@@ -498,6 +513,11 @@ int server_event_loop()
 	}
 
 	mylog(log_info,"now listening at %s:%d\n",my_ntoa(local_ip_uint32),local_port);
+
+	my_timer_t timer;
+	timer.add_fd_to_epoll(epoll_fd);
+	timer.set_timer_repeat_us(timer_interval*1000);
+
 	while(1)////////////////////////
 	{
 
@@ -527,7 +547,15 @@ int server_event_loop()
 				read(timer_fd, &dummy, 8);
 				//current_time_rough=get_current_time();
 			}
-			else */if (events[idx].data.u64 == (u64_t)local_listen_fd)
+			else */
+			if(events[idx].data.u64==(u64_t)timer.get_timer_fd())
+			{
+				uint64_t value;
+				read(timer.get_timer_fd(), &value, 8);
+				conn_manager.clear_inactive();
+				//conn_info.conv_manager.clear_inactive();
+			}
+			else if (events[idx].data.u64 == (u64_t)local_listen_fd)
 			{
 				//int recv_len;
 				char data[buf_len];
@@ -544,6 +572,11 @@ int server_event_loop()
 				{
 					mylog(log_warn,"huge packet,data len=%d (>=%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",data_len,mtu_warn);
 				}
+
+				if(rm_crc32(data,data_len)!=0)
+				{
+					mylog(log_debug,"crc32 check error");
+				}
 				mylog(log_trace,"Received packet from %s:%d,len: %d\n", inet_ntoa(udp_new_addr_in.sin_addr),
 						ntohs(udp_new_addr_in.sin_port),data_len);
 
@@ -557,12 +590,21 @@ int server_event_loop()
 					conn_info.fec_encode_manager.re_init(fec_data_num,fec_redundant_num,fec_mtu,fec_pending_num,fec_pending_time);
 					conn_info.conv_manager.reserve();
 
-					u64_t fd64=conn_info.fec_encode_manager.get_timer_fd64();
-					ev.events = EPOLLIN;
-					ev.data.u64 = fd64;
-					ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd_manager.to_fd(fd64), &ev);
 
-					fd_manager.get_info(fd64).ip_port=ip_port;
+					u64_t fec_fd64=conn_info.fec_encode_manager.get_timer_fd64();
+					ev.events = EPOLLIN;
+					ev.data.u64 = fec_fd64;
+					ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd_manager.to_fd(fec_fd64), &ev);
+
+					fd_manager.get_info(fec_fd64).ip_port=ip_port;
+
+
+
+					conn_info.timer.add_fd64_to_epoll(epoll_fd);
+					conn_info.timer.set_timer_repeat_us(timer_interval*1000);
+					u64_t timer_fd64=conn_info.timer.get_timer_fd64();
+					fd_manager.get_info(timer_fd64).ip_port=ip_port;
+
 				}
 				conn_info_t &conn_info=conn_manager.find(ip_port);
 
@@ -683,6 +725,7 @@ int server_event_loop()
 				dest.type=type_ip_port;
 				//dest.conv=conv;
 				dest.inner.ip_port=ip_port;
+				dest.cook=1;
 
 				if(fd64==conn_info.fec_encode_manager.get_timer_fd64())
 				{
@@ -699,8 +742,15 @@ int server_event_loop()
 					assert(value==1);
 					from_normal_to_fec(conn_info,0,0,out_n,out_arr,out_len,out_delay);
 				}
+				else if(fd64==conn_info.timer.get_timer_fd64())
+				{
+					uint64_t value;
+					read(conn_info.timer.get_timer_fd(), &value, 8);
+					conn_info.conv_manager.clear_inactive();
+				}
 				else
 				{
+
 
 					assert(conn_info.conv_manager.is_u64_used(fd64));
 
@@ -723,8 +773,6 @@ int server_event_loop()
 					{
 						mylog(log_warn,"huge packet,data len=%d (>=%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",data_len,mtu_warn);
 					}
-
-
 
 					char * new_data;
 					int new_len;

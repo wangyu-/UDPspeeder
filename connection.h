@@ -48,6 +48,10 @@ struct conv_manager_t  // manage the udp connections
 	long long last_clear_time;
 
 	conv_manager_t();
+	conv_manager_t(const conv_manager_t &b)
+	{
+		assert(0==1);
+	}
 	~conv_manager_t();
 	int get_size();
 	void reserve();
@@ -70,30 +74,41 @@ struct conn_info_t     //stores info for a raw connection.for client ,there is o
 	conv_manager_t conv_manager;
 	fec_encode_manager_t fec_encode_manager;
 	fec_decode_manager_t fec_decode_manager;
-	fd64_t timer_fd;
+	my_timer_t timer;
 	ip_port_t ip_port;
+	conn_info_t()
+	{
+	}
+	conn_info_t(const conn_info_t &b)
+	{
+		assert(0==1);
+	}
 };//g_conn_info;
 
 struct conn_manager_t  //manager for connections. for client,we dont need conn_manager since there is only one connection.for server we use one conn_manager for all connections
 {
 
- unordered_map<u64_t,conn_info_t*> mp;//<ip,port> to conn_info_t;
- unordered_map<u64_t,conn_info_t*>::iterator clear_it;
- long long last_clear_time;
+	unordered_map<u64_t,conn_info_t*> mp;//<ip,port> to conn_info_t;
+	unordered_map<u64_t,conn_info_t*>::iterator clear_it;
+	long long last_clear_time;
 
- conn_manager_t();
- int exist(ip_port_t);
- conn_info_t *& find_p(ip_port_t);  //be aware,the adress may change after rehash
- conn_info_t & find(ip_port_t) ; //be aware,the adress may change after rehash
- int insert(ip_port_t);
- /*
- int exist_fd64(fd64_t fd64);
- void insert_fd64(fd64_t fd64,ip_port_t);
- ip_port_t find_by_fd64(fd64_t fd64);*/
+	conn_manager_t();
+	conn_manager_t(const conn_info_t &b)
+	{
+		assert(0==1);
+	}
+	int exist(ip_port_t);
+	conn_info_t *& find_p(ip_port_t);  //be aware,the adress may change after rehash
+	conn_info_t & find(ip_port_t) ; //be aware,the adress may change after rehash
+	int insert(ip_port_t);
+	 /*
+	 int exist_fd64(fd64_t fd64);
+	 void insert_fd64(fd64_t fd64,ip_port_t);
+	 ip_port_t find_by_fd64(fd64_t fd64);*/
 
-int erase(unordered_map<u64_t,conn_info_t*>::iterator erase_it);
-int clear_inactive();
-int clear_inactive0();
+	int erase(unordered_map<u64_t,conn_info_t*>::iterator erase_it);
+	int clear_inactive();
+	int clear_inactive0();
 
 };
 

@@ -147,6 +147,7 @@ int send_fd (int fd,char * buf, int len,int flags)
 
 int my_send(const dest_t &dest,char *data,int len)
 {
+	if(dest.cook)put_crc32(data,len);
 	switch(dest.type)
 	{
 		case type_ip_port:
@@ -164,6 +165,7 @@ int my_send(const dest_t &dest,char *data,int len)
 		}
 		case type_fd64:
 		{
+
 			if(!fd_manager.exist(dest.inner.fd64)) return -1;
 			int fd=fd_manager.to_fd(dest.inner.fd64);
 			return send_fd(fd,data,len,0);
@@ -251,7 +253,23 @@ int get_conv0(u32_t &conv,const char *input,int len_in,char *&output,int &len_ou
 	}
 	return 0;
 }
-
+int put_crc32(char * s,int &len)
+{
+	if(len<0) return -1;
+	u32_t crc32=crc32h((unsigned char *)s,len);
+	write_u32(s+len,crc32);
+	len+=sizeof(u32_t);
+	return 0;
+}
+int rm_crc32(char * s,int &len)
+{
+	len-=sizeof(u32_t);
+	if(len<0) return -1;
+	u32_t crc32_in=read_u32(s+len);
+	u32_t crc32=crc32h((unsigned char *)s,len);
+	if(crc32!=crc32_in) return -1;
+	return 0;
+}
 int put_conv(u32_t conv,const char * input,int len_in,char *&output,int &len_out)
 {
 	static char buf[buf_len];

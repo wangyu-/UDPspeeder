@@ -62,7 +62,7 @@ int delay_manager_t::add(my_time_t delay,const dest_t &dest,char *data,int len)
 	}
 
 	delay_data_t tmp=delay_data;
-	tmp.data=(char *)malloc(delay_data.len);
+	tmp.data=(char *)malloc(delay_data.len+100);
 
 	memcpy(tmp.data,delay_data.data,delay_data.len);
 

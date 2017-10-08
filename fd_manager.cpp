@@ -35,7 +35,7 @@ void fd_manager_t::remove_fd(int fd)
 	fd64_to_fd_mp.erase(fd64);
 	//return 0;
 }*/
-void fd_manager_t::close(fd64_t fd64)
+void fd_manager_t::fd64_close(fd64_t fd64)
 {
 	assert(exist(fd64));
 	int fd=fd64_to_fd_mp[fd64];

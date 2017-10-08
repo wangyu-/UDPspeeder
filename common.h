@@ -96,7 +96,7 @@ const i32_t max_fail_time=0;//disable
 
 const u32_t heartbeat_interval=1000;
 
-const u32_t timer_interval=400;//this should be smaller than heartbeat_interval and retry interval;
+const u32_t timer_interval=50;//this should be smaller than heartbeat_interval and retry interval;
 
 //const uint32_t conv_timeout=120000; //120 second
 //const u32_t conv_timeout=120000; //for test
@@ -152,6 +152,7 @@ struct dest_t
 	dest_type type;
 	inner_t inner;
 	u32_t conv;
+	int cook=0;
 };
 
 struct fd_info_t

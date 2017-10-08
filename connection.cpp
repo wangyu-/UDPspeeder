@@ -18,9 +18,9 @@ conn_manager_t conn_manager;
 void server_clear_function(u64_t u64)//used in conv_manager in server mode.for server we have to use one udp fd for one conv(udp connection),
 //so we have to close the fd when conv expires
 {
-	int fd64=u64;
+	fd64_t fd64=u64;
 	assert(fd_manager.exist(fd64));
-	fd_manager.close(fd64);
+	fd_manager.fd64_close(fd64);
 }
 
 conv_manager_t::conv_manager_t()
@@ -103,12 +103,14 @@ conv_manager_t::~conv_manager_t()
 	}
 	int conv_manager_t::erase_conv(u32_t conv)
 	{
-		if(disable_conv_clear) return 0;
+		//if(disable_conv_clear) return 0;
+		assert(conv_last_active_time.find(conv)!=conv_last_active_time.end());
 		u64_t u64=conv_to_u64[conv];
 		if(program_mode==server_mode)
 		{
 			server_clear_function(u64);
 		}
+		assert(conv_to_u64.find(conv)!=conv_to_u64.end());
 		conv_to_u64.erase(conv);
 		u64_to_conv.erase(u64);
 		conv_last_active_time.erase(conv);
@@ -152,7 +154,7 @@ conv_manager_t::~conv_manager_t()
 				old_it=it;
 				it++;
 				u32_t conv= old_it->first;
-				erase_conv(old_it->first);
+				erase_conv(conv);
 				if(ip_port==0)
 				{
 					mylog(log_info,"conv %x cleared\n",conv);
