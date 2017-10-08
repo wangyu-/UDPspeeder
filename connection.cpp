@@ -24,154 +24,157 @@ void server_clear_function(u64_t u64)//used in conv_manager in server mode.for s
 }
 
 conv_manager_t::conv_manager_t()
-	{
-		clear_it=conv_last_active_time.begin();
-		long long last_clear_time=0;
-	}
+{
+	clear_it=conv_last_active_time.begin();
+	long long last_clear_time=0;
+}
 conv_manager_t::~conv_manager_t()
-	{
-		clear();
-	}
-	int conv_manager_t::get_size()
-	{
-		return conv_to_u64.size();
-	}
-	void conv_manager_t::reserve()
-	{
-		u64_to_conv.reserve(10007);
-		conv_to_u64.reserve(10007);
-		conv_last_active_time.reserve(10007);
-	}
-	void conv_manager_t::clear()
-	{
-		if(disable_conv_clear) return ;
+{
+	clear();
+}
+int conv_manager_t::get_size()
+{
+	return conv_to_u64.size();
+}
+void conv_manager_t::reserve()
+{
+	u64_to_conv.reserve(10007);
+	conv_to_u64.reserve(10007);
+	conv_last_active_time.reserve(10007);
+}
+void conv_manager_t::clear()
+{
+	if(disable_conv_clear) return ;
 
-		if(program_mode==server_mode)
+	if(program_mode==server_mode)
+	{
+		for(it=conv_to_u64.begin();it!=conv_to_u64.end();it++)
 		{
-			for(it=conv_to_u64.begin();it!=conv_to_u64.end();it++)
-			{
-				//int fd=int((it->second<<32u)>>32u);
-				server_clear_function(  it->second);
-			}
+			//int fd=int((it->second<<32u)>>32u);
+			server_clear_function(  it->second);
 		}
-		u64_to_conv.clear();
-		conv_to_u64.clear();
-		conv_last_active_time.clear();
+	}
+	u64_to_conv.clear();
+	conv_to_u64.clear();
+	conv_last_active_time.clear();
 
+	clear_it=conv_last_active_time.begin();
+
+}
+u32_t conv_manager_t::get_new_conv()
+{
+	u32_t conv=get_true_random_number_nz();
+	while(conv_to_u64.find(conv)!=conv_to_u64.end())
+	{
+		conv=get_true_random_number_nz();
+	}
+	return conv;
+}
+int conv_manager_t::is_conv_used(u32_t conv)
+{
+	return conv_to_u64.find(conv)!=conv_to_u64.end();
+}
+int conv_manager_t::is_u64_used(u64_t u64)
+{
+	return u64_to_conv.find(u64)!=u64_to_conv.end();
+}
+u32_t conv_manager_t::find_conv_by_u64(u64_t u64)
+{
+	return u64_to_conv[u64];
+}
+u64_t conv_manager_t::find_u64_by_conv(u32_t conv)
+{
+	return conv_to_u64[conv];
+}
+int conv_manager_t::update_active_time(u32_t conv)
+{
+	return conv_last_active_time[conv]=get_current_time();
+}
+int conv_manager_t::insert_conv(u32_t conv,u64_t u64)//////todo add capacity
+{
+	int bucket_size_before=conv_last_active_time.bucket_count();
+	u64_to_conv[u64]=conv;
+	conv_to_u64[conv]=u64;
+	conv_last_active_time[conv]=get_current_time();
+	int bucket_size_after=conv_last_active_time.bucket_count();
+	if(bucket_size_after!=bucket_size_before)
 		clear_it=conv_last_active_time.begin();
-
-	}
-	u32_t conv_manager_t::get_new_conv()
+	return 0;
+}
+int conv_manager_t::erase_conv(u32_t conv)
+{
+	//if(disable_conv_clear) return 0;
+	assert(conv_last_active_time.find(conv)!=conv_last_active_time.end());
+	u64_t u64=conv_to_u64[conv];
+	if(program_mode==server_mode)
 	{
-		u32_t conv=get_true_random_number_nz();
-		while(conv_to_u64.find(conv)!=conv_to_u64.end())
+		server_clear_function(u64);
+	}
+	assert(conv_to_u64.find(conv)!=conv_to_u64.end());
+	conv_to_u64.erase(conv);
+	u64_to_conv.erase(u64);
+	conv_last_active_time.erase(conv);
+	return 0;
+}
+int conv_manager_t::clear_inactive(char * ip_port)
+{
+	if(get_current_time()-last_clear_time>conv_clear_interval)
+	{
+		last_clear_time=get_current_time();
+		return clear_inactive0(ip_port);
+	}
+	return 0;
+}
+int conv_manager_t::clear_inactive0(char * ip_port)
+{
+	if(disable_conv_clear) return 0;
+
+	//map<uint32_t,uint64_t>::iterator it;
+	int cnt=0;
+	it=clear_it;
+	int size=conv_last_active_time.size();
+	int num_to_clean=size/conv_clear_ratio+conv_clear_min;   //clear 1/10 each time,to avoid latency glitch
+
+	num_to_clean=min(num_to_clean,size);
+
+	u64_t current_time=get_current_time();
+	for(;;)
+	{
+		if(cnt>=num_to_clean) break;
+		if(conv_last_active_time.begin()==conv_last_active_time.end()) break;
+
+		if(it==conv_last_active_time.end())
 		{
-			conv=get_true_random_number_nz();
+			it=conv_last_active_time.begin();
 		}
-		return conv;
-	}
-	int conv_manager_t::is_conv_used(u32_t conv)
-	{
-		return conv_to_u64.find(conv)!=conv_to_u64.end();
-	}
-	int conv_manager_t::is_u64_used(u64_t u64)
-	{
-		return u64_to_conv.find(u64)!=u64_to_conv.end();
-	}
-	u32_t conv_manager_t::find_conv_by_u64(u64_t u64)
-	{
-		return u64_to_conv[u64];
-	}
-	u64_t conv_manager_t::find_u64_by_conv(u32_t conv)
-	{
-		return conv_to_u64[conv];
-	}
-	int conv_manager_t::update_active_time(u32_t conv)
-	{
-		return conv_last_active_time[conv]=get_current_time();
-	}
-	int conv_manager_t::insert_conv(u32_t conv,u64_t u64)//////todo add capacity
-	{
-		int bucket_size_before=conv_last_active_time.bucket_count();
-		u64_to_conv[u64]=conv;
-		conv_to_u64[conv]=u64;
-		conv_last_active_time[conv]=get_current_time();
-		int bucket_size_after=conv_last_active_time.bucket_count();
-		if(bucket_size_after!=bucket_size_before)
-			clear_it=conv_last_active_time.begin();
-		return 0;
-	}
-	int conv_manager_t::erase_conv(u32_t conv)
-	{
-		//if(disable_conv_clear) return 0;
-		assert(conv_last_active_time.find(conv)!=conv_last_active_time.end());
-		u64_t u64=conv_to_u64[conv];
-		if(program_mode==server_mode)
+
+		if( current_time -it->second  >conv_timeout )
 		{
-			server_clear_function(u64);
-		}
-		assert(conv_to_u64.find(conv)!=conv_to_u64.end());
-		conv_to_u64.erase(conv);
-		u64_to_conv.erase(u64);
-		conv_last_active_time.erase(conv);
-		return 0;
-	}
-	int conv_manager_t::clear_inactive(char * ip_port)
-	{
-		if(get_current_time()-last_clear_time>conv_clear_interval)
-		{
-			last_clear_time=get_current_time();
-			return clear_inactive0(ip_port);
-		}
-		return 0;
-	}
-	int conv_manager_t::clear_inactive0(char * ip_port)
-	{
-		if(disable_conv_clear) return 0;
-
-		//map<uint32_t,uint64_t>::iterator it;
-		int cnt=0;
-		it=clear_it;
-		int size=conv_last_active_time.size();
-		int num_to_clean=size/conv_clear_ratio+conv_clear_min;   //clear 1/10 each time,to avoid latency glitch
-
-		num_to_clean=min(num_to_clean,size);
-
-		u64_t current_time=get_current_time();
-		for(;;)
-		{
-			if(cnt>=num_to_clean) break;
-			if(conv_last_active_time.begin()==conv_last_active_time.end()) break;
-
-			if(it==conv_last_active_time.end())
+			//mylog(log_info,"inactive conv %u cleared \n",it->first);
+			old_it=it;
+			it++;
+			u32_t conv= old_it->first;
+			erase_conv(conv);
+			if(ip_port==0)
 			{
-				it=conv_last_active_time.begin();
-			}
-
-			if( current_time -it->second  >conv_timeout )
-			{
-				//mylog(log_info,"inactive conv %u cleared \n",it->first);
-				old_it=it;
-				it++;
-				u32_t conv= old_it->first;
-				erase_conv(conv);
-				if(ip_port==0)
-				{
-					mylog(log_info,"conv %x cleared\n",conv);
-				}
-				else
-				{
-					mylog(log_info,"[%s]conv %x cleared\n",ip_port,conv);
-				}
+				mylog(log_info,"conv %x cleared\n",conv);
 			}
 			else
 			{
-				it++;
+				mylog(log_info,"[%s]conv %x cleared\n",ip_port,conv);
 			}
-			cnt++;
 		}
-		return 0;
+		else
+		{
+			it++;
+		}
+		cnt++;
 	}
+	return 0;
+}
+
+
+
  conn_manager_t::conn_manager_t()
  {
 	 //ready_num=0;
