@@ -121,10 +121,10 @@ int delay_send(my_time_t delay,const dest_t &dest,char *data,int len)
 int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,int *&out_delay)
 {
 	static int out_delay_buf[max_fec_packet_num+100]={0};
-	static int out_len_buf[max_fec_packet_num+100]={0};
+	//static int out_len_buf[max_fec_packet_num+100]={0};
 	static int counter=0;
 	out_delay=out_delay_buf;
-	out_len=out_len_buf;
+	//out_len=out_len_buf;
 
 	if(0)
 	{
@@ -150,14 +150,9 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 		//char **s_arr;
 		//int s_len;
 
-		int tmp_out_len;
-		conn_info.fec_encode_manager.output(out_n,out_arr,tmp_out_len);
 
-		for(int i=0;i<out_n;i++)
-		{
-			out_len_buf[i]=tmp_out_len;
-		//	out_delay_buf[i]=100*i;
-		}
+		conn_info.fec_encode_manager.output(out_n,out_arr,out_len);
+
 
 	}
 
@@ -900,15 +895,15 @@ int unit_test()
 
 		int n;
 		char **s_arr;
-		int len;
+		int *len;
 
 
 		fec_encode_manager.output(n,s_arr,len);
-		printf("<n:%d,len:%d>",n,len);
+		printf("<n:%d,len:%d>",n,len[0]);
 
 		for(int i=0;i<n;i++)
 		{
-			fec_decode_manager.input(s_arr[i],len);
+			fec_decode_manager.input(s_arr[i],len[i]);
 		}
 
 		{
@@ -937,16 +932,16 @@ int unit_test()
 
 		int n;
 		char **s_arr;
-		int len;
+		int * len;
 
 
 		fec_encode_manager.output(n,s_arr,len);
-		printf("<n:%d,len:%d>",n,len);
+		printf("<n:%d,len:%d>",n,len[0]);
 
 		for(int i=0;i<n;i++)
 		{
 			if(i==1||i==3||i==5||i==0)
-			fec_decode_manager.input(s_arr[i],len);
+			fec_decode_manager.input(s_arr[i],len[i]);
 		}
 
 		{

@@ -35,7 +35,7 @@ struct anti_replay_t
 
 		if(st.find(seq)!=st.end() )
 		{
-			mylog(log_trace,"seq %llx exist\n",seq);
+			mylog(log_trace,"seq %u exist\n",seq);
 			return;
 			//return 0;
 		}
@@ -101,7 +101,7 @@ class fec_encode_manager_t
 	int fec_pending_time;
 	char buf[max_fec_packet_num+5][buf_len+100];
 	char *output_buf[max_fec_packet_num+5];
-	int output_len;
+	int output_len[max_fec_packet_num+5];
 	int ready_for_output;
 	u32_t seq;
 	int counter;
@@ -116,7 +116,7 @@ public:
 	u64_t get_timer_fd64();
 	int re_init(int data_num,int redundant_num,int mtu,int pending_num,int pending_time);
 	int input(char *s,int len/*,int &is_first_packet*/);
-	int output(int &n,char ** &s_arr,int &len);
+	int output(int &n,char ** &s_arr,int *&len);
 };
 struct fec_data_t
 {

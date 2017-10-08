@@ -172,20 +172,21 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     		buf[i][tmp_idx++]=(unsigned char)fec_data_num;
     		buf[i][tmp_idx++]=(unsigned char)fec_redundant_num;
     		buf[i][tmp_idx++]=(unsigned char)i;
-    		output_buf[i]=buf[i]+tmp_idx;
+    		output_buf[i]=buf[i]+tmp_idx; //////caution ,trick here.
+    		output_len[i]=tmp_idx+blob_len;
     		if(i<fec_data_num)
     		{
     			memcpy(buf[i]+tmp_idx,blob_output[i],blob_len);
     			tmp_idx+=blob_len;
     		}
     	}
-    	output_len=blob_len+sizeof(u32_t)+4*sizeof(char);/////remember to change this 4,if modified the protocol
+    	//output_len=blob_len+sizeof(u32_t)+4*sizeof(char);/////remember to change this 4,if modified the protocol
 
 		rs_encode2(fec_data_num,fec_data_num+fec_redundant_num,output_buf,blob_len);
 
 		for(int i=0;i<fec_data_num+fec_redundant_num;i++)
 		{
-			output_buf[i]=buf[i];
+			output_buf[i]=buf[i];//////caution ,trick here.
 		}
 
     	ready_for_output=1;
@@ -211,12 +212,12 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 	return 0;
 }
 
-int fec_encode_manager_t::output(int &n,char ** &s_arr,int &len)
+int fec_encode_manager_t::output(int &n,char ** &s_arr,int *&len)
 {
 	if(!ready_for_output)
 	{
 		n=-1;
-		len=-1;
+		len=0;
 		s_arr=0;
 	}
 	else
