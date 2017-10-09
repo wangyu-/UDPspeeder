@@ -32,6 +32,7 @@ int fec_redundant_num=8;
 int fec_mtu=1200;
 int fec_pending_num=200;
 int fec_pending_time=50000;
+int fec_type=0;
 
 u32_t local_ip_uint32,remote_ip_uint32=0;
 char local_ip[100], remote_ip[100];
@@ -217,7 +218,7 @@ int client_event_loop()
     conn_info_t *conn_info_p=new conn_info_t;
     conn_info_t &conn_info=*conn_info_p;  //huge size of conn_info,do not allocate on stack
     conn_info.conv_manager.reserve();
-	conn_info.fec_encode_manager.re_init(fec_data_num,fec_redundant_num,fec_mtu,fec_pending_num,fec_pending_time);
+	conn_info.fec_encode_manager.re_init(fec_data_num,fec_redundant_num,fec_mtu,fec_pending_num,fec_pending_time,fec_type);
 
 	init_listen_socket();
 
@@ -585,7 +586,7 @@ int server_event_loop()
 				{
 					conn_manager.insert(ip_port);
 					conn_info_t &conn_info=conn_manager.find(ip_port);
-					conn_info.fec_encode_manager.re_init(fec_data_num,fec_redundant_num,fec_mtu,fec_pending_num,fec_pending_time);
+					conn_info.fec_encode_manager.re_init(fec_data_num,fec_redundant_num,fec_mtu,fec_pending_num,fec_pending_time,fec_type);
 					conn_info.conv_manager.reserve();
 
 
@@ -1128,6 +1129,9 @@ void process_arg(int argc, char *argv[])
 			}
 			break;
 		case 't':
+
+			sscanf(optarg,"%d",&fec_type);
+			/*
 			if (strchr(optarg, ':') == 0)
 			{
 				int dup_delay=-1;
@@ -1147,7 +1151,7 @@ void process_arg(int argc, char *argv[])
 					mylog(log_fatal," must satisfy  1<=dmin<=dmax\n");
 					myexit(-1);
 				}
-			}
+			}*/
 			break;
 		case 'd':
 			dup_num=-1;

@@ -100,6 +100,7 @@ class fec_encode_manager_t
 	int fec_pending_num;
 	int fec_pending_time;
 	char buf[max_fec_packet_num+5][buf_len+100];
+	char buf_s_len[max_fec_packet_num+5];
 	char *output_buf[max_fec_packet_num+5];
 	int output_len[max_fec_packet_num+5];
 	int ready_for_output;
@@ -108,13 +109,18 @@ class fec_encode_manager_t
 	int timer_fd;
 	u64_t timer_fd64;
 
+	u32_t output_n;
+
+	int type;
+
 	blob_encode_t blob_encode;
+	int append(char *s,int len);
 public:
 	fec_encode_manager_t();
 	~fec_encode_manager_t();
 
 	u64_t get_timer_fd64();
-	int re_init(int data_num,int redundant_num,int mtu,int pending_num,int pending_time);
+	int re_init(int data_num,int redundant_num,int mtu,int pending_num,int pending_time,int type);
 	int input(char *s,int len/*,int &is_first_packet*/);
 	int output(int &n,char ** &s_arr,int *&len);
 };
@@ -141,6 +147,8 @@ class fec_decode_manager_t
 	int output_n;
 	char ** output_s_arr;
 	int * output_len_arr;
+	char *output_s_arr_buf[max_normal_packet_num+100];
+	int output_len_arr_buf[max_normal_packet_num+100];
 	int ready_for_output;
 public:
 	fec_decode_manager_t();
