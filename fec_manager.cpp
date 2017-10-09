@@ -276,6 +276,8 @@ int fec_decode_manager_t::input(char *s,int len)
 			ok=0;
 		if(fec_data[first_idx].len!=len)
 			ok=0;
+		if(fec_data[first_idx].type!=type)
+			ok=0;
 		if(ok==0)
 		{
 			return 0;
@@ -308,21 +310,27 @@ int fec_decode_manager_t::input(char *s,int len)
 	assert((int)inner_mp.size()<=data_num);
 	if((int)inner_mp.size()==data_num)
 	{
+		if(type==0)
+		{
+			char *fec_tmp_arr[max_fec_packet_num+5]={0};
+			for(auto it=inner_mp.begin();it!=inner_mp.end();it++)
+			{
+				fec_tmp_arr[it->first]=fec_data[it->second].buf;
+			}
+			rs_decode2(data_num,data_num+redundant_num,fec_tmp_arr,len); //the input data has been modified in-place
+			blob_decode.clear();
+			for(int i=0;i<data_num;i++)
+			{
+				blob_decode.input(fec_tmp_arr[i],len);
+			}
+			blob_decode.output(output_n,output_s_arr,output_len_arr);
+			ready_for_output=1;
+			anti_replay.set_invaild(seq);
+		}
+		else
+		{
 
-		char *fec_tmp_arr[max_fec_packet_num+5]={0};
-		for(auto it=inner_mp.begin();it!=inner_mp.end();it++)
-		{
-			fec_tmp_arr[it->first]=fec_data[it->second].buf;
 		}
-		rs_decode2(data_num,data_num+redundant_num,fec_tmp_arr,len); //the input data has been modified in-place
-		blob_decode.clear();
-		for(int i=0;i<data_num;i++)
-		{
-			blob_decode.input(fec_tmp_arr[i],len);
-		}
-		blob_decode.output(output_n,output_s_arr,output_len_arr);
-		ready_for_output=1;
-		anti_replay.set_invaild(seq);
 	}
 
 	return 0;

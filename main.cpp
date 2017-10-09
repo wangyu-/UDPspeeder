@@ -310,7 +310,7 @@ int client_event_loop()
 
 				if(events[idx].data.u64 == conn_info.fec_encode_manager.get_timer_fd64())
 				{
-					mylog(log_info,"timer!!!\n");
+					//mylog(log_info,"timer!!!\n");
 					uint64_t value;
 					if(!fd_manager.exist(fd64))   //fd64 has been closed
 					{
@@ -733,7 +733,7 @@ int server_event_loop()
 
 				if(fd64==conn_info.fec_encode_manager.get_timer_fd64())
 				{
-					mylog(log_info,"timer!!!\n");
+					//mylog(log_info,"timer!!!\n");
 					uint64_t value;
 					if(read(fd_manager.to_fd(fd64), &value, 8)!=8)
 					{

@@ -281,7 +281,7 @@ int conn_manager_t::clear_inactive()
 }
 int conn_manager_t::clear_inactive0()
 {
-mylog(log_info,"called\n");
+//mylog(log_info,"called\n");
 	 unordered_map<u64_t,conn_info_t*>::iterator it;
 	 unordered_map<u64_t,conn_info_t*>::iterator old_it;
 
@@ -293,12 +293,12 @@ mylog(log_info,"called\n");
 	int size=mp.size();
 	int num_to_clean=size/conn_clear_ratio+conn_clear_min;   //clear 1/10 each time,to avoid latency glitch
 
-	mylog(log_trace,"mp.size() %d\n", size);
+	//mylog(log_trace,"mp.size() %d\n", size);
 
 	num_to_clean=min(num_to_clean,(int)mp.size());
 	u64_t current_time=get_current_time();
 
-	mylog(log_info,"here size=%d\n",(int)mp.size());
+	//mylog(log_info,"here size=%d\n",(int)mp.size());
 	for(;;)
 	{
 		if(cnt>=num_to_clean) break;
@@ -310,7 +310,7 @@ mylog(log_info,"called\n");
 
 		if(it->second->conv_manager.get_size() >0)
 		{
-			mylog(log_info,"[%s:%d]size %d \n",my_ntoa(get_u64_h(it->first)),get_u64_l(it->first),(int)it->second->conv_manager.get_size());
+			//mylog(log_info,"[%s:%d]size %d \n",my_ntoa(get_u64_h(it->first)),get_u64_l(it->first),(int)it->second->conv_manager.get_size());
 			it++;
 		}
 		else
