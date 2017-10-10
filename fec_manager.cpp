@@ -11,6 +11,8 @@
 #include "lib/rs.h"
 #include "fd_manager.h"
 
+const int encode_fast_send=1;
+const int decode_fast_send=1;
 blob_encode_t::blob_encode_t()
 {
 	clear();
@@ -473,7 +475,6 @@ int fec_decode_manager_t::input(char *s,int len)
 			int missed_packet[max_fec_packet_num+5];
 			int missed_packet_counter=0;
 
-
 			for(int i=0;i<data_num;i++)
 			{
 				if(output_s_arr_buf[i]==0 ||i==inner_index) //only missed packet +current packet
@@ -481,6 +482,7 @@ int fec_decode_manager_t::input(char *s,int len)
 					missed_packet[missed_packet_counter++]=i;
 				}
 			}
+
 			rs_decode2(data_num,data_num+redundant_num,output_s_arr_buf,max_len);
 			for(int i=0;i<data_num;i++)
 			{
@@ -501,13 +503,16 @@ int fec_decode_manager_t::input(char *s,int len)
 			if(fec_ok)
 			{
 
-				//output_n=data_num;
+				output_n=data_num;
 
-				output_n=missed_packet_counter;
-				for(int i=0;i<missed_packet_counter;i++)
+				if(decode_fast_send)
 				{
-					output_s_arr_buf[i]=output_s_arr_buf[missed_packet[i]];
-					output_len_arr_buf[i]=output_len_arr_buf[missed_packet[i]];
+					output_n=missed_packet_counter;
+					for(int i=0;i<missed_packet_counter;i++)
+					{
+						output_s_arr_buf[i]=output_s_arr_buf[missed_packet[i]];
+						output_len_arr_buf[i]=output_len_arr_buf[missed_packet[i]];
+					}
 				}
 
 
@@ -526,22 +531,25 @@ int fec_decode_manager_t::input(char *s,int len)
 	else
 	{
 
-		if(type==1&&inner_index<data_num)
+		if(decode_fast_send)
 		{
-			assert(ready_for_output==0);
-			output_n=1;
-			int check_len=read_u16(fec_data[index].buf);
-			output_s_arr_buf[0]=fec_data[index].buf+sizeof(u16_t);
-			output_len_arr_buf[0]=fec_data[index].len-sizeof(u16_t);
-
-			if(output_len_arr_buf[0]!=check_len)
+			if(type==1&&inner_index<data_num)
 			{
-				mylog(log_warn,"len mismatch %d %d\n",output_len_arr_buf[0],check_len);
-			}
-			output_s_arr=output_s_arr_buf;
-			output_len_arr=output_len_arr_buf;
+				assert(ready_for_output==0);
+				output_n=1;
+				int check_len=read_u16(fec_data[index].buf);
+				output_s_arr_buf[0]=fec_data[index].buf+sizeof(u16_t);
+				output_len_arr_buf[0]=fec_data[index].len-sizeof(u16_t);
 
-			ready_for_output=1;
+				if(output_len_arr_buf[0]!=check_len)
+				{
+					mylog(log_warn,"len mismatch %d %d\n",output_len_arr_buf[0],check_len);
+				}
+				output_s_arr=output_s_arr_buf;
+				output_len_arr=output_len_arr_buf;
+
+				ready_for_output=1;
+			}
 		}
 	}
 
