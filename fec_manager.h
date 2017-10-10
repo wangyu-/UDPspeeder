@@ -135,12 +135,21 @@ struct fec_data_t
 	char buf[buf_len];
 	int len;
 };
+struct fec_group_t
+{
+	int type=-1;
+	int data_num=-1;
+	int redundant_num=-1;
+	int len=-1;
+	int data_counter=0;
+	map<int,int>  group_mp;
+};
 class fec_decode_manager_t
 {
 	anti_replay_t anti_replay;
 	fec_data_t fec_data[fec_buff_size];
 	int index;
-	unordered_map<u32_t, map<int,int> > mp;
+	unordered_map<u32_t, fec_group_t> mp;
 	blob_decode_t blob_decode;
 
 
