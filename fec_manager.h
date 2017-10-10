@@ -99,8 +99,8 @@ class fec_encode_manager_t
 	int fec_mtu;
 	int fec_pending_num;
 	int fec_pending_time;
-	char buf[max_fec_packet_num+5][buf_len+100];
-	char buf_s_len[max_fec_packet_num+5];
+	char buf[max_fec_packet_num+5][buf_len];
+	int buf_s_len[max_fec_packet_num+5];
 	char *output_buf[max_fec_packet_num+5];
 	int output_len[max_fec_packet_num+5];
 	int ready_for_output;

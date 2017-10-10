@@ -56,7 +56,7 @@ int delay_manager_t::add(my_time_t delay,const dest_t &dest,char *data,int len)
 	{
 		int ret=delay_data.handle();
 		if (ret != 0) {
-			mylog(log_debug, "handle() return %d\n", ret);
+			mylog(log_trace, "handle() return %d\n", ret);
 		}
 		return 0;
 	}

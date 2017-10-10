@@ -29,7 +29,7 @@ int mtu_warn=1350;
 
 int fec_data_num=20;
 int fec_redundant_num=8;
-int fec_mtu=1200;
+int fec_mtu=1300;
 int fec_pending_num=200;
 int fec_pending_time=50000;
 int fec_type=0;
@@ -112,10 +112,11 @@ int delay_send(my_time_t delay,const dest_t &dest,char *data,int len)
 {
 	int rand=random()%100;
 	//mylog(log_info,"rand = %d\n",rand);
-	if(rand>=80)
-	{
-		//return 0;
-		//mylog(log_info,"dropped!\n");
+
+	if (dest.cook&&random_drop != 0) {
+		if (get_true_random_number() % 10000 < (u32_t) random_drop) {
+			return 0;
+		}
 	}
 	return delay_manager.add(delay,dest,data,len);;
 }
@@ -153,6 +154,7 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 
 
 		conn_info.fec_encode_manager.output(out_n,out_arr,out_len);
+
 
 
 	}

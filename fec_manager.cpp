@@ -162,16 +162,18 @@ int fec_encode_manager_t::append(char *s,int len/*,int &is_first_packet*/)
 		its.it_value.tv_nsec=(tmp_time%1000000llu)*1000llu;
 		timerfd_settime(timer_fd,TFD_TIMER_ABSTIME,&its,0);
 	}
-
 	if(type==0)
 	{
 		blob_encode.input(s,len);
 	}
 	else if(type==1)
 	{
+		mylog(log_info,"counter=%d\n",counter);
 		assert(len<=65535&&len>=0);
-		write_u16(buf[counter]+sizeof(u32_t)+4*sizeof(char),(u16_t)((u32_t)len));
-		memcpy(buf[counter]+sizeof(u32_t)+4*sizeof(char)+sizeof(u16_t),s,len);//remember to change this,if protocol is modified
+		char * p=buf[counter]+sizeof(u32_t)+4*sizeof(char);
+		write_u16(p,(u16_t)((u32_t)len));
+		p+=sizeof(u16_t);
+		memcpy(p,s,len);//remember to change this,if protocol is modified
 		buf_s_len[counter]=len+sizeof(u16_t);
 	}
 	else
@@ -185,7 +187,7 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 {
 	int about_to_fec=0;
 	int delayed_append=0;
-	if(type==0&& s!=0 &&blob_encode.get_num()==0&&blob_encode.get_shard_len(fec_data_num,len)>=fec_mtu)
+	if(type==0&& s!=0 &&counter==0&&blob_encode.get_shard_len(fec_data_num,len)>=fec_mtu)
 	{
 		mylog(log_warn,"message too long len=%d,ignored\n",len);
 		return -1;
@@ -196,6 +198,7 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 		return -1;
 	}
 	if(s==0) about_to_fec=1;//now
+
 	assert(type==0||type==1);
 	if(type==0&& blob_encode.get_shard_len(fec_data_num,len)>=fec_mtu) {about_to_fec=1; delayed_append=1;}//fec then add packet
 	if(type==0) assert(counter<fec_pending_num);
@@ -208,6 +211,8 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 	}
 
 	if(type==0&& counter==fec_pending_num) {about_to_fec=1;} //
+
+
 	if(type==1&& counter==fec_data_num) about_to_fec=1;
 
 
@@ -218,7 +223,7 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     	mylog(log_debug,"counter=%d\n",counter);
     	if(counter==0)
     	{
-    		mylog(log_warn,"unexpected s==0\n");
+    		mylog(log_warn,"unexpected counter==0\n");
     		return -1;
     	}
 
@@ -239,57 +244,62 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 
     		for(int i=0;i<counter;i++)
     		{
-    			assert(buf_s_len[i]>0);
+    			assert(buf_s_len[i]>=0);
     			if(buf_s_len[i]>fec_len) fec_len=buf_s_len[i];
     		}
 
     	}
+    	mylog(log_info,"%d %d %d\n",actual_data_num,actual_redundant_num,fec_len);
 
+    	char *tmp_output_buf[max_fec_packet_num+5]={0};
     	for(int i=0;i<actual_data_num+actual_redundant_num;i++)
     	{
     		int tmp_idx=0;
     		write_u32(buf[i]+tmp_idx,seq);
     		tmp_idx+=sizeof(u32_t);
-    		buf[i][tmp_idx++]=(unsigned char)0;
+    		buf[i][tmp_idx++]=(unsigned char)type;
     		buf[i][tmp_idx++]=(unsigned char)actual_data_num;
     		buf[i][tmp_idx++]=(unsigned char)actual_redundant_num;
     		buf[i][tmp_idx++]=(unsigned char)i;
 
-    		output_buf[i]=buf[i]+tmp_idx; //////caution ,trick here.
+    		tmp_output_buf[i]=buf[i]+tmp_idx; //////caution ,trick here.
+
     		if(type==0)
     		{
         		output_len[i]=tmp_idx+fec_len;
+        		if(i<actual_data_num)
+        		{
+        			memcpy(buf[i]+tmp_idx,blob_output[i],fec_len);
+        		}
     		}
     		else
     		{
     			if(i<actual_data_num)
+    			{
     				output_len[i]=tmp_idx+buf_s_len[i];
+    				memset(tmp_output_buf[i]+buf_s_len[i],0,fec_len-buf_s_len[i]);
+    			}
     			else
     				output_len[i]=tmp_idx+fec_len;
-    		}
 
-    		if(i<actual_data_num)
-    		{
-    			if(type==0)
-    				memcpy(buf[i]+tmp_idx,blob_output[i],fec_len);
-    			else
-    				memset(buf[i]+tmp_idx+buf_s_len[i],0,fec_len-buf_s_len[i]);
     		}
+    		output_buf[i]=buf[i];
+
     	}
     	//output_len=blob_len+sizeof(u32_t)+4*sizeof(char);/////remember to change this 4,if modified the protocol
+		rs_encode2(actual_data_num,actual_data_num+actual_redundant_num,tmp_output_buf,fec_len);
 
-		rs_encode2(actual_data_num,actual_data_num+actual_redundant_num,output_buf,fec_len);
-
-		for(int i=0;i<actual_data_num+actual_redundant_num;i++)
-		{
-			output_buf[i]=buf[i];//////caution ,trick here.
-		}
-
+		mylog(log_info,"!!! s= %d\n");
     	ready_for_output=1;
     	seq++;
     	counter=0;
     	output_n=actual_data_num+actual_redundant_num;
     	blob_encode.clear();
+
+
+		itimerspec its;
+		memset(&its,0,sizeof(its));
+		timerfd_settime(timer_fd,TFD_TIMER_ABSTIME,&its,0);
 	}
 
 	if(s!=0&&delayed_append)
@@ -346,11 +356,21 @@ int fec_decode_manager_t::input(char *s,int len)
 
 	if(len<0)
 	{
+		mylog(log_warn,"len<0\n");
 		return -1;
 	}
-	if(type==1&&len<2)
+	if(type==1&&len<(int)sizeof(u16_t))
 	{
+		mylog(log_warn,"type==1&&len<2\n");
 		return -1;
+	}
+	if(type==1)
+	{
+		if(inner_index<data_num&&(int)( read_u16(s+tmp_idx)+sizeof(u16_t))!=len)
+		{
+			mylog(log_warn,"inner_index<data_num&&read_u16(s+tmp_idx)+sizeof(u16_t)!=len    %d %d\n",(int)( read_u16(s+tmp_idx)+sizeof(u16_t)),len);
+			return -1;
+		}
 	}
 
 	if(data_num+redundant_num>max_fec_packet_num)
@@ -375,17 +395,21 @@ int fec_decode_manager_t::input(char *s,int len)
 			ok=0;
 		if(ok==0)
 		{
-			return 0;
+			return -1;
 		}
 	}
 
 	if(fec_data[index].used!=0)
 	{
-		int tmp_seq=fec_data[index].seq;
+		u32_t tmp_seq=fec_data[index].seq;
 		anti_replay.set_invaild(tmp_seq);
 		if(mp.find(tmp_seq)!=mp.end())
 		{
 			mp.erase(tmp_seq);
+		}
+		if(tmp_seq==seq)
+		{
+			return -1;
 		}
 	}
 
@@ -425,11 +449,19 @@ int fec_decode_manager_t::input(char *s,int len)
 		{
 			int max_len=-1;
 			int fec_ok=1;
+			int debug_num=inner_mp.size();
 			//outupt_s_arr_buf[max_fec_packet_num+5]={0};
+
+			//memset(output_s_arr_buf,0,sizeof(output_s_arr_buf));//in efficient
+
+			for(int i=0;i<data_num+redundant_num;i++)
+			{
+				output_s_arr_buf[i]=0;
+			}
 			for(auto it=inner_mp.begin();it!=inner_mp.end();it++)
 			{
 				output_s_arr_buf[it->first]=fec_data[it->second].buf;
-				assert(fec_data[it->second].len>=0);
+				assert(fec_data[it->second].len>=(int)sizeof(u16_t));
 
 				if(fec_data[it->second].len > max_len)
 					max_len=fec_data[it->second].len;
@@ -440,6 +472,8 @@ int fec_decode_manager_t::input(char *s,int len)
 			}
 			int missed_packet[max_fec_packet_num+5];
 			int missed_packet_counter=0;
+
+
 			for(int i=0;i<data_num;i++)
 			{
 				if(output_s_arr_buf[i]==0 ||i==inner_index) //only missed packet +current packet
@@ -454,12 +488,21 @@ int fec_decode_manager_t::input(char *s,int len)
 				output_s_arr_buf[i]+=sizeof(u16_t);
 				if(output_len_arr_buf[i]>max_data_len)
 				{
+					mylog(log_warn,"invaild len %d,seq= %u,data_num= %d r_num= %d,i= %d\n",output_len_arr_buf[i],seq,data_num,redundant_num,i);
 					fec_ok=0;
-					break;
+					for(int i=0;i<missed_packet_counter;i++)
+					{
+						log_bare(log_warn,"%d ",missed_packet[i]);
+					}
+					log_bare(log_warn,"\n");
+					//break;
 				}
 			}
 			if(fec_ok)
 			{
+
+				//output_n=data_num;
+
 				output_n=missed_packet_counter;
 				for(int i=0;i<missed_packet_counter;i++)
 				{
@@ -467,25 +510,37 @@ int fec_decode_manager_t::input(char *s,int len)
 					output_len_arr_buf[i]=output_len_arr_buf[missed_packet[i]];
 				}
 
+
 				output_s_arr=output_s_arr_buf;
 				output_len_arr=output_len_arr_buf;
 				assert(ready_for_output==0);
 				ready_for_output=1;
-				anti_replay.set_invaild(seq);
 			}
 			else
 			{
 				ready_for_output=0;
 			}
+			anti_replay.set_invaild(seq);
 		}
 	}
 	else
 	{
-		if(type==1&&inner_index<=data_num)
+
+		if(type==1&&inner_index<data_num)
 		{
+			assert(ready_for_output==0);
 			output_n=1;
+			int check_len=read_u16(fec_data[index].buf);
 			output_s_arr_buf[0]=fec_data[index].buf+sizeof(u16_t);
-			output_len_arr[0]=fec_data[index].len-sizeof(u16_t);
+			output_len_arr_buf[0]=fec_data[index].len-sizeof(u16_t);
+
+			if(output_len_arr_buf[0]!=check_len)
+			{
+				mylog(log_warn,"len mismatch %d %d\n",output_len_arr_buf[0],check_len);
+			}
+			output_s_arr=output_s_arr_buf;
+			output_len_arr=output_len_arr_buf;
+
 			ready_for_output=1;
 		}
 	}
