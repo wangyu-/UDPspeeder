@@ -553,7 +553,7 @@ int server_event_loop()
 			{
 				uint64_t value;
 				read(timer.get_timer_fd(), &value, 8);
-				///conn_manager.clear_inactive();///////////////////////////remember to uncomment
+				conn_manager.clear_inactive();
 				//conn_info.conv_manager.clear_inactive();
 			}
 			else if (events[idx].data.u64 == (u64_t)local_listen_fd)
@@ -611,10 +611,11 @@ int server_event_loop()
 				}
 				conn_info_t &conn_info=conn_manager.find(ip_port);
 
+				conn_info.update_active_time();
 				int  out_n;char **out_arr;int *out_len;int *out_delay;
 				from_fec_to_normal(conn_info,data,data_len,out_n,out_arr,out_len,out_delay);
 
-				mylog(log_info,"out_n= %d\n",out_n);
+				mylog(log_trace,"out_n= %d\n",out_n);
 				for(int i=0;i<out_n;i++)
 				{
 					u32_t conv;
@@ -727,6 +728,7 @@ int server_event_loop()
 				//conn_info_t* p_conn_info=conn_manager.find_insert_p(ip_port);
 
 				conn_info_t &conn_info=conn_manager.find(ip_port);
+				conn_info.update_active_time();
 
 				int  out_n;char **out_arr;int *out_len;int *out_delay;
 				dest_t dest;

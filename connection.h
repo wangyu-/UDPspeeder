@@ -76,8 +76,13 @@ struct conn_info_t     //stores info for a raw connection.for client ,there is o
 	fec_decode_manager_t fec_decode_manager;
 	my_timer_t timer;
 	ip_port_t ip_port;
+	u64_t last_active_time;
 	conn_info_t()
 	{
+	}
+	void update_active_time()
+	{
+		last_active_time=get_current_time();
 	}
 	conn_info_t(const conn_info_t &b)
 	{

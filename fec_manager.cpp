@@ -252,7 +252,7 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     		}
 
     	}
-    	mylog(log_info,"%d %d %d\n",actual_data_num,actual_redundant_num,fec_len);
+    	mylog(log_trace,"%d %d %d\n",actual_data_num,actual_redundant_num,fec_len);
 
     	char *tmp_output_buf[max_fec_packet_num+5]={0};
     	for(int i=0;i<actual_data_num+actual_redundant_num;i++)
@@ -301,7 +301,7 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     	//output_len=blob_len+sizeof(u32_t)+4*sizeof(char);/////remember to change this 4,if modified the protocol
 		rs_encode2(actual_data_num,actual_data_num+actual_redundant_num,tmp_output_buf,fec_len);
 
-		mylog(log_info,"!!! s= %d\n");
+		mylog(log_trace,"!!! s= %d\n");
 
     	ready_for_output=1;
     	seq++;
@@ -412,7 +412,7 @@ int fec_decode_manager_t::input(char *s,int len)
 	int inner_index=(unsigned char)s[tmp_idx++];
 	len=len-tmp_idx;
 
-	mylog(log_info,"input\n");
+	mylog(log_trace,"input\n");
 	if(len<0)
 	{
 		mylog(log_warn,"len<0\n");

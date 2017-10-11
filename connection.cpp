@@ -313,6 +313,10 @@ int conn_manager_t::clear_inactive0()
 			//mylog(log_info,"[%s:%d]size %d \n",my_ntoa(get_u64_h(it->first)),get_u64_l(it->first),(int)it->second->conv_manager.get_size());
 			it++;
 		}
+		else if(current_time<it->second->last_active_time+server_conn_timeout)
+		{
+			it++;
+		}
 		else
 		{
 			mylog(log_info,"[%s:%d]inactive conn cleared \n",my_ntoa(get_u64_h(it->first)),get_u64_l(it->first));
