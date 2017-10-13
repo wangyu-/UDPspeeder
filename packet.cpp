@@ -301,7 +301,7 @@ int put_crc32(char * s,int &len)
 	return 0;
 }
 
-int cook_rm_crc32(char * s,int &len)
+int de_cook(char * s,int &len)
 {
 	if(!disable_xor)decrypt_0(s,len,key_string);
 	if(!disable_obscure)
@@ -313,7 +313,13 @@ int cook_rm_crc32(char * s,int &len)
 			return ret;
 		}
 	}
-	return rm_crc32(s,len);
+	int ret=rm_crc32(s,len);
+	if(ret!=0)
+	{
+		mylog(log_debug,"rm_crc32 fail\n");
+		return ret;
+	}
+	return 0;
 }
 int rm_crc32(char * s,int &len)
 {

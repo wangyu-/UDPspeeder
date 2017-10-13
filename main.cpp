@@ -442,9 +442,9 @@ int client_event_loop()
 					mylog(log_warn,"huge packet,data len=%d (>%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ",data_len,mtu_warn);
 				}
 
-				if(cook_rm_crc32(data,data_len)!=0)
+				if(de_cook(data,data_len)!=0)
 				{
-					mylog(log_debug,"cook_rm_crc32 check error");
+					mylog(log_debug,"de_cook error");
 					continue;
 				}
 
@@ -602,9 +602,9 @@ int server_event_loop()
 				}
 
 
-				if(cook_rm_crc32(data,data_len)!=0)
+				if(de_cook(data,data_len)!=0)
 				{
-					mylog(log_debug,"cook_rm_crc32 check error");
+					mylog(log_debug,"de_cook error");
 					continue;
 				}
 
