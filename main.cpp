@@ -30,10 +30,10 @@ int mtu_warn=1350;
 int disable_mtu_warn=0;
 
 int fec_data_num=20;
-int fec_redundant_num=16;
-int fec_mtu=1300;
-int fec_pending_num=200;
-int fec_pending_time=50000;
+int fec_redundant_num=8;
+int fec_mtu=1000;
+int fec_pending_num=30;
+int fec_pending_time=10000;
 int fec_type=0;
 
 u32_t local_ip_uint32,remote_ip_uint32=0;

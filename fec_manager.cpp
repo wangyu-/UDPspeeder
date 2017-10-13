@@ -223,7 +223,7 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 	{
     	char ** blob_output;
     	int fec_len=-1;
-    	mylog(log_debug,"counter=%d\n",counter);
+    	mylog(log_trace,"counter=%d\n",counter);
     	if(counter==0)
     	{
     		mylog(log_warn,"unexpected counter==0\n");
