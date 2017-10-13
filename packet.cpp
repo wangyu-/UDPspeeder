@@ -11,13 +11,17 @@
 #include "packet.h"
 
 int iv_min=2;
-int iv_max=16;//< 256;
+int iv_max=18;//< 256;
 u64_t packet_send_count=0;
 u64_t dup_packet_send_count=0;
 u64_t packet_recv_count=0;
 u64_t dup_packet_recv_count=0;
+
 typedef u64_t anti_replay_seq_t;
 int disable_replay_filter=0;
+
+int disable_obscure=0;
+int disable_xor=0;
 
 int random_drop=0;
 
@@ -36,6 +40,7 @@ void encrypt_0(char * input,int &len,char *key)
 		input[i]^=key[j];
 	}
 }
+
 void decrypt_0(char * input,int &len,char *key)
 {
 
@@ -47,7 +52,7 @@ void decrypt_0(char * input,int &len,char *key)
 		input[i]^=key[j];
 	}
 }
-int do_obscure(const char * input, int in_len,char *output,int &out_len)
+int do_obscure_old(const char * input, int in_len,char *output,int &out_len)
 {
 	//memcpy(output,input,in_len);
 //	out_len=in_len;
@@ -77,7 +82,42 @@ int do_obscure(const char * input, int in_len,char *output,int &out_len)
 	out_len=iv_len+in_len+1;
 	return 0;
 }
-int de_obscure(const char * input, int in_len,char *output,int &out_len)
+
+int do_obscure(char * data,int &len)
+{
+	assert(len>=0);
+	assert(len<buf_len);
+
+	int iv_len=random_between(iv_min,iv_max);
+	get_true_random_chars(data+len,iv_len);
+	data[iv_len+len]=(uint8_t)iv_len;
+	for(int i=0,j=0;i<len;i++,j++)
+	{
+		if(j==iv_len)j=0;
+		data[i]^=data[len+j];
+	}
+
+	len=len+iv_len+1;
+	return 0;
+}
+
+int de_obscure(char * data,int &len)
+{
+	if(len<1) return -1;
+	int iv_len=int ((uint8_t) data[len-1]);
+
+	if(len<1+iv_len) return -1;
+
+	len=len-1-iv_len;
+	for(int i=0,j=0;i<len;i++,j++)
+	{
+		if(j==iv_len)j=0;
+		data[i]^=data[len+j];
+	}
+
+	return 0;
+}
+int de_obscure_old(const char * input, int in_len,char *output,int &out_len)
 {
 	//memcpy(output,input,in_len);
 	//out_len=in_len;
@@ -127,27 +167,20 @@ int sendto_ip_port (u32_t ip,int port,char * buf, int len,int flags)
 {
 	return sendto_fd_ip_port(local_listen_fd,ip,port,buf,len,flags);
 }
+
 int send_fd (int fd,char * buf, int len,int flags)
 {
-	/*
-	if(is_client)
-	{
-		dup_packet_send_count++;
-	}
-	if(is_client&&random_drop!=0)
-	{
-		if(get_true_random_number()%10000<(u32_t)random_drop)
-		{
-			return 0;
-		}
-	}*/
 	return send(fd,buf,len,flags);
 }
-//enum delay_type_t {none=0,enum_sendto_u64,enum_send_fd,client_to_local,client_to_remote,server_to_local,server_to_remote};
 
 int my_send(const dest_t &dest,char *data,int len)
 {
-	if(dest.cook)put_crc32(data,len);
+	if(dest.cook)
+	{
+		put_crc32(data,len);
+		if(!disable_obscure)do_obscure(data,len);
+		if(!disable_xor)encrypt_0(data,len,key_string);
+	}
 	switch(dest.type)
 	{
 		case type_ip_port:
@@ -197,6 +230,7 @@ int my_send(const dest_t &dest,char *data,int len)
  *  this function comes from  http://www.hackersdelight.org/hdcodetxt/crc.c.txt
  */
 unsigned int crc32h(unsigned char *message,int len) {
+	assert(len>=0);
    int i, crc;
    unsigned int byte, c;
    const unsigned int g0 = 0xEDB88320,    g1 = g0>>1,
@@ -220,6 +254,7 @@ unsigned int crc32h(unsigned char *message,int len) {
 
 int put_conv0(u32_t conv,const char * input,int len_in,char *&output,int &len_out)
 {
+	assert(len_in>=0);
 	static char buf[buf_len];
 	output=buf;
 	u32_t n_conv=htonl(conv);
@@ -233,6 +268,7 @@ int put_conv0(u32_t conv,const char * input,int len_in,char *&output,int &len_ou
 }
 int get_conv0(u32_t &conv,const char *input,int len_in,char *&output,int &len_out )
 {
+	assert(len_in>=0);
 	u32_t n_conv;
 	memcpy(&n_conv,input,sizeof(n_conv));
 	conv=ntohl(n_conv);
@@ -255,14 +291,34 @@ int get_conv0(u32_t &conv,const char *input,int len_in,char *&output,int &len_ou
 }
 int put_crc32(char * s,int &len)
 {
-	if(len<0) return -1;
+	assert(len>=0);
+	//if(len<0) return -1;
 	u32_t crc32=crc32h((unsigned char *)s,len);
 	write_u32(s+len,crc32);
 	len+=sizeof(u32_t);
+
+
 	return 0;
+}
+
+int cook_rm_crc32(char * s,int &len)
+{
+	if(!disable_xor)decrypt_0(s,len,key_string);
+	if(!disable_obscure)
+	{
+		int ret=de_obscure(s,len);
+		if(ret!=0)
+		{
+			mylog(log_debug,"de_obscure fail\n");
+			return ret;
+		}
+	}
+	return rm_crc32(s,len);
 }
 int rm_crc32(char * s,int &len)
 {
+	assert(len>=0);
+
 	len-=sizeof(u32_t);
 	if(len<0) return -1;
 	u32_t crc32_in=read_u32(s+len);
@@ -284,6 +340,7 @@ int put_conv(u32_t conv,const char * input,int len_in,char *&output,int &len_out
 	memcpy(output,&n_conv,sizeof(n_conv));
 	memcpy(output+sizeof(n_conv),input,len_in);
 	len_out=len_in+(int)(sizeof(n_conv));
+
 	return 0;
 }
 int get_conv(u32_t &conv,const char *input,int len_in,char *&output,int &len_out )
