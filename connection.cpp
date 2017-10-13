@@ -7,8 +7,6 @@
 
 #include "connection.h"
 
-int disable_anti_replay=0;//if anti_replay windows is diabled
-
 const int disable_conv_clear=0;//a udp connection in the multiplexer is called conversation in this program,conv for short.
 
 const int disable_conn_clear=0;//a raw connection is called conn.
@@ -22,6 +20,8 @@ void server_clear_function(u64_t u64)//used in conv_manager in server mode.for s
 	assert(fd_manager.exist(fd64));
 	fd_manager.fd64_close(fd64);
 }
+
+////////////////////////////////////////////////////////////////////
 
 conv_manager_t::conv_manager_t()
 {
@@ -45,11 +45,11 @@ void conv_manager_t::reserve()
 }
 void conv_manager_t::clear()
 {
-	if(disable_conv_clear) return ;
+	//if(disable_conv_clear) return ;//////what was the purpose of this code?
 
 	if(program_mode==server_mode)
 	{
-		for(it=conv_to_u64.begin();it!=conv_to_u64.end();it++)
+		for(auto it=conv_to_u64.begin();it!=conv_to_u64.end();it++)
 		{
 			//int fd=int((it->second<<32u)>>32u);
 			server_clear_function(  it->second);
@@ -81,18 +81,22 @@ int conv_manager_t::is_u64_used(u64_t u64)
 }
 u32_t conv_manager_t::find_conv_by_u64(u64_t u64)
 {
+	assert(is_u64_used(u64));
 	return u64_to_conv[u64];
 }
 u64_t conv_manager_t::find_u64_by_conv(u32_t conv)
 {
+	assert(is_conv_used(conv));
 	return conv_to_u64[conv];
 }
 int conv_manager_t::update_active_time(u32_t conv)
 {
+	assert(is_conv_used(conv));
 	return conv_last_active_time[conv]=get_current_time();
 }
-int conv_manager_t::insert_conv(u32_t conv,u64_t u64)//////todo add capacity
+int conv_manager_t::insert_conv(u32_t conv,u64_t u64)//////todo add capacity ///done at upper level
 {
+	assert(!is_conv_used(conv));
 	int bucket_size_before=conv_last_active_time.bucket_count();
 	u64_to_conv[u64]=conv;
 	conv_to_u64[conv]=u64;
@@ -132,7 +136,7 @@ int conv_manager_t::clear_inactive0(char * ip_port)
 
 	//map<uint32_t,uint64_t>::iterator it;
 	int cnt=0;
-	it=clear_it;
+	auto it=clear_it;
 	int size=conv_last_active_time.size();
 	int num_to_clean=size/conv_clear_ratio+conv_clear_min;   //clear 1/10 each time,to avoid latency glitch
 
@@ -152,9 +156,10 @@ int conv_manager_t::clear_inactive0(char * ip_port)
 		if( current_time -it->second  >conv_timeout )
 		{
 			//mylog(log_info,"inactive conv %u cleared \n",it->first);
-			old_it=it;
+			//auto old_it=it;
+			//it++;
+			u32_t conv= it->first;
 			it++;
-			u32_t conv= old_it->first;
 			erase_conv(conv);
 			if(ip_port==0)
 			{
@@ -176,36 +181,27 @@ int conv_manager_t::clear_inactive0(char * ip_port)
 }
 
 
+////////////////////////////////////////////////////////////////////
 
- conn_manager_t::conn_manager_t()
- {
-	 //ready_num=0;
-	 mp.reserve(10007);
-	 //fd64_mp.reserve(100007);
-	 clear_it=mp.begin();
-	 last_clear_time=0;
- }
- int conn_manager_t::exist(ip_port_t ip_port)
- {
-	 u64_t u64=ip_port.to_u64();
-	 if(mp.find(u64)!=mp.end())
-	 {
-		 return 1;
-	 }
-	 return 0;
- }
- /*
- int insert(uint32_t ip,uint16_t port)
- {
-	 uint64_t u64=0;
-	 u64=ip;
-	 u64<<=32u;
-	 u64|=port;
-	 mp[u64];
-	 return 0;
- }*/
 
- conn_info_t *& conn_manager_t::find_p(ip_port_t ip_port) //todo capacity
+conn_manager_t::conn_manager_t()
+{
+	//ready_num=0;
+	mp.reserve(10007);
+	//fd64_mp.reserve(100007);
+	clear_it=mp.begin();
+	last_clear_time=0;
+}
+int conn_manager_t::exist(ip_port_t ip_port)
+{
+	u64_t u64=ip_port.to_u64();
+	if(mp.find(u64)!=mp.end())
+	{
+	 return 1;
+	}
+	return 0;
+}
+ conn_info_t *& conn_manager_t::find_p(ip_port_t ip_port) //todo capacity   ///done at upper level
  //be aware,the adress may change after rehash
  {
 	 assert(exist(ip_port));
@@ -220,53 +216,17 @@ int conv_manager_t::clear_inactive0(char * ip_port)
  }
  int conn_manager_t::insert(ip_port_t ip_port)
  {
-	    assert(!exist(ip_port));
-	    int bucket_size_before=mp.bucket_count();
-	    mp[ip_port.to_u64()]=new conn_info_t;
-		int bucket_size_after=mp.bucket_count();
-		if(bucket_size_after!=bucket_size_before)
-			clear_it=mp.begin();
-		return 0;
+	assert(!exist(ip_port));
+	int bucket_size_before=mp.bucket_count();
+	mp[ip_port.to_u64()]=new conn_info_t;
+	int bucket_size_after=mp.bucket_count();
+	if(bucket_size_after!=bucket_size_before)
+		clear_it=mp.begin();
+	return 0;
  }
- /*
- int conn_manager_t::exist_fd64(fd64_t fd64)
- {
-	 return fd64_mp.find(fd64)!=fd64_mp.end();
- }
- void conn_manager_t::insert_fd64(fd64_t fd64,ip_port_t ip_port)
- {
-	 assert(exist_ip_port(ip_port));
-	 u64_t u64=ip_port.to_u64();
-	 fd64_mp[fd64]=u64;
- }
- ip_port_t conn_manager_t::find_by_fd64(fd64_t fd64)
- {
-	 assert(exist_fd64(fd64));
-	 ip_port_t res;
-	 res.from_u64(fd64_mp[fd64]);
-	 return res;
- }*/
  int conn_manager_t::erase(unordered_map<u64_t,conn_info_t*>::iterator erase_it)
  {
-	 /*
-		if(erase_it->second->state.server_current_state==server_ready)
-		{
-			ready_num--;
-			assert(i32_t(ready_num)!=-1);
-			assert(erase_it->second!=0);
-			assert(erase_it->second->timer_fd !=0);
-			assert(erase_it->second->oppsite_const_id!=0);
-			assert(const_id_mp.find(erase_it->second->oppsite_const_id)!=const_id_mp.end());
-			assert(timer_fd_mp.find(erase_it->second->timer_fd)!=timer_fd_mp.end());
-
-			const_id_mp.erase(erase_it->second->oppsite_const_id);
-			timer_fd_mp.erase(erase_it->second->timer_fd);
-			close(erase_it->second->timer_fd);// close will auto delte it from epoll
-			delete(erase_it->second);
-			mp.erase(erase_it->first);
-		}
-		else*/
-	 ////////todo  close and erase timer_fd ,check fd64 empty
+	 ////////todo  close and erase timer_fd ,check fd64 empty   ///dont need
 		delete(erase_it->second);
 		mp.erase(erase_it->first);
 		return 0;

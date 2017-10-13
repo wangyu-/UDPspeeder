@@ -170,7 +170,7 @@ int fec_encode_manager_t::append(char *s,int len/*,int &is_first_packet*/)
 	}
 	else if(type==1)
 	{
-		mylog(log_info,"counter=%d\n",counter);
+		mylog(log_trace,"counter=%d\n",counter);
 		assert(len<=65535&&len>=0);
 		char * p=buf[counter]+sizeof(u32_t)+4*sizeof(char);
 		write_u16(p,(u16_t)((u32_t)len));

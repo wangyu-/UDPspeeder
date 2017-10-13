@@ -18,20 +18,6 @@ extern int disable_anti_replay;
 #include "fec_manager.h"
 
 
-/*
-struct anti_replay_t  //its for anti replay attack,similar to openvpn/ipsec 's anti replay window
-{
-	u64_t max_packet_received;
-	char window[anti_replay_window_size];
-	anti_replay_seq_t anti_replay_seq;
-	anti_replay_seq_t get_new_seq_for_send();
-	anti_replay_t();
-	void re_init();
-
-	int is_vaild(u64_t seq);
-};//anti_replay;
-*/
-
 struct conv_manager_t  // manage the udp connections
 {
 	//typedef hash_map map;
@@ -40,8 +26,6 @@ struct conv_manager_t  // manage the udp connections
 	unordered_map<u32_t,u64_t> conv_last_active_time;
 
 	unordered_map<u32_t,u64_t>::iterator clear_it;
-	unordered_map<u32_t,u64_t>::iterator it;
-	unordered_map<u32_t,u64_t>::iterator old_it;
 
 	//void (*clear_function)(uint64_t u64) ;
 
@@ -105,10 +89,6 @@ struct conn_manager_t  //manager for connections. for client,we dont need conn_m
 	conn_info_t *& find_p(ip_port_t);  //be aware,the adress may change after rehash
 	conn_info_t & find(ip_port_t) ; //be aware,the adress may change after rehash
 	int insert(ip_port_t);
-	 /*
-	 int exist_fd64(fd64_t fd64);
-	 void insert_fd64(fd64_t fd64,ip_port_t);
-	 ip_port_t find_by_fd64(fd64_t fd64);*/
 
 	int erase(unordered_map<u64_t,conn_info_t*>::iterator erase_it);
 	int clear_inactive();

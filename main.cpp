@@ -30,7 +30,7 @@ int mtu_warn=1350;
 int disable_mtu_warn=0;
 
 int fec_data_num=20;
-int fec_redundant_num=8;
+int fec_redundant_num=16;
 int fec_mtu=1300;
 int fec_pending_num=200;
 int fec_pending_time=50000;
@@ -57,7 +57,6 @@ int VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 int init_listen_socket()
 {
 	local_listen_fd =socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
 
 	int yes = 1;
 	//setsockopt(udp_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
@@ -1319,12 +1318,12 @@ int main(int argc, char *argv[])
 	assert(sizeof(i64_t)==8);
 	assert(sizeof(u32_t)==4);
 	assert(sizeof(i32_t)==4);
+	assert(sizeof(u16_t)==2);
+	assert(sizeof(i16_t)==2);
 	dup2(1, 2);		//redirect stderr to stdout
 	int i, j, k;
 	process_arg(argc,argv);
 	delay_manager.capacity=max_pending_packet;
-	//init_random_number_fd();
-
 	local_ip_uint32=inet_addr(local_ip);
 	remote_ip_uint32=inet_addr(remote_ip);
 	fd_manager.reserve(10007);
