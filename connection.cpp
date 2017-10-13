@@ -27,6 +27,7 @@ conv_manager_t::conv_manager_t()
 {
 	clear_it=conv_last_active_time.begin();
 	long long last_clear_time=0;
+	reserve();
 }
 conv_manager_t::~conv_manager_t()
 {

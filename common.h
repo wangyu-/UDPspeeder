@@ -63,7 +63,7 @@ typedef short i16_t;
 
 typedef u64_t my_time_t;
 
-const int max_data_len=1600;
+const int max_data_len=2000;
 const int buf_len=max_data_len+200;
 
 const u32_t conv_clear_interval=200;
@@ -71,6 +71,7 @@ const u32_t conv_clear_interval=200;
 ////const u32_t conv_timeout=180000;
 const u32_t conv_timeout=40000;//for test
 const int max_conv_num=10000;
+const int max_conn_num=200;
 
 /*
 const u32_t max_handshake_conn_num=10000;
@@ -96,7 +97,7 @@ const i32_t max_fail_time=0;//disable
 
 const u32_t heartbeat_interval=1000;
 
-const u32_t timer_interval=50;//this should be smaller than heartbeat_interval and retry interval;
+const u32_t timer_interval=500;//this should be smaller than heartbeat_interval and retry interval;
 
 //const uint32_t conv_timeout=120000; //120 second
 //const u32_t conv_timeout=120000; //for test

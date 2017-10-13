@@ -270,6 +270,12 @@ int rm_crc32(char * s,int &len)
 	if(crc32!=crc32_in) return -1;
 	return 0;
 }
+/*
+int do_obs()
+{
+
+}
+int de_obs()*/
 int put_conv(u32_t conv,const char * input,int len_in,char *&output,int &len_out)
 {
 	static char buf[buf_len];

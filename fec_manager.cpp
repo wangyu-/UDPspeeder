@@ -301,7 +301,7 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     	//output_len=blob_len+sizeof(u32_t)+4*sizeof(char);/////remember to change this 4,if modified the protocol
 		rs_encode2(actual_data_num,actual_data_num+actual_redundant_num,tmp_output_buf,fec_len);
 
-		mylog(log_trace,"!!! s= %d\n");
+		//mylog(log_trace,"!!! s= %d\n");
 
     	ready_for_output=1;
     	seq++;

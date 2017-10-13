@@ -16,11 +16,33 @@ raw_mode_t raw_mode=mode_faketcp;
 unordered_map<int, const char*> raw_mode_tostring = {{mode_faketcp, "faketcp"}, {mode_udp, "udp"}, {mode_icmp, "icmp"}};
 
 int max_pending_packet=0;
-static int random_number_fd=-1;
+//static int random_number_fd=-1;
 char iptables_rule[200]="";
 //int is_client = 0, is_server = 0;
 
 program_mode_t program_mode=unset_mode;//0 unset; 1client 2server
+
+
+
+struct random_fd_t
+{
+	int random_number_fd;
+	random_fd_t()
+	{
+			random_number_fd=open("/dev/urandom",O_RDONLY);
+
+			if(random_number_fd==-1)
+			{
+				mylog(log_fatal,"error open /dev/urandom\n");
+				myexit(-1);
+			}
+			setnonblocking(random_number_fd);
+	}
+	int get_fd()
+	{
+		return random_number_fd;
+	}
+}random_fd;
 
 u64_t get_current_time()//ms
 {
@@ -138,22 +160,11 @@ int clear_iptables_rule()
 }
 
 
-void init_random_number_fd()
-{
 
-	random_number_fd=open("/dev/urandom",O_RDONLY);
-
-	if(random_number_fd==-1)
-	{
-		mylog(log_fatal,"error open /dev/urandom\n");
-		myexit(-1);
-	}
-	setnonblocking(random_number_fd);
-}
 u64_t get_true_random_number_64()
 {
 	u64_t ret;
-	int size=read(random_number_fd,&ret,sizeof(ret));
+	int size=read(random_fd.get_fd(),&ret,sizeof(ret));
 	if(size!=sizeof(ret))
 	{
 		mylog(log_fatal,"get random number failed %d\n",size);
@@ -166,7 +177,7 @@ u64_t get_true_random_number_64()
 u32_t get_true_random_number()
 {
 	u32_t ret;
-	int size=read(random_number_fd,&ret,sizeof(ret));
+	int size=read(random_fd.get_fd(),&ret,sizeof(ret));
 	if(size!=sizeof(ret))
 	{
 		mylog(log_fatal,"get random number failed %d\n",size);
@@ -280,7 +291,7 @@ void myexit(int a)
 {
     if(enable_log_color)
    	 printf("%s\n",RESET);
-    clear_iptables_rule();
+   // clear_iptables_rule();
 	exit(a);
 }
 void  signal_handler(int sig)
@@ -380,7 +391,7 @@ bool larger_than_u16(uint16_t a,uint16_t b)
 
 void get_true_random_chars(char * s,int len)
 {
-	int size=read(random_number_fd,s,len);
+	int size=read(random_fd.get_fd(),s,len);
 	if(size!=len)
 	{
 		printf("get random number failed\n");

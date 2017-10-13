@@ -66,8 +66,7 @@ struct conv_manager_t  // manage the udp connections
 	int erase_conv(u32_t conv);
 	int clear_inactive(char * ip_port=0);
 	int clear_inactive0(char * ip_port);
-};//g_conv_manager;
-
+};
 struct conn_info_t     //stores info for a raw connection.for client ,there is only one connection,for server there can be thousand of connection since server can
 //handle multiple clients
 {
@@ -88,7 +87,7 @@ struct conn_info_t     //stores info for a raw connection.for client ,there is o
 	{
 		assert(0==1);
 	}
-};//g_conn_info;
+};
 
 struct conn_manager_t  //manager for connections. for client,we dont need conn_manager since there is only one connection.for server we use one conn_manager for all connections
 {
