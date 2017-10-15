@@ -12,10 +12,10 @@
 #include "log.h"
 #include "lib/rs.h"
 
-const int max_normal_packet_num=1000;
+const int max_fec_pending_packet_num=1000;
 const int max_fec_packet_num=255;
-const u32_t anti_replay_buff_size=30000;
-const u32_t fec_buff_size=3000;
+const u32_t anti_replay_buff_size=10000;
+const u32_t fec_buff_num=1000;
 
 
 struct anti_replay_t
@@ -27,7 +27,7 @@ struct anti_replay_t
 	anti_replay_t()
 	{
 		memset(replay_buffer,-1,sizeof(replay_buffer));
-		st.rehash(anti_replay_buff_size*10);
+		st.rehash(anti_replay_buff_size*3);
 		index=0;
 	}
 	void set_invaild(u32_t seq)
@@ -62,7 +62,6 @@ struct blob_encode_t
 	int current_len;
 	int counter;
 
-
 	char *output_arr[max_fec_packet_num+100];
 
 	blob_encode_t();
@@ -84,8 +83,8 @@ struct blob_decode_t
 	int last_len;
 	int counter;
 
-	char *s_buf[max_normal_packet_num+100];
-	int len_buf[max_normal_packet_num+100];
+	char *s_buf[max_fec_pending_packet_num+100];
+	int len_buf[max_fec_pending_packet_num+100];
 
 	blob_decode_t();
 	int clear();
@@ -95,26 +94,30 @@ struct blob_decode_t
 
 class fec_encode_manager_t
 {
+private:
+	u32_t seq;
+
+	int type;
 	int fec_data_num,fec_redundant_num;
 	int fec_mtu;
 	int fec_pending_num;
 	int fec_pending_time;
-	char buf[max_fec_packet_num+5][buf_len];
-	int buf_s_len[max_fec_packet_num+5];
+
+	char input_buf[max_fec_packet_num+5][buf_len];
+	int input_len[max_fec_packet_num+5];
 	char *output_buf[max_fec_packet_num+5];
 	int output_len[max_fec_packet_num+5];
-	int ready_for_output;
-	u32_t seq;
+
 	int counter;
 	int timer_fd;
 	u64_t timer_fd64;
 
+	int ready_for_output;
 	u32_t output_n;
-
-	int type;
 
 	blob_encode_t blob_encode;
 	int append(char *s,int len);
+
 public:
 	fec_encode_manager_t();
 	~fec_encode_manager_t();
@@ -147,7 +150,7 @@ struct fec_group_t
 class fec_decode_manager_t
 {
 	anti_replay_t anti_replay;
-	fec_data_t fec_data[fec_buff_size];
+	fec_data_t fec_data[fec_buff_num];
 	int index;
 	unordered_map<u32_t, fec_group_t> mp;
 	blob_decode_t blob_decode;
@@ -156,8 +159,8 @@ class fec_decode_manager_t
 	int output_n;
 	char ** output_s_arr;
 	int * output_len_arr;
-	char *output_s_arr_buf[max_normal_packet_num+100];
-	int output_len_arr_buf[max_normal_packet_num+100];
+	char *output_s_arr_buf[max_fec_pending_packet_num+100];
+	int output_len_arr_buf[max_fec_pending_packet_num+100];
 	int ready_for_output;
 public:
 	fec_decode_manager_t();

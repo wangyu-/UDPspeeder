@@ -28,9 +28,10 @@ int jitter_max=0;
 int mtu_warn=1350;
 
 int disable_mtu_warn=0;
+int disable_fec=1;
 
 int fec_data_num=20;
-int fec_redundant_num=8;
+int fec_redundant_num=10;
 int fec_mtu=1000;
 int fec_pending_num=30;
 int fec_pending_time=10000;
@@ -125,13 +126,14 @@ int delay_send(my_time_t delay,const dest_t &dest,char *data,int len)
 }
 int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,int *&out_delay)
 {
+
 	static int out_delay_buf[max_fec_packet_num+100]={0};
 	//static int out_len_buf[max_fec_packet_num+100]={0};
 	static int counter=0;
 	out_delay=out_delay_buf;
 	//out_len=out_len_buf;
 
-	if(0)
+	if(disable_fec)
 	{
 		if(data==0) return 0;
 		out_n=1;
@@ -158,10 +160,14 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 
 		conn_info.fec_encode_manager.output(out_n,out_arr,out_len);
 
-
+		for(int i=0;i<out_n;i++)
+		{
+			out_delay_buf[i]=0;
+		}
 
 	}
 
+	mylog(log_debug,"from_normal_to_fec input_len=%d,output_n=%d\n",len,out_n);
 	//for(int i=0;i<n;i++)
 	//{
 		//delay_send(0,dest,s_arr[i],s_len);
@@ -172,9 +178,9 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 }
 int from_fec_to_normal(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,int *&out_delay)
 {
-	static int out_delay_buf[max_normal_packet_num+100]={0};
+	static int out_delay_buf[max_fec_pending_packet_num+100]={0};
 	out_delay=out_delay_buf;
-	if(0)
+	if(disable_fec)
 	{
 		if(data==0) return 0;
 		out_n=1;
@@ -195,10 +201,12 @@ int from_fec_to_normal(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 		conn_info.fec_decode_manager.output(out_n,out_arr,out_len);
 		for(int i=0;i<out_n;i++)
 		{
-			//out_delay_buf[i]=100*i;
+			out_delay_buf[i]=0;
 		}
 
 	}
+
+	mylog(log_debug,"from_fec_to_normal input_len=%d,output_n=%d\n",len,out_n);
 
 //	printf("<n:%d>",n);
 	/*
@@ -642,7 +650,7 @@ int server_event_loop()
 					u64_t timer_fd64=conn_info.timer.get_timer_fd64();
 					fd_manager.get_info(timer_fd64).ip_port=ip_port;
 
-					mylog(log_info,"new connection from %s,conn_info.timer_fd %lld,\n",ip_port.to_s(),timer.get_timer_fd64());
+					mylog(log_info,"new connection from %s\n",ip_port.to_s());
 
 				}
 				conn_info_t &conn_info=conn_manager.find(ip_port);

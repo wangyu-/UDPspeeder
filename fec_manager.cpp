@@ -43,7 +43,7 @@ int blob_encode_t::input(char *s,int len)
 	assert(current_len+len+sizeof(u16_t) <=max_fec_packet_num*buf_len);
 	assert(len<=65535&&len>=0);
 	counter++;
-	assert(counter<=max_normal_packet_num);
+	assert(counter<=max_fec_pending_packet_num);
 	write_u16(buf+current_len,len);
 	current_len+=sizeof(u16_t);
 	memcpy(buf+current_len,s,len);
@@ -95,7 +95,7 @@ int blob_decode_t::output(int &n,char ** &s_arr,int *&len_arr)
 	if(parser_pos+(int)sizeof(u32_t)>current_len) return -1;
 
 	n=(int)read_u32(buf+parser_pos);
-	if(n>max_normal_packet_num) {mylog(log_info,"failed 1\n");return -1;}
+	if(n>max_fec_pending_packet_num) {mylog(log_info,"failed 1\n");return -1;}
 	s_arr=s_buf;
 	len_arr=len_buf;
 
@@ -172,11 +172,11 @@ int fec_encode_manager_t::append(char *s,int len/*,int &is_first_packet*/)
 	{
 		mylog(log_trace,"counter=%d\n",counter);
 		assert(len<=65535&&len>=0);
-		char * p=buf[counter]+sizeof(u32_t)+4*sizeof(char);
+		char * p=input_buf[counter]+sizeof(u32_t)+4*sizeof(char);
 		write_u16(p,(u16_t)((u32_t)len));
 		p+=sizeof(u16_t);
 		memcpy(p,s,len);//remember to change this,if protocol is modified
-		buf_s_len[counter]=len+sizeof(u16_t);
+		input_len[counter]=len+sizeof(u16_t);
 	}
 	else
 	{
@@ -247,8 +247,8 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 
     		for(int i=0;i<counter;i++)
     		{
-    			assert(buf_s_len[i]>=0);
-    			if(buf_s_len[i]>fec_len) fec_len=buf_s_len[i];
+    			assert(input_len[i]>=0);
+    			if(input_len[i]>fec_len) fec_len=input_len[i];
     		}
 
     	}
@@ -259,43 +259,43 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     	{
     		int tmp_idx=0;
 
-        	write_u32(buf[i] + tmp_idx, seq);
+        	write_u32(input_buf[i] + tmp_idx, seq);
 			tmp_idx += sizeof(u32_t);
-			buf[i][tmp_idx++] = (unsigned char) type;
+			input_buf[i][tmp_idx++] = (unsigned char) type;
 			if (type == 1 && i < actual_data_num)
 			{
-				buf[i][tmp_idx++] = (unsigned char) 0;
-				buf[i][tmp_idx++] = (unsigned char) 0;
+				input_buf[i][tmp_idx++] = (unsigned char) 0;
+				input_buf[i][tmp_idx++] = (unsigned char) 0;
 			} else
 			{
-				buf[i][tmp_idx++] = (unsigned char) actual_data_num;
-				buf[i][tmp_idx++] = (unsigned char) actual_redundant_num;
+				input_buf[i][tmp_idx++] = (unsigned char) actual_data_num;
+				input_buf[i][tmp_idx++] = (unsigned char) actual_redundant_num;
 			}
-			buf[i][tmp_idx++] = (unsigned char) i;
+			input_buf[i][tmp_idx++] = (unsigned char) i;
 
 
-    		tmp_output_buf[i]=buf[i]+tmp_idx; //////caution ,trick here.
+    		tmp_output_buf[i]=input_buf[i]+tmp_idx; //////caution ,trick here.
 
     		if(type==0)
     		{
         		output_len[i]=tmp_idx+fec_len;
         		if(i<actual_data_num)
         		{
-        			memcpy(buf[i]+tmp_idx,blob_output[i],fec_len);
+        			memcpy(input_buf[i]+tmp_idx,blob_output[i],fec_len);
         		}
     		}
     		else
     		{
     			if(i<actual_data_num)
     			{
-    				output_len[i]=tmp_idx+buf_s_len[i];
-    				memset(tmp_output_buf[i]+buf_s_len[i],0,fec_len-buf_s_len[i]);
+    				output_len[i]=tmp_idx+input_len[i];
+    				memset(tmp_output_buf[i]+input_len[i],0,fec_len-input_len[i]);
     			}
     			else
     				output_len[i]=tmp_idx+fec_len;
 
     		}
-    		output_buf[i]=buf[i];
+    		output_buf[i]=input_buf[i];
 
     	}
     	//output_len=blob_len+sizeof(u32_t)+4*sizeof(char);/////remember to change this 4,if modified the protocol
@@ -347,16 +347,16 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     		output_n=1;
 
     		int tmp_idx=0;
-    		write_u32(buf[buf_idx]+tmp_idx,seq);
+    		write_u32(input_buf[buf_idx]+tmp_idx,seq);
     		tmp_idx+=sizeof(u32_t);
 
-    		buf[buf_idx][tmp_idx++]=(unsigned char)type;
-    		buf[buf_idx][tmp_idx++]=(unsigned char)0;
-    		buf[buf_idx][tmp_idx++]=(unsigned char)0;
-    		buf[buf_idx][tmp_idx++]=(unsigned char)((u32_t)buf_idx);
+    		input_buf[buf_idx][tmp_idx++]=(unsigned char)type;
+    		input_buf[buf_idx][tmp_idx++]=(unsigned char)0;
+    		input_buf[buf_idx][tmp_idx++]=(unsigned char)0;
+    		input_buf[buf_idx][tmp_idx++]=(unsigned char)((u32_t)buf_idx);
 
-    		output_len[0]=buf_s_len[buf_idx]+tmp_idx;
-    		output_buf[0]=buf[buf_idx];
+    		output_len[0]=input_len[buf_idx]+tmp_idx;
+    		output_buf[0]=input_buf[buf_idx];
     	}
     }
 
@@ -394,7 +394,7 @@ fec_decode_manager_t::fec_decode_manager_t()
 
 int fec_decode_manager_t::re_init()
 {
-	for(int i=0;i<(int)fec_buff_size;i++)
+	for(int i=0;i<(int)fec_buff_num;i++)
 		fec_data[i].used=0;
 	ready_for_output=0;
 	return 0;
