@@ -28,7 +28,9 @@ int jitter_max=0;
 int mtu_warn=1350;
 
 int disable_mtu_warn=0;
-int disable_fec=1;
+int disable_fec=0;
+
+int debug_force_flush_fec=0;
 
 int fec_data_num=20;
 int fec_redundant_num=10;
@@ -44,9 +46,11 @@ int local_port = -1, remote_port = -1;
 u64_t last_report_time=0;
 int report_interval=0;
 
-//conn_manager_t conn_manager;
+conn_manager_t conn_manager;
 delay_manager_t delay_manager;
 fd_manager_t fd_manager;
+
+
 
 const int disable_conv_clear=0;
 
@@ -321,6 +325,20 @@ int client_event_loop()
 				read(conn_info.timer.get_timer_fd(), &value, 8);
 				conn_info.conv_manager.clear_inactive();
 				mylog(log_trace,"events[idx].data.u64==(u64_t)conn_info.timer.get_timer_fd()\n");
+
+				if(debug_force_flush_fec)
+				{
+				int  out_n;char **out_arr;int *out_len;int *out_delay;
+				dest_t dest;
+				dest.type=type_fd64;
+				dest.inner.fd64=remote_fd64;
+				dest.cook=1;
+				from_normal_to_fec(conn_info,0,0,out_n,out_arr,out_len,out_delay);
+				for(int i=0;i<out_n;i++)
+				{
+					delay_send(out_delay[i],dest,out_arr[i],out_len[i]);
+				}
+				}
 			}
 			else if (events[idx].data.u64 == (u64_t)local_listen_fd||events[idx].data.u64 == conn_info.fec_encode_manager.get_timer_fd64())
 			{
@@ -643,7 +661,7 @@ int server_event_loop()
 					fd_manager.get_info(fec_fd64).ip_port=ip_port;
 
 					conn_info.timer.add_fd64_to_epoll(epoll_fd);
-					conn_info.timer.set_timer_repeat_us(timer_interval*100);
+					conn_info.timer.set_timer_repeat_us(timer_interval*1000);
 
 					mylog(log_debug,"conn_info.timer.get_timer_fd64()=%llu\n",conn_info.timer.get_timer_fd64());
 
@@ -770,6 +788,10 @@ int server_event_loop()
 					uint64_t value;
 					read(conn_info.timer.get_timer_fd(), &value, 8);
 					conn_info.conv_manager.clear_inactive();
+					if(debug_force_flush_fec)
+					{
+					from_normal_to_fec(conn_info,0,0,out_n,out_arr,out_len,out_delay);
+					}
 					continue;
 				}
 				else

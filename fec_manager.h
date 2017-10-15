@@ -58,11 +58,11 @@ struct anti_replay_t
 
 struct blob_encode_t
 {
-	char buf[(max_fec_packet_num+5)*buf_len];
+	char input_buf[(max_fec_packet_num+5)*buf_len];
 	int current_len;
 	int counter;
 
-	char *output_arr[max_fec_packet_num+100];
+	char *output_buf[max_fec_packet_num+100];
 
 	blob_encode_t();
 
@@ -78,13 +78,13 @@ struct blob_encode_t
 
 struct blob_decode_t
 {
-	char buf[(max_fec_packet_num+5)*buf_len];
+	char input_buf[(max_fec_packet_num+5)*buf_len];
 	int current_len;
 	int last_len;
 	int counter;
 
-	char *s_buf[max_fec_pending_packet_num+100];
-	int len_buf[max_fec_pending_packet_num+100];
+	char *output_buf[max_fec_pending_packet_num+100];
+	int output_len[max_fec_pending_packet_num+100];
 
 	blob_decode_t();
 	int clear();
