@@ -49,7 +49,8 @@ u64_t fd_manager_t::create(int fd)
 fd_manager_t::fd_manager_t()
 {
 	counter=u32_t(-1);
-	counter+=10;
+	counter+=100;
+	reserve(10007);
 }
 fd_info_t & fd_manager_t::get_info(fd64_t fd64)
 {

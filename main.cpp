@@ -33,7 +33,7 @@ int disable_fec=0;
 int debug_force_flush_fec=0;
 
 int fec_data_num=20;
-int fec_redundant_num=10;
+int fec_redundant_num=8;
 int fec_mtu=1000;
 int fec_pending_num=30;
 int fec_pending_time=10000;
@@ -1354,10 +1354,10 @@ int main(int argc, char *argv[])
 	dup2(1, 2);		//redirect stderr to stdout
 	int i, j, k;
 	process_arg(argc,argv);
-	delay_manager.capacity=max_pending_packet;
+
+	delay_manager.set_capacity(max_pending_packet);
 	local_ip_uint32=inet_addr(local_ip);
 	remote_ip_uint32=inet_addr(remote_ip);
-	fd_manager.reserve(10007);
 
 	if(program_mode==client_mode)
 	{

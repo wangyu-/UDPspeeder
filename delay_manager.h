@@ -121,6 +121,7 @@ struct delay_manager_t
 	{
 		assert(0==1);
 	}
+	int set_capacity(int a){capacity=a;return 0;}
 	~delay_manager_t();
 	int get_timer_fd();
 	int check();
