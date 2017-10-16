@@ -34,7 +34,7 @@ int debug_force_flush_fec=0;
 
 int fec_data_num=20;
 int fec_redundant_num=8;
-int fec_mtu=1000;
+int fec_mtu=1250;
 int fec_pending_num=30;
 int fec_pending_time=10000;
 int fec_type=0;
@@ -171,7 +171,18 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 
 	}
 
-	mylog(log_debug,"from_normal_to_fec input_len=%d,output_n=%d\n",len,out_n);
+	mylog(log_info,"from_normal_to_fec input_len=%d,output_n=%d\n",len,out_n);
+
+	if(out_n>0)
+	{
+		log_bare(log_info,"seq= %u ",read_u32(out_arr[0]));
+	}
+	for(int i=0;i<out_n;i++)
+	{
+		log_bare(log_info,"%d ",out_len[i]);
+	}
+
+	log_bare(log_info,"\n");
 	//for(int i=0;i<n;i++)
 	//{
 		//delay_send(0,dest,s_arr[i],s_len);
@@ -210,7 +221,8 @@ int from_fec_to_normal(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 
 	}
 
-	mylog(log_debug,"from_fec_to_normal input_len=%d,output_n=%d\n",len,out_n);
+	mylog(log_info,"from_fec_to_normal input_len=%d,output_n=%d,input_seq=%u\n",len,out_n,read_u32(data));
+
 
 //	printf("<n:%d>",n);
 	/*
@@ -422,6 +434,7 @@ int client_event_loop()
 					put_conv(conv,data,data_len,new_data,new_len);
 
 
+					mylog(log_trace,"data_len=%d new_len=%d\n",data_len,new_len);
 					//dest.conv=conv;
 					from_normal_to_fec(conn_info,new_data,new_len,out_n,out_arr,out_len,out_delay);
 
@@ -964,6 +977,7 @@ int unit_test()
 		string b = "bbbbbbbbbbbbb";
 		string c = "ccc";
 
+
 		fec_encode_manager.input((char *) a.c_str(), a.length());
 		fec_encode_manager.input((char *) b.c_str(), b.length());
 		fec_encode_manager.input((char *) c.c_str(), c.length());
@@ -995,6 +1009,70 @@ int unit_test()
 		}
 	}
 
+	for(int i=0;i<10;i++)
+	{
+		string a = "aaaaaaaaaaaaaaaaaaaaaaa";
+		string b = "bbbbbbbbbbbbb";
+		string c = "cccccccccccccccccc";
+
+
+
+		printf("======\n");
+		int n;
+		char **s_arr;
+		int * len;
+		fec_decode_manager.output(n,s_arr,len);
+
+		fec_encode_manager.re_init(3,2,fec_mtu,fec_pending_num,fec_pending_time,1);
+
+		fec_encode_manager.input((char *) a.c_str(), a.length());
+		fec_encode_manager.output(n,s_arr,len);
+		assert(n==1);
+
+		fec_decode_manager.input(s_arr[0],len[0]);
+
+		fec_decode_manager.output(n,s_arr,len);
+		assert(n==1);
+		printf("%s\n",s_arr[0]);
+
+		fec_encode_manager.input((char *) b.c_str(), b.length());
+		fec_encode_manager.output(n,s_arr,len);
+		assert(n==1);
+		//fec_decode_manager.input(s_arr[0],len[0]);
+
+
+		fec_encode_manager.input((char *) c.c_str(), c.length());
+		fec_encode_manager.output(n,s_arr,len);
+
+		assert(n==3);
+
+		fec_decode_manager.input(s_arr[0],len[0]);
+		//printf("n=%d\n",n);
+
+
+		{
+			int n;
+			char **s_arr;
+			int * len;
+			fec_decode_manager.output(n,s_arr,len);
+			assert(n==1);
+			printf("%s\n",s_arr[0]);
+		}
+
+		fec_decode_manager.input(s_arr[1],len[1]);
+
+		{
+			int n;
+			char **s_arr;
+			int * len;
+			fec_decode_manager.output(n,s_arr,len);
+			assert(n==1);
+			printf("n=%d\n",n);
+			s_arr[0][len[0]]=0;
+			printf("%s\n",s_arr[0]);
+		}
+
+	}
 
 	return 0;
 }

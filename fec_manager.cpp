@@ -174,10 +174,13 @@ int fec_encode_manager_t::append(char *s,int len/*,int &is_first_packet*/)
 	{
 		mylog(log_trace,"counter=%d\n",counter);
 		assert(len<=65535&&len>=0);
-		char * p=input_buf[counter]+sizeof(u32_t)+4*sizeof(char);
+		assert(len<=fec_mtu);
+		char * p=input_buf[counter]+sizeof(u32_t)+4*sizeof(char);//copy directly to final position,avoid unnecessary copy.
+		//remember to change this,if protocol is modified
+
 		write_u16(p,(u16_t)((u32_t)len));  //TODO  omit this u16 for data packet while sending
 		p+=sizeof(u16_t);
-		memcpy(p,s,len);//remember to change this,if protocol is modified
+		memcpy(p,s,len);
 		input_len[counter]=len+sizeof(u16_t);
 	}
 	else
@@ -201,7 +204,7 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 	}
 	if(type==1&&s!=0&&len>=fec_mtu)
 	{
-		mylog(log_warn,"message too long len=%d,ignored\n",len);
+		mylog(log_warn,"message too long len=%d fec_mtu=%d,ignored\n",len,fec_mtu);
 		return -1;
 	}
 	if(s==0&&counter==0)
@@ -213,7 +216,7 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 
 	if(type==0&& blob_encode.get_shard_len(fec_data_num,len)>=fec_mtu) {about_to_fec=1; delayed_append=1;}//fec then add packet
 
-	if(type==0) assert(counter<fec_pending_num);
+	if(type==0) assert(counter<fec_pending_num);//counter cant = fec_pending_num,if that happens fec should already been done.
 	if(type==1) assert(counter<fec_data_num);
 
 
@@ -303,11 +306,42 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     				output_len[i]=tmp_idx+fec_len;
 
     		}
-    		output_buf[i]=input_buf[i];//output_buf points same block of memory with different offset
+    		output_buf[i]=input_buf[i];//output_buf points to same block of memory with different offset
 
+    	}
+
+    	if(0)
+    	{
+			printf("seq=%u,fec_len=%d,%d %d,before fec\n",seq,fec_len,actual_data_num,actual_redundant_num);
+
+			for(int i=0;i<actual_data_num;i++)
+			{
+				printf("{");
+				for(int j=0;j<8+fec_len;j++)
+				{
+					log_bare(log_warn,"0x%02x,",(u32_t)(unsigned char)input_buf[i][j]);
+				}
+				printf("},\n");
+				//log_bare(log_warn,"")
+			}
     	}
     	//output_len=blob_len+sizeof(u32_t)+4*sizeof(char);/////remember to change this 4,if modified the protocol
 		rs_encode2(actual_data_num,actual_data_num+actual_redundant_num,tmp_output_buf,fec_len);
+
+		if(0)
+		{
+			printf("seq=%u,fec_len=%d,%d %d,after fec\n",seq,fec_len,actual_data_num,actual_redundant_num);
+			for(int i=0;i<actual_data_num+actual_redundant_num;i++)
+			{
+				printf("{");
+				for(int j=0;j<8+fec_len;j++)
+				{
+					log_bare(log_warn,"0x%02x,",(u32_t)(unsigned char)output_buf[i][j]);
+				}
+				printf("},\n");
+				//log_bare(log_warn,"")
+			}
+		}
 
 		//mylog(log_trace,"!!! s= %d\n");
 		assert(ready_for_output==0);
@@ -365,6 +399,16 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 
     		output_len[0]=input_len[buf_idx]+tmp_idx;
     		output_buf[0]=input_buf[buf_idx];
+
+    		if(0)
+    		{
+				printf("seq=%u,buf_idx=%d\n",seq,buf_idx);
+				for(int j=0;j<output_len[0];j++)
+				{
+					log_bare(log_warn,"0x%02x,",(u32_t)(unsigned char)output_buf[0][j]);
+				}
+				printf("\n");
+    		}
     	}
     }
 
@@ -433,7 +477,7 @@ int fec_decode_manager_t::input(char *s,int len)
 	}
 	if(type==1)
 	{
-		if(inner_index<data_num&&(int)( read_u16(s+tmp_idx)+sizeof(u16_t))!=len)
+		if(data_num==0&&(int)( read_u16(s+tmp_idx)+sizeof(u16_t))!=len)
 		{
 			mylog(log_warn,"inner_index<data_num&&read_u16(s+tmp_idx)+sizeof(u16_t)!=len    %d %d\n",(int)( read_u16(s+tmp_idx)+sizeof(u16_t)),len);
 			return -1;
@@ -442,7 +486,7 @@ int fec_decode_manager_t::input(char *s,int len)
 
 	if(data_num+redundant_num>=max_fec_packet_num)
 	{
-		mylog(log_info,"failed here\n");
+		mylog(log_warn,"failed here\n");
 		return -1;
 	}
 	if(!anti_replay.is_vaild(seq))
@@ -460,7 +504,7 @@ int fec_decode_manager_t::input(char *s,int len)
 
 	if(type==0&&data_num==0)
 	{
-		mylog(log_warn,"unexpected here,data_num=0\n");
+		mylog(log_warn,"unexpected type==0&&data_num==0\n");
 		return -1;
 	}
 
@@ -469,12 +513,16 @@ int fec_decode_manager_t::input(char *s,int len)
 		mp[seq].type=type;
 	else
 	{
-		if(mp[seq].type!=type) ok=0;
+		if(mp[seq].type!=type)
+		{
+			mylog(log_warn,"type mismatch\n");
+			ok=0;
+		}
 	}
 
 	if(data_num!=0)
 	{
-		mp[seq].data_counter++;
+		//mp[seq].data_counter++;
 
 		if(mp[seq].data_num==-1)
 		{
@@ -494,7 +542,7 @@ int fec_decode_manager_t::input(char *s,int len)
 
 	if(ok==0)
 	{
-		mylog(log_warn,"fec data invaild\n");
+		mylog(log_warn,"fec packets invaild\n");
 		return -1;
 	}
 
@@ -538,64 +586,11 @@ int fec_decode_manager_t::input(char *s,int len)
 	{
 		if(mp[seq].data_num!=-1)
 		{
-			//int old_data_num=data_num;
-			//int old_redundant_num=redundant_num;
-
-			//data_num=mp[seq].data_num;
-			//redundant_num=mp[seq].redundant_num;
-
-			/*if(mp[seq].data_counter>data_num)  //invaild
-			{
-				mylog(log_warn,"unexpected mp[seq].data_counter>mp[seq].data_num\n");
-				anti_replay.set_invaild(seq);
-				return -1;
-			}*/
-			//assert((int)inner_mp.size()<=data_num);
 			if((int)inner_mp.size()>=mp[seq].data_num)
 			{
 				about_to_fec=1;
 			}
-
-
-			/*
-			else if(mp[seq].data_counter==data_num)   //no need to fec . (received first redundant packet ,or received a data packet after redunant packet)
-			{
-				anti_replay.set_invaild(seq);// dont do fec,but  still set invaild
-			}
-			else //mp[seq].data_counter < mp[seq].data_num
-			{
-				if((int)inner_mp.size()>data_num)
-				{
-					mylog(log_warn,"unexpected (int)inner_mp.size()>data_num+1\n");
-					anti_replay.set_invaild(seq);
-					return -1;
-				}*/
-
-				//if((int)inner_mp.size()==data_num)
-					//about_to_fec=1;
-
-				/*
-				if((int)inner_mp.size()==data_num+1)
-				{
-					anti_replay.set_invaild(seq);
-
-					if(old_data_num==0)
-						return 0;
-					else
-					{
-						mylog(log_warn,"data_num=0\n");
-						return -1;
-					}
-				}*/
-
-
-			//}
 		}
-		else
-		{
-
-		}
-		//for()
 	}
 
 
@@ -628,8 +623,13 @@ int fec_decode_manager_t::input(char *s,int len)
 
 
 			int max_len=-1;
-			int fec_ok=1;
+			int fec_result_ok=1;
+			int data_check_ok=1;
 			int debug_num=inner_mp.size();
+
+			int missed_packet[max_fec_packet_num+5];
+			int missed_packet_counter=0;
+
 			//outupt_s_arr_buf[max_fec_packet_num+5]={0};
 
 			//memset(output_s_arr_buf,0,sizeof(output_s_arr_buf));//in efficient
@@ -641,17 +641,32 @@ int fec_decode_manager_t::input(char *s,int len)
 			for(auto it=inner_mp.begin();it!=inner_mp.end();it++)
 			{
 				output_s_arr_buf[it->first]=fec_data[it->second].buf;
-				assert(fec_data[it->second].len>=(int)sizeof(u16_t));
+				if(fec_data[it->second].len<(int)sizeof(u16_t))
+				{
+					mylog(log_warn,"fec_data[it->second].len<(int)sizeof(u16_t)");
+					data_check_ok=0;
+				}
 
 				if(fec_data[it->second].len > max_len)
 					max_len=fec_data[it->second].len;
 			}
+
+			if(max_len!=mp[seq].len)
+			{
+				data_check_ok=0;
+				mylog(log_warn,"max_len!=mp[seq].len");
+			}
+			if(data_check_ok==0)
+			{
+				ready_for_output=0;
+				anti_replay.set_invaild(seq);
+				goto end;
+			}
 			for(auto it=inner_mp.begin();it!=inner_mp.end();it++)
 			{
-				memset(fec_data[it->second].buf+fec_data[it->second].len,0,max_len-fec_data[it->second].len);
+				int tmp_idx=it->second;
+				memset(fec_data[tmp_idx].buf+fec_data[tmp_idx].len,0,max_len-fec_data[tmp_idx].len);
 			}
-			int missed_packet[max_fec_packet_num+5];
-			int missed_packet_counter=0;
 
 			for(int i=0;i<group_data_num;i++)
 			{
@@ -660,8 +675,10 @@ int fec_decode_manager_t::input(char *s,int len)
 					missed_packet[missed_packet_counter++]=i;
 				}
 			}
+			mylog(log_trace,"fec done,%d %d,missed_packet_counter=%d\n",group_data_num,group_redundant_num,missed_packet_counter);
 
-			rs_decode2(group_data_num,group_data_num+group_redundant_num,output_s_arr_buf,max_len);
+			assert(rs_decode2(group_data_num,group_data_num+group_redundant_num,output_s_arr_buf,max_len)==0);
+
 			for(int i=0;i<group_data_num;i++)
 			{
 				output_len_arr_buf[i]=read_u16(output_s_arr_buf[i]);
@@ -669,7 +686,7 @@ int fec_decode_manager_t::input(char *s,int len)
 				if(output_len_arr_buf[i]>max_data_len)
 				{
 					mylog(log_warn,"invaild len %d,seq= %u,data_num= %d r_num= %d,i= %d\n",output_len_arr_buf[i],seq,group_data_num,group_redundant_num,i);
-					fec_ok=0;
+					fec_result_ok=0;
 					for(int i=0;i<missed_packet_counter;i++)
 					{
 						log_bare(log_warn,"%d ",missed_packet[i]);
@@ -678,7 +695,7 @@ int fec_decode_manager_t::input(char *s,int len)
 					//break;
 				}
 			}
-			if(fec_ok)
+			if(fec_result_ok)
 			{
 
 				output_n=group_data_num;
@@ -701,6 +718,7 @@ int fec_decode_manager_t::input(char *s,int len)
 			}
 			else
 			{
+				//fec_not_ok:
 				ready_for_output=0;
 			}
 			anti_replay.set_invaild(seq);
@@ -731,6 +749,7 @@ int fec_decode_manager_t::input(char *s,int len)
 		}
 	}
 
+	end:
 	index++;
 	if(index==int(anti_replay_buff_size)) index=0;
 

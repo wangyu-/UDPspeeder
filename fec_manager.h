@@ -103,10 +103,12 @@ private:
 	int fec_pending_num;
 	int fec_pending_time;
 
+	blob_encode_t blob_encode;
 	char input_buf[max_fec_packet_num+5][buf_len];
-	int input_len[max_fec_packet_num+5];
-	char *output_buf[max_fec_packet_num+5];
-	int output_len[max_fec_packet_num+5];
+	int input_len[max_fec_packet_num+100];
+
+	char *output_buf[max_fec_packet_num+100];
+	int output_len[max_fec_packet_num+100];
 
 	int counter;
 	int timer_fd;
@@ -115,7 +117,7 @@ private:
 	int ready_for_output;
 	u32_t output_n;
 
-	blob_encode_t blob_encode;
+
 	int append(char *s,int len);
 
 public:
@@ -144,7 +146,7 @@ struct fec_group_t
 	int data_num=-1;
 	int redundant_num=-1;
 	int len=-1;
-	int data_counter=0;
+	//int data_counter=0;
 	map<int,int>  group_mp;
 };
 class fec_decode_manager_t
@@ -159,8 +161,8 @@ class fec_decode_manager_t
 	int output_n;
 	char ** output_s_arr;
 	int * output_len_arr;
-	char *output_s_arr_buf[max_fec_pending_packet_num+100];
-	int output_len_arr_buf[max_fec_pending_packet_num+100];
+	char *output_s_arr_buf[max_fec_packet_num+100];
+	int output_len_arr_buf[max_fec_packet_num+100];
 	int ready_for_output;
 public:
 	fec_decode_manager_t();

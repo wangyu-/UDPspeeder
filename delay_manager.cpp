@@ -44,7 +44,7 @@ int delay_manager_t::add(my_time_t delay,const dest_t &dest,char *data,int len)
 {
 	delay_data_t delay_data;
 	delay_data.dest=dest;
-	delay_data.data=data;
+	//delay_data.data=data;
 	delay_data.len=len;
 
 	if(capacity!=0&&int(delay_mp.size()) >=capacity)
@@ -54,6 +54,9 @@ int delay_manager_t::add(my_time_t delay,const dest_t &dest,char *data,int len)
 	}
 	if(delay==0)
 	{
+		static char buf[buf_len];
+		delay_data.data=buf;
+		memcpy(buf,data,len);
 		int ret=delay_data.handle();
 		if (ret != 0) {
 			mylog(log_trace, "handle() return %d\n", ret);
