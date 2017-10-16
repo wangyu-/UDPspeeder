@@ -171,18 +171,18 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 
 	}
 
-	mylog(log_info,"from_normal_to_fec input_len=%d,output_n=%d\n",len,out_n);
+	mylog(log_trace,"from_normal_to_fec input_len=%d,output_n=%d\n",len,out_n);
 
 	if(out_n>0)
 	{
-		log_bare(log_info,"seq= %u ",read_u32(out_arr[0]));
+		log_bare(log_trace,"seq= %u ",read_u32(out_arr[0]));
 	}
 	for(int i=0;i<out_n;i++)
 	{
-		log_bare(log_info,"%d ",out_len[i]);
+		log_bare(log_trace,"%d ",out_len[i]);
 	}
 
-	log_bare(log_info,"\n");
+	log_bare(log_trace,"\n");
 	//for(int i=0;i<n;i++)
 	//{
 		//delay_send(0,dest,s_arr[i],s_len);
@@ -221,7 +221,7 @@ int from_fec_to_normal(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 
 	}
 
-	mylog(log_info,"from_fec_to_normal input_len=%d,output_n=%d,input_seq=%u\n",len,out_n,read_u32(data));
+	mylog(log_trace,"from_fec_to_normal input_len=%d,output_n=%d,input_seq=%u\n",len,out_n,read_u32(data));
 
 
 //	printf("<n:%d>",n);
