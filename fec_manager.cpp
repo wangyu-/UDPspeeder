@@ -13,6 +13,10 @@
 
 const int encode_fast_send=1;
 const int decode_fast_send=1;
+
+int short_packet_optimize=1;
+int header_overhead=40;
+
 blob_encode_t::blob_encode_t()
 {
 	clear();
@@ -247,8 +251,27 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 
     	if(type==0)
     	{
+
     		actual_data_num=fec_data_num;
     		actual_redundant_num=fec_redundant_num;
+
+    		if(short_packet_optimize)
+    		{
+    			u32_t best_len=(blob_encode.get_shard_len(fec_data_num,0)+header_overhead)*(fec_data_num+fec_redundant_num);
+    			int best_data_num=fec_data_num;
+    			for(int i=1;i<actual_data_num;i++)
+    			{
+    				u32_t new_len=(blob_encode.get_shard_len(i,0)+header_overhead)*(i+fec_redundant_num);
+    				if(new_len<best_len)
+    				{
+    					best_len=new_len;
+    					best_data_num=i;
+    				}
+    			}
+    			actual_data_num=best_data_num;
+    			actual_redundant_num=fec_redundant_num;
+    			mylog(log_info,"actual_data_num=%d actual_redundant_num=%d\n",best_data_num,fec_redundant_num);
+    		}
 
         	assert(blob_encode.output(actual_data_num,blob_output,fec_len)==0);
     	}

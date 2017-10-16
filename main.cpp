@@ -32,11 +32,11 @@ int disable_fec=0;
 
 int debug_force_flush_fec=0;
 
-int fec_data_num=20;
-int fec_redundant_num=8;
+int fec_data_num=160;
+int fec_redundant_num=80;
 int fec_mtu=1250;
-int fec_pending_num=30;
-int fec_pending_time=10000;
+int fec_pending_num=50;
+int fec_pending_time=10000; //10ms
 int fec_type=0;
 
 u32_t local_ip_uint32,remote_ip_uint32=0;
