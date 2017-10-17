@@ -12,10 +12,11 @@
 #include "log.h"
 #include "lib/rs.h"
 
-const int max_fec_pending_packet_num=1000;
-const int max_fec_packet_num=255;
-const u32_t anti_replay_buff_size=10000;
-const u32_t fec_buff_num=1000;
+const int max_blob_packet_num=20000;//how many packet can be contain in a blob_t ,can be set very large
+const u32_t anti_replay_buff_size=20000;//can be set very large
+
+const int max_fec_packet_num=255;// this is the limitation of the rs lib
+const u32_t fec_buff_num=2000;// how many packet can fec_decode_manager hold. shouldnt be very large,or it will cost huge memory
 
 
 struct anti_replay_t
@@ -83,8 +84,8 @@ struct blob_decode_t
 	int last_len;
 	int counter;
 
-	char *output_buf[max_fec_pending_packet_num+100];
-	int output_len[max_fec_pending_packet_num+100];
+	char *output_buf[max_blob_packet_num+100];
+	int output_len[max_blob_packet_num+100];
 
 	blob_decode_t();
 	int clear();

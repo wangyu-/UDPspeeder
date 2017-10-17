@@ -15,7 +15,7 @@ int about_to_exit=0;
 raw_mode_t raw_mode=mode_faketcp;
 unordered_map<int, const char*> raw_mode_tostring = {{mode_faketcp, "faketcp"}, {mode_udp, "udp"}, {mode_icmp, "icmp"}};
 
-int max_pending_packet=0;
+int delay_capacity=0;
 //static int random_number_fd=-1;
 char iptables_rule[200]="";
 //int is_client = 0, is_server = 0;

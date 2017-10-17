@@ -11,6 +11,7 @@ const int disable_conv_clear=0;//a udp connection in the multiplexer is called c
 
 const int disable_conn_clear=0;//a raw connection is called conn.
 
+int report_interval=0;
 
 void server_clear_function(u64_t u64)//used in conv_manager in server mode.for server we have to use one udp fd for one conv(udp connection),
 //so we have to close the fd when conv expires

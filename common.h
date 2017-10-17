@@ -63,7 +63,7 @@ typedef short i16_t;
 
 typedef u64_t my_time_t;
 
-const int max_data_len=2000;
+const int max_data_len=2200;
 const int buf_len=max_data_len+200;
 
 const u32_t conv_clear_interval=200;
@@ -117,7 +117,7 @@ enum program_mode_t {unset_mode=0,client_mode,server_mode};
 extern program_mode_t program_mode;
 extern unordered_map<int, const char*> raw_mode_tostring ;
 
-extern int max_pending_packet;
+extern int delay_capacity;
 
 
 typedef u32_t id_t;

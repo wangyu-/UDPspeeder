@@ -50,8 +50,8 @@ u32_t local_ip_uint32,remote_ip_uint32=0;
 char local_ip[100], remote_ip[100];
 int local_port = -1, remote_port = -1;
 
-u64_t last_report_time=0;
-int report_interval=0;
+//u64_t last_report_time=0;
+
 
 conn_manager_t conn_manager;
 delay_manager_t delay_manager;
@@ -144,9 +144,15 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 	//static int counter=0;
 	out_delay=out_delay_buf;
 	//out_len=out_len_buf;
-
+	inner_stat_t &inner_stat=conn_info.stat.normal_to_fec;
 	if(disable_fec)
 	{
+		assert(data!=0);
+		inner_stat.input_packet_num++;
+		inner_stat.input_packet_size+=len;
+		inner_stat.output_packet_num++;
+		inner_stat.output_packet_size+=len;
+
 		if(data==0) return 0;
 		out_n=1;
 		static char *data_static;
@@ -156,9 +162,15 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 		out_arr=&data_static;
 		out_len=&len_static;
 		out_delay[0]=0;
+
 	}
 	else
 	{
+		if(data!=0)
+		{
+			inner_stat.input_packet_num++;
+			inner_stat.input_packet_size+=len;
+		}
 		//counter++;
 
 		conn_info.fec_encode_manager.input(data,len);
@@ -177,9 +189,10 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 		{
 			my_time_t common_latency=0;
 			my_time_t first_packet_time=conn_info.fec_encode_manager.get_first_packet_time();
-			my_time_t current_time=get_current_time_us();
+
 			if(fix_latency==1&&first_packet_time!=0)
 			{
+				my_time_t current_time=get_current_time_us();
 				my_time_t tmp;
 				if((my_time_t)fec_pending_time >=(current_time - first_packet_time))
 				{
@@ -209,7 +222,11 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 	}
 	for(int i=0;i<out_n;i++)
 	{
+		inner_stat.output_packet_num++;
+		inner_stat.output_packet_size+=out_len[i];
+
 		log_bare(log_trace,"%d ",out_len[i]);
+
 	}
 
 	log_bare(log_trace,"\n");
@@ -223,10 +240,17 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 }
 int from_fec_to_normal(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,my_time_t *&out_delay)
 {
-	static my_time_t out_delay_buf[max_fec_pending_packet_num+100]={0};
+	static my_time_t out_delay_buf[max_blob_packet_num+100]={0};
 	out_delay=out_delay_buf;
+	inner_stat_t &inner_stat=conn_info.stat.fec_to_normal;
 	if(disable_fec)
 	{
+		assert(data!=0);
+		inner_stat.input_packet_num++;
+		inner_stat.input_packet_size+=len;
+		inner_stat.output_packet_num++;
+		inner_stat.output_packet_size+=len;
+
 		if(data==0) return 0;
 		out_n=1;
 		static char *data_static;
@@ -240,6 +264,12 @@ int from_fec_to_normal(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 	else
 	{
 
+		if(data!=0)
+		{
+			inner_stat.input_packet_num++;
+			inner_stat.input_packet_size+=len;
+		}
+
 		conn_info.fec_decode_manager.input(data,len);
 
 		//int n;char ** s_arr;int* len_arr;
@@ -247,7 +277,11 @@ int from_fec_to_normal(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 		for(int i=0;i<out_n;i++)
 		{
 			out_delay_buf[i]=0;
+
+			inner_stat.output_packet_num++;
+			inner_stat.output_packet_size+=out_len[i];
 		}
+
 
 	}
 
@@ -367,6 +401,8 @@ int client_event_loop()
 				read(conn_info.timer.get_timer_fd(), &value, 8);
 				conn_info.conv_manager.clear_inactive();
 				mylog(log_trace,"events[idx].data.u64==(u64_t)conn_info.timer.get_timer_fd()\n");
+
+				conn_info.stat.report_as_client();
 
 				if(debug_force_flush_fec)
 				{
@@ -835,6 +871,8 @@ int server_event_loop()
 					{
 					from_normal_to_fec(conn_info,0,0,out_n,out_arr,out_len,out_delay);
 					}
+
+					conn_info.stat.report_as_server(ip_port);
 					continue;
 				}
 				else
@@ -1166,6 +1204,8 @@ void process_arg(int argc, char *argv[])
 		{"sock-buf", required_argument,    0, 1},
 		{"random-drop", required_argument,    0, 1},
 		{"report", required_argument,    0, 1},
+		{"delay-capacity", required_argument,    0, 1},
+		{"mtu", required_argument,    0, 'm'},
 		{NULL, 0, 0, 0}
       };
     int option_index = 0;
@@ -1312,9 +1352,9 @@ void process_arg(int argc, char *argv[])
 			else
 			{
 				sscanf(optarg,"%d:%d\n",&fec_data_num,&fec_redundant_num);
-				if(fec_data_num<1 ||fec_redundant_num<0||fec_data_num+fec_redundant_num>255)
+				if(fec_data_num<1 ||fec_redundant_num<0||fec_data_num+fec_redundant_num>254)
 				{
-					mylog(log_fatal,"fec_data_num<1 ||fec_redundant_num<0||fec_data_num+fec_redundant_num>255\n");
+					mylog(log_fatal,"fec_data_num<1 ||fec_redundant_num<0||fec_data_num+fec_redundant_num>254\n");
 					myexit(-1);
 				}
 			}
@@ -1329,9 +1369,9 @@ void process_arg(int argc, char *argv[])
 			break;
 		case 'm':
 			sscanf(optarg,"%d",&fec_mtu);
-			if(fec_mtu<500||fec_mtu>1600)
+			if(fec_mtu<100||fec_mtu>2000)
 			{
-				mylog(log_fatal,"fec_mtu should be between 500 and 1600\n");
+				mylog(log_fatal,"fec_mtu should be between 100 and 2000\n");
 				myexit(-1);
 			}
 			break;
@@ -1452,6 +1492,16 @@ void process_arg(int argc, char *argv[])
 					myexit(-1);
 				}
 			}
+			else if(strcmp(long_options[option_index].name,"delay-capacity")==0)
+			{
+				sscanf(optarg,"%d",&delay_capacity);
+
+				if(delay_capacity<0)
+				{
+					mylog(log_fatal,"delay_capacity must be >=0 \n");
+					myexit(-1);
+				}
+			}
 			else if(strcmp(long_options[option_index].name,"report")==0)
 			{
 				sscanf(optarg,"%d",&report_interval);
@@ -1541,7 +1591,7 @@ int main(int argc, char *argv[])
 	int i, j, k;
 	process_arg(argc,argv);
 
-	delay_manager.set_capacity(max_pending_packet);
+	delay_manager.set_capacity(delay_capacity);
 	local_ip_uint32=inet_addr(local_ip);
 	remote_ip_uint32=inet_addr(remote_ip);
 

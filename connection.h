@@ -17,6 +17,7 @@ extern int disable_anti_replay;
 #include "fd_manager.h"
 #include "fec_manager.h"
 
+extern int report_interval;
 
 struct conv_manager_t  // manage the udp connections
 {
@@ -51,6 +52,54 @@ struct conv_manager_t  // manage the udp connections
 	int clear_inactive(char * ip_port=0);
 	int clear_inactive0(char * ip_port);
 };
+
+
+struct inner_stat_t
+{
+	u64_t input_packet_num;
+	u64_t input_packet_size;
+	u64_t output_packet_num;
+	u64_t output_packet_size;
+};
+struct stat_t
+{
+	u64_t last_report_time;
+	inner_stat_t normal_to_fec;
+	inner_stat_t fec_to_normal;
+	stat_t()
+	{
+		memset(this,0,sizeof(stat_t));
+	}
+	void report_as_client()
+	{
+		if(report_interval!=0 &&get_current_time()-last_report_time>u64_t(report_interval)*1000)
+		{
+			last_report_time=get_current_time();
+			inner_stat_t &a=normal_to_fec;
+			inner_stat_t &b=fec_to_normal;
+			mylog(log_info,"[report]client-->server:(original:%llu pkt;%llu byte) (fec:%llu pkt,%llu byte)  server-->client:(original:%llu pkt;%llu byte) (fec:%llu pkt;%llu byte)\n",
+					a.input_packet_num,a.input_packet_size,a.output_packet_num,a.output_packet_size,
+					b.output_packet_num,b.output_packet_size,b.input_packet_num,b.input_packet_size
+					);
+		}
+	}
+	void report_as_server(ip_port_t &ip_port)
+	{
+		if(report_interval!=0 &&get_current_time()-last_report_time>u64_t(report_interval)*1000)
+		{
+			last_report_time=get_current_time();
+			inner_stat_t &a=fec_to_normal;
+			inner_stat_t &b=normal_to_fec;
+			mylog(log_info,"[report][%s]client-->server:(original:%llu pkt;%llu byte) (fec:%llu pkt;%llu byte)  server-->client:(original:%llu pkt;%llu byte) (fec:%llu pkt;%llu byte)\n",
+					ip_port.to_s(),
+					a.output_packet_num,a.output_packet_size,a.input_packet_num,a.input_packet_size,
+					b.input_packet_num,b.input_packet_size,b.output_packet_num,b.output_packet_size
+					);
+		}
+	}
+};
+
+
 struct conn_info_t     //stores info for a raw connection.for client ,there is only one connection,for server there can be thousand of connection since server can
 //handle multiple clients
 {
@@ -60,6 +109,7 @@ struct conn_info_t     //stores info for a raw connection.for client ,there is o
 	my_timer_t timer;
 	ip_port_t ip_port;
 	u64_t last_active_time;
+	stat_t stat;
 	conn_info_t()
 	{
 	}
