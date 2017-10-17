@@ -1297,9 +1297,9 @@ void process_arg(int argc, char *argv[])
 			{
 				int jitter;
 				sscanf(optarg,"%d\n",&jitter);
-				if(jitter<0 ||jitter>1000*100)
+				if(jitter<0 ||jitter>1000*10)
 				{
-					mylog(log_fatal,"jitter must be between 0 and 100,000(10 second)\n");
+					mylog(log_fatal,"jitter must be between 0 and 10,000(10 second)\n");
 					myexit(-1);
 				}
 				jitter_min=0;
@@ -1316,17 +1316,17 @@ void process_arg(int argc, char *argv[])
 					myexit(-1);
 				}
 			}
-			jitter_min*=100;
-			jitter_max*=100;
+			jitter_min*=1000;
+			jitter_max*=1000;
 			break;
 		case 'i':
 			if (strchr(optarg, ':') == 0)
 			{
 				int output_interval=-1;
 				sscanf(optarg,"%d\n",&output_interval);
-				if(output_interval<0||output_interval>1000*100)
+				if(output_interval<0||output_interval>1000*10)
 				{
-					mylog(log_fatal,"output_interval must be between 0 and 100,000(10 second)\n");
+					mylog(log_fatal,"output_interval must be between 0 and 10,000(10 second)\n");
 					myexit(-1);
 				}
 				output_interval_min=output_interval_max=output_interval;
@@ -1340,8 +1340,8 @@ void process_arg(int argc, char *argv[])
 					myexit(-1);
 				}
 			}
-			output_interval_min*=100;
-			output_interval_max*=100;
+			output_interval_min*=1000;
+			output_interval_max*=1000;
 			break;
 		case 'f':
 			if (strchr(optarg, ':') == 0)
@@ -1377,13 +1377,13 @@ void process_arg(int argc, char *argv[])
 			break;
 		case 'p':
 			sscanf(optarg,"%d",&fec_pending_time);
-			if(fec_pending_time<0||fec_pending_time>10000)
+			if(fec_pending_time<0||fec_pending_time>1000)
 			{
 
-					mylog(log_fatal,"fec_pending_time should be between 0 and 10000\n");
+					mylog(log_fatal,"fec_pending_time should be between 0 and 1000(1s)\n");
 					myexit(-1);
 			}
-			fec_pending_time*=100;
+			fec_pending_time*=1000;
 			break;
 
 		case 'n':
@@ -1562,6 +1562,10 @@ void process_arg(int argc, char *argv[])
 	{
 		program_mode=server_mode;
 	}
+
+	mylog(log_info,"jitter_min=%d jitter_max=%d output_interval_min=%d output_interval_max=%d fec_pending_num=%d fec_data_num=%d fec_redundant_num=%d fec_mtu=%d fec_pending_time=%d fec_type=%d\n",
+			jitter_min/1000,jitter_max/1000,output_interval_min/1000,output_interval_max/1000,fec_pending_time/1000,
+			fec_data_num,fec_redundant_num,fec_mtu,fec_pending_num,fec_type);
 }
 
 int main(int argc, char *argv[])
