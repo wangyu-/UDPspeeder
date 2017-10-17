@@ -16,12 +16,11 @@ typedef long long i64_t;
 typedef unsigned int u32_t;
 typedef int i32_t;
 
-int dup_num=1;
-int dup_delay_min=20;   //0.1ms
-int dup_delay_max=20;
+//int dup_num=1;
+//int dup_delay_min=20;   //0.1ms
+//int dup_delay_max=20;
 
-int jitter_min=0;
-int jitter_max=0;
+
 
 //int random_number_fd=-1;
 
@@ -36,8 +35,16 @@ int fec_data_num=20;
 int fec_redundant_num=10;
 int fec_mtu=1250;
 int fec_pending_num=200;
-int fec_pending_time=10000; //10ms
+int fec_pending_time=10*1000; //10ms
 int fec_type=0;
+
+int jitter_min=0*1000;
+int jitter_max=0*1000;
+
+int output_interval_min=0*1000;
+int output_interval_max=0*1000;
+
+int fix_latency=1;
 
 u32_t local_ip_uint32,remote_ip_uint32=0;
 char local_ip[100], remote_ip[100];
@@ -50,6 +57,7 @@ conn_manager_t conn_manager;
 delay_manager_t delay_manager;
 fd_manager_t fd_manager;
 
+int time_mono_test=1;
 
 
 const int disable_conv_clear=0;
@@ -118,7 +126,7 @@ int new_connected_socket(int &fd,u32_t ip,int port)
 }
 int delay_send(my_time_t delay,const dest_t &dest,char *data,int len)
 {
-	int rand=random()%100;
+	//int rand=random()%100;
 	//mylog(log_info,"rand = %d\n",rand);
 
 	if (dest.cook&&random_drop != 0) {
@@ -128,12 +136,12 @@ int delay_send(my_time_t delay,const dest_t &dest,char *data,int len)
 	}
 	return delay_manager.add(delay,dest,data,len);;
 }
-int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,int *&out_delay)
+int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,my_time_t *&out_delay)
 {
 
-	static int out_delay_buf[max_fec_packet_num+100]={0};
+	static my_time_t out_delay_buf[max_fec_packet_num+100]={0};
 	//static int out_len_buf[max_fec_packet_num+100]={0};
-	static int counter=0;
+	//static int counter=0;
 	out_delay=out_delay_buf;
 	//out_len=out_len_buf;
 
@@ -147,10 +155,11 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 		len_static=len;
 		out_arr=&data_static;
 		out_len=&len_static;
+		out_delay[0]=0;
 	}
 	else
 	{
-		counter++;
+		//counter++;
 
 		conn_info.fec_encode_manager.input(data,len);
 
@@ -164,9 +173,30 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 
 		conn_info.fec_encode_manager.output(out_n,out_arr,out_len);
 
-		for(int i=0;i<out_n;i++)
+		if(out_n>0)
 		{
-			out_delay_buf[i]=0;
+			my_time_t common_latency=0;
+			my_time_t first_packet_time=conn_info.fec_encode_manager.get_first_packet_time();
+			my_time_t current_time=get_current_time_us();
+			if(fix_latency==1&&first_packet_time!=0)
+			{
+				my_time_t tmp;
+				if((my_time_t)fec_pending_time >=(current_time - first_packet_time))
+				{
+					tmp=(my_time_t)fec_pending_time-(current_time - first_packet_time);
+				}
+				else tmp=0;
+				common_latency+=tmp;
+			}
+
+			common_latency+=random_between(jitter_min,jitter_max);
+
+			out_delay_buf[0]=common_latency;
+
+			for(int i=1;i<out_n;i++)
+			{
+				out_delay_buf[i]=out_delay_buf[i-1]+ (my_time_t)( random_between(output_interval_min,output_interval_max)/(out_n-1)  );
+			}
 		}
 
 	}
@@ -191,9 +221,9 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 	//delay_send(1000*1000,dest,data,len);
 	return 0;
 }
-int from_fec_to_normal(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,int *&out_delay)
+int from_fec_to_normal(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,my_time_t *&out_delay)
 {
-	static int out_delay_buf[max_fec_pending_packet_num+100]={0};
+	static my_time_t out_delay_buf[max_fec_pending_packet_num+100]={0};
 	out_delay=out_delay_buf;
 	if(disable_fec)
 	{
@@ -205,7 +235,7 @@ int from_fec_to_normal(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 		len_static=len;
 		out_arr=&data_static;
 		out_len=&len_static;
-		//out_len_buf[0]=len;
+		out_delay[0]=0;
 	}
 	else
 	{
@@ -340,7 +370,7 @@ int client_event_loop()
 
 				if(debug_force_flush_fec)
 				{
-				int  out_n;char **out_arr;int *out_len;int *out_delay;
+				int  out_n;char **out_arr;int *out_len;my_time_t *out_delay;
 				dest_t dest;
 				dest.type=type_fd64;
 				dest.inner.fd64=remote_fd64;
@@ -358,7 +388,7 @@ int client_event_loop()
 				int data_len;
 				ip_port_t ip_port;
 				u32_t conv;
-				int  out_n;char **out_arr;int *out_len;int *out_delay;
+				int  out_n;char **out_arr;int *out_len;my_time_t *out_delay;
 				dest_t dest;
 				dest.type=type_fd64;
 				dest.inner.fd64=remote_fd64;
@@ -487,7 +517,7 @@ int client_event_loop()
 					continue;
 				}
 
-				int  out_n;char **out_arr;int *out_len;int *out_delay;
+				int  out_n;char **out_arr;int *out_len;my_time_t *out_delay;
 				from_fec_to_normal(conn_info,data,data_len,out_n,out_arr,out_len,out_delay);
 
 				mylog(log_trace,"out_n=%d\n",out_n);
@@ -687,7 +717,7 @@ int server_event_loop()
 				conn_info_t &conn_info=conn_manager.find(ip_port);
 
 				conn_info.update_active_time();
-				int  out_n;char **out_arr;int *out_len;int *out_delay;
+				int  out_n;char **out_arr;int *out_len;my_time_t *out_delay;
 				from_fec_to_normal(conn_info,data,data_len,out_n,out_arr,out_len,out_delay);
 
 				mylog(log_trace,"out_n= %d\n",out_n);
@@ -772,7 +802,7 @@ int server_event_loop()
 				conn_info_t &conn_info=conn_manager.find(ip_port);
 				//conn_info.update_active_time(); //cant put it here
 
-				int  out_n=-2;char **out_arr;int *out_len;int *out_delay;
+				int  out_n=-2;char **out_arr;int *out_len;my_time_t *out_delay;
 				dest_t dest;
 				dest.type=type_ip_port;
 				//dest.conv=conv;
@@ -1094,19 +1124,19 @@ void print_help()
 	printf("    -k,--key              <string>        key for simple xor encryption,default:\"secret key\"\n");
 
 	printf("main options:\n");
-	printf("    -d                    <number>        duplicated packet number, -d 0 means no duplicate. default value:0\n");
-	printf("    -t                    <number>        duplicated packet delay time, unit: 0.1ms,default value:20(2ms)\n");
+	//printf("    -d                    <number>        duplicated packet number, -d 0 means no duplicate. default value:0\n");
+	//printf("    -t                    <number>        duplicated packet delay time, unit: 0.1ms,default value:20(2ms)\n");
 	printf("    -j                    <number>        simulated jitter.randomly delay first packet for 0~jitter_value*0.1 ms,to\n");
 	printf("                                          create simulated jitter.default value:0.do not use if you dont\n");
 	printf("                                          know what it means\n");
 	printf("    --report              <number>        turn on udp send/recv report,and set a time interval for reporting,unit:s\n");
 	printf("advanced options:\n");
-	printf("    -t                    tmin:tmax       simliar to -t above,but delay randomly between tmin and tmax\n");
+	//printf("    -t                    tmin:tmax       simliar to -t above,but delay randomly between tmin and tmax\n");
 	printf("    -j                    jmin:jmax       simliar to -j above,but create jitter randomly between jmin and jmax\n");
 	printf("    --random-drop         <number>        simulate packet loss ,unit:0.01%%\n");
-	printf("    --disable-filter                      disable duplicate packet filter.\n");
-	printf("    -m                    <number>        max pending packets,to prevent the program from eating up all your memory,\n");
-	printf("                                          default value:0(disabled).\n");
+	//printf("    --disable-filter                      disable duplicate packet filter.\n");
+	//printf("    -m                    <number>        max pending packets,to prevent the program from eating up all your memory,\n");
+	//printf("                                          default value:0(disabled).\n");
 	printf("other options:\n");
 	printf("    --log-level           <number>        0:never    1:fatal   2:error   3:warn \n");
 	printf("                                          4:info (default)     5:debug   6:trace\n");
@@ -1129,6 +1159,9 @@ void process_arg(int argc, char *argv[])
 		{"log-position", no_argument,    0, 1},
 		{"disable-color", no_argument,    0, 1},
 		{"disable-filter", no_argument,    0, 1},
+		{"disable-fec", no_argument,    0, 1},
+		{"disable-obs", no_argument,    0, 1},
+		{"disable-xor", no_argument,    0, 1},
 		{"sock-buf", required_argument,    0, 1},
 		{"random-drop", required_argument,    0, 1},
 		{"report", required_argument,    0, 1},
@@ -1193,7 +1226,7 @@ void process_arg(int argc, char *argv[])
 	}
 
 	int no_l = 1, no_r = 1;
-	while ((opt = getopt_long(argc, argv, "l:r:d:t:hcsk:j:m:f:p:n:",long_options,&option_index)) != -1)
+	while ((opt = getopt_long(argc, argv, "l:r:d:t:hcsk:j:m:f:p:n:i:",long_options,&option_index)) != -1)
 	{
 		//string opt_key;
 		//opt_key+=opt;
@@ -1230,6 +1263,8 @@ void process_arg(int argc, char *argv[])
 				}
 				jitter_min=0;
 				jitter_max=jitter;
+
+
 			}
 			else
 			{
@@ -1240,6 +1275,32 @@ void process_arg(int argc, char *argv[])
 					myexit(-1);
 				}
 			}
+			jitter_min*=100;
+			jitter_max*=100;
+			break;
+		case 'i':
+			if (strchr(optarg, ':') == 0)
+			{
+				int output_interval=-1;
+				sscanf(optarg,"%d\n",&output_interval);
+				if(output_interval<0||output_interval>1000*100)
+				{
+					mylog(log_fatal,"output_interval must be between 0 and 100,000(10 second)\n");
+					myexit(-1);
+				}
+				output_interval_min=output_interval_max=output_interval;
+			}
+			else
+			{
+				sscanf(optarg,"%d:%d\n",&output_interval_min,&output_interval_max);
+				if(output_interval_min<0 ||output_interval_max<0||output_interval_min>output_interval_max)
+				{
+					mylog(log_fatal," must satisfy  0<=output_interval_min<=output_interval_max\n");
+					myexit(-1);
+				}
+			}
+			output_interval_min*=100;
+			output_interval_max*=100;
 			break;
 		case 'f':
 			if (strchr(optarg, ':') == 0)
@@ -1355,6 +1416,22 @@ void process_arg(int argc, char *argv[])
 			else if(strcmp(long_options[option_index].name,"disable-color")==0)
 			{
 				//enable_log_color=0;
+			}
+			else if(strcmp(long_options[option_index].name,"disable-fec")==0)
+			{
+				disable_fec=1;
+			}
+			else if(strcmp(long_options[option_index].name,"disable-obs")==0)
+			{
+				disable_obscure=1;
+			}
+			else if(strcmp(long_options[option_index].name,"disable-xor")==0)
+			{
+				disable_xor=1;
+			}
+			else if(strcmp(long_options[option_index].name,"disable-filter")==0)
+			{
+				disable_replay_filter=1;
 			}
 			else if(strcmp(long_options[option_index].name,"log-position")==0)
 			{

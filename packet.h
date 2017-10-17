@@ -22,6 +22,8 @@ extern char key_string[1000];
 extern int disable_replay_filter;
 extern int random_drop;
 extern int local_listen_fd;
+extern int disable_obscure;
+extern int disable_xor;
 
 
 int my_send(const dest_t &dest,char *data,int len);

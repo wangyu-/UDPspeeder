@@ -103,6 +103,10 @@ private:
 	int fec_pending_num;
 	int fec_pending_time;
 
+	my_time_t first_packet_time;
+	my_time_t first_packet_time_for_output;
+
+
 	blob_encode_t blob_encode;
 	char input_buf[max_fec_packet_num+5][buf_len];
 	int input_len[max_fec_packet_num+100];
@@ -123,6 +127,11 @@ private:
 public:
 	fec_encode_manager_t();
 	~fec_encode_manager_t();
+
+	int get_first_packet_time()
+	{
+		return first_packet_time_for_output;
+	}
 
 	u64_t get_timer_fd64();
 	int re_init(int data_num,int redundant_num,int mtu,int pending_num,int pending_time,int type);

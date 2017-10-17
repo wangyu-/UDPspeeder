@@ -165,7 +165,8 @@ int fec_encode_manager_t::append(char *s,int len/*,int &is_first_packet*/)
 	{
 		itimerspec its;
 		memset(&its.it_interval,0,sizeof(its.it_interval));
-		my_time_t tmp_time=fec_pending_time+get_current_time_us();
+		first_packet_time=get_current_time_us();
+		my_time_t tmp_time=fec_pending_time+first_packet_time;
 		its.it_value.tv_sec=tmp_time/1000000llu;
 		its.it_value.tv_nsec=(tmp_time%1000000llu)*1000llu;
 		timerfd_settime(timer_fd,TFD_TIMER_ABSTIME,&its,0);
@@ -369,6 +370,7 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 		//mylog(log_trace,"!!! s= %d\n");
 		assert(ready_for_output==0);
     	ready_for_output=1;
+    	first_packet_time_for_output=first_packet_time;
     	seq++;
     	counter=0;
     	output_n=actual_data_num+actual_redundant_num;
@@ -409,6 +411,7 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     		int buf_idx=counter-1;
     		assert(ready_for_output==0);
     		ready_for_output=1;
+    		first_packet_time_for_output=0;
     		output_n=1;
 
     		int tmp_idx=0;
