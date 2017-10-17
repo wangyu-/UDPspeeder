@@ -1388,10 +1388,10 @@ void process_arg(int argc, char *argv[])
 
 		case 'n':
 			sscanf(optarg,"%d",&fec_pending_num);
-			if(fec_pending_num<1||fec_pending_num>1000)
+			if(fec_pending_num<1||fec_pending_num>10000)
 			{
 
-					mylog(log_fatal,"fec_pending_num should be between 1 and 1000\n");
+					mylog(log_fatal,"fec_pending_num should be between 1 and 10000\n");
 					myexit(-1);
 			}
 			break;
