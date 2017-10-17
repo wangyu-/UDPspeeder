@@ -44,7 +44,7 @@ int jitter_max=0*1000;
 int output_interval_min=0*1000;
 int output_interval_max=0*1000;
 
-int fix_latency=1;
+int fix_latency=0;
 
 u32_t local_ip_uint32,remote_ip_uint32=0;
 char local_ip[100], remote_ip[100];
@@ -1162,6 +1162,7 @@ void process_arg(int argc, char *argv[])
 		{"disable-fec", no_argument,    0, 1},
 		{"disable-obs", no_argument,    0, 1},
 		{"disable-xor", no_argument,    0, 1},
+		{"fix-latency", no_argument,    0, 1},
 		{"sock-buf", required_argument,    0, 1},
 		{"random-drop", required_argument,    0, 1},
 		{"report", required_argument,    0, 1},
@@ -1433,6 +1434,11 @@ void process_arg(int argc, char *argv[])
 			{
 				disable_replay_filter=1;
 			}
+			else if(strcmp(long_options[option_index].name,"fix-latency")==0)
+			{
+				fix_latency=1;
+			}
+
 			else if(strcmp(long_options[option_index].name,"log-position")==0)
 			{
 				enable_log_position=1;
