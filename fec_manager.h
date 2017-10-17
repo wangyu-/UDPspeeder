@@ -152,7 +152,7 @@ struct fec_group_t
 class fec_decode_manager_t
 {
 	anti_replay_t anti_replay;
-	fec_data_t fec_data[fec_buff_num];
+	fec_data_t fec_data[fec_buff_num+10];
 	int index;
 	unordered_map<u32_t, fec_group_t> mp;
 	blob_decode_t blob_decode;

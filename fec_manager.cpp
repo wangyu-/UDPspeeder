@@ -236,7 +236,7 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 
     if(about_to_fec)
 	{
-    	char ** blob_output;
+    	char ** blob_output=0;
     	int fec_len=-1;
     	mylog(log_trace,"counter=%d\n",counter);
 
@@ -270,7 +270,7 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     			}
     			actual_data_num=best_data_num;
     			actual_redundant_num=fec_redundant_num;
-    			mylog(log_info,"actual_data_num=%d actual_redundant_num=%d\n",best_data_num,fec_redundant_num);
+    			mylog(log_trace,"actual_data_num=%d actual_redundant_num=%d\n",best_data_num,fec_redundant_num);
     		}
 
         	assert(blob_encode.output(actual_data_num,blob_output,fec_len)==0);
@@ -488,6 +488,7 @@ int fec_decode_manager_t::input(char *s,int len)
 	len=len-tmp_idx;
 
 	mylog(log_trace,"input\n");
+	assert(len+100<buf_len);
 	if(len<0)
 	{
 		mylog(log_warn,"len<0\n");
@@ -591,6 +592,8 @@ int fec_decode_manager_t::input(char *s,int len)
 	fec_data[index].redundant_num=redundant_num;
 	fec_data[index].idx=inner_index;
 	fec_data[index].len=len;
+	assert(0<=index&&index<(int)fec_buff_num);
+	assert(len+100<buf_len);
 	memcpy(fec_data[index].buf,s+tmp_idx,len);
 	mp[seq].group_mp[inner_index]=index;
 	//index++ at end of function
@@ -774,7 +777,7 @@ int fec_decode_manager_t::input(char *s,int len)
 
 	end:
 	index++;
-	if(index==int(anti_replay_buff_size)) index=0;
+	if(index==int(fec_buff_num)) index=0;
 
 	return 0;
 }

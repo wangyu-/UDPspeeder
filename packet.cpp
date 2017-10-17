@@ -25,7 +25,7 @@ int disable_xor=0;
 
 int random_drop=0;
 
-char key_string[1000]= "secret key";
+char key_string[1000]= "";
 
 int local_listen_fd=-1;
 
@@ -43,7 +43,6 @@ void encrypt_0(char * input,int &len,char *key)
 
 void decrypt_0(char * input,int &len,char *key)
 {
-
 	int i,j;
 	if(key[0]==0) return;
 	for(i=0,j=0;i<len;i++,j++)

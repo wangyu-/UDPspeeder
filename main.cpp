@@ -32,10 +32,10 @@ int disable_fec=0;
 
 int debug_force_flush_fec=0;
 
-int fec_data_num=160;
-int fec_redundant_num=80;
+int fec_data_num=20;
+int fec_redundant_num=10;
 int fec_mtu=1250;
-int fec_pending_num=50;
+int fec_pending_num=200;
 int fec_pending_time=10000; //10ms
 int fec_type=0;
 
@@ -1193,15 +1193,12 @@ void process_arg(int argc, char *argv[])
 	}
 
 	int no_l = 1, no_r = 1;
-	while ((opt = getopt_long(argc, argv, "l:r:d:t:hcspk:j:m:",long_options,&option_index)) != -1)
+	while ((opt = getopt_long(argc, argv, "l:r:d:t:hcsk:j:m:f:p:n:",long_options,&option_index)) != -1)
 	{
 		//string opt_key;
 		//opt_key+=opt;
 		switch (opt)
 		{
-		case 'p':
-			//multi_process_mode=1;
-			break;
 		case 'k':
 			sscanf(optarg,"%s\n",key_string);
 			mylog(log_debug,"key=%s\n",key_string);
@@ -1211,7 +1208,7 @@ void process_arg(int argc, char *argv[])
 				myexit(-1);
 			}
 			break;
-
+/*
 		case 'm':
 			sscanf(optarg,"%d\n",&max_pending_packet);
 			if(max_pending_packet<1000)
@@ -1220,7 +1217,7 @@ void process_arg(int argc, char *argv[])
 				myexit(-1);
 			}
 			break;
-
+*/
 		case 'j':
 			if (strchr(optarg, ':') == 0)
 			{
@@ -1244,31 +1241,59 @@ void process_arg(int argc, char *argv[])
 				}
 			}
 			break;
-		case 't':
-
-			sscanf(optarg,"%d",&fec_type);
-			/*
+		case 'f':
 			if (strchr(optarg, ':') == 0)
 			{
-				int dup_delay=-1;
-				sscanf(optarg,"%d\n",&dup_delay);
-				if(dup_delay<1||dup_delay>1000*100)
-				{
-					mylog(log_fatal,"dup_delay must be between 1 and 100,000(10 second)\n");
-					myexit(-1);
-				}
-				dup_delay_min=dup_delay_max=dup_delay;
+				mylog(log_fatal,"invalid format for f");
+				myexit(-1);
 			}
 			else
 			{
-				sscanf(optarg,"%d:%d\n",&dup_delay_min,&dup_delay_max);
-				if(dup_delay_min<1 ||dup_delay_max<1||dup_delay_min>dup_delay_max)
+				sscanf(optarg,"%d:%d\n",&fec_data_num,&fec_redundant_num);
+				if(fec_data_num<1 ||fec_redundant_num<0||fec_data_num+fec_redundant_num>255)
 				{
-					mylog(log_fatal," must satisfy  1<=dmin<=dmax\n");
+					mylog(log_fatal,"fec_data_num<1 ||fec_redundant_num<0||fec_data_num+fec_redundant_num>255\n");
 					myexit(-1);
 				}
-			}*/
+			}
 			break;
+		case 't':
+			sscanf(optarg,"%d",&fec_type);
+			if(fec_type!=0&&fec_type!=1)
+			{
+				mylog(log_fatal,"mode should be 0 or 1\n");
+				myexit(-1);
+			}
+			break;
+		case 'm':
+			sscanf(optarg,"%d",&fec_mtu);
+			if(fec_mtu<500||fec_mtu>1600)
+			{
+				mylog(log_fatal,"fec_mtu should be between 500 and 1600\n");
+				myexit(-1);
+			}
+			break;
+		case 'p':
+			sscanf(optarg,"%d",&fec_pending_time);
+			if(fec_pending_time<0||fec_pending_time>10000)
+			{
+
+					mylog(log_fatal,"fec_pending_time should be between 0 and 10000\n");
+					myexit(-1);
+			}
+			fec_pending_time*=100;
+			break;
+
+		case 'n':
+			sscanf(optarg,"%d",&fec_pending_num);
+			if(fec_pending_num<1||fec_pending_num>1000)
+			{
+
+					mylog(log_fatal,"fec_pending_num should be between 1 and 1000\n");
+					myexit(-1);
+			}
+			break;
+			/*
 		case 'd':
 			dup_num=-1;
 			sscanf(optarg,"%d\n",&dup_num);
@@ -1278,7 +1303,7 @@ void process_arg(int argc, char *argv[])
 				myexit(-1);
 			}
 			dup_num+=1;
-			break;
+			break;*/
 		case 'c':
 			is_client = 1;
 			break;
