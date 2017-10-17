@@ -622,7 +622,7 @@ int fec_decode_manager_t::input(char *s,int len)
 	{
 		if(mp[seq].data_num!=-1)
 		{
-			if((int)inner_mp.size()>data_num+1)
+			if((int)inner_mp.size()>mp[seq].data_num+1)
 			{
 				mylog(log_warn,"inner_mp.size()>data_num+1\n");
 				anti_replay.set_invaild(seq);
