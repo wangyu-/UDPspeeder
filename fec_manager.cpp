@@ -657,7 +657,7 @@ int fec_decode_manager_t::input(char *s,int len)
 			{
 				blob_decode.input(fec_tmp_arr[i],len);
 			}
-			if(blob_decode.output(output_n,output_s_arr,output_len_arr)==0)
+			if(blob_decode.output(output_n,output_s_arr,output_len_arr)!=0)
 			{
 				mylog(log_warn,"blob_decode failed\n");
 				//ready_for_output=0;
