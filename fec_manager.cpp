@@ -413,7 +413,7 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     		int input_buf_idx=counter-1;
     		assert(ready_for_output==0);
     		ready_for_output=1;
-    		first_packet_time_for_output=0;
+    		//first_packet_time_for_output=0;
     		output_n=1;
 
     		int tmp_idx=0;

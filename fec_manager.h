@@ -134,6 +134,10 @@ public:
 		return first_packet_time_for_output;
 	}
 
+	int get_type()
+	{
+		return type;
+	}
 	u64_t get_timer_fd64();
 	int re_init(int data_num,int redundant_num,int mtu,int pending_num,int pending_time,int type);
 	int input(char *s,int len/*,int &is_first_packet*/);

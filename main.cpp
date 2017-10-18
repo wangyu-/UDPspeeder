@@ -190,15 +190,19 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 			my_time_t common_latency=0;
 			my_time_t first_packet_time=conn_info.fec_encode_manager.get_first_packet_time();
 
-			if(fix_latency==1&&first_packet_time!=0)
+			if(fix_latency==1&&conn_info.fec_encode_manager.get_type()==0&&first_packet_time!=0)
 			{
 				my_time_t current_time=get_current_time_us();
 				my_time_t tmp;
 				if((my_time_t)fec_pending_time >=(current_time - first_packet_time))
 				{
 					tmp=(my_time_t)fec_pending_time-(current_time - first_packet_time);
+					mylog(log_info,"delay=%llu\n",tmp);
 				}
-				else tmp=0;
+				else
+				{
+					tmp=0;
+				}
 				common_latency+=tmp;
 			}
 
@@ -1219,7 +1223,7 @@ void process_arg(int argc, char *argv[])
 		{"mtu", required_argument,    0, 1},
 		{"mode", required_argument,   0,1},
 		{"timeout", required_argument,   0,1},
-		{"--decode-buf", required_argument,   0,1},
+		{"decode-buf", required_argument,   0,1},
 		{"queue-len", required_argument,   0,'q'},
 		{"fec", required_argument,   0,'f'},
 		{"jitter", required_argument,   0,'j'},
@@ -1498,9 +1502,9 @@ void process_arg(int argc, char *argv[])
 			else if(strcmp(long_options[option_index].name,"decode-buf")==0)
 			{
 				sscanf(optarg,"%d",&fec_buff_num);
-				if(fec_buff_num<100 || fec_buff_num>20000)
+				if(fec_buff_num<300 || fec_buff_num>20000)
 				{
-					mylog(log_fatal,"decode-buf value must be between 100 and 20000 (kbyte) \n");
+					mylog(log_fatal,"decode-buf value must be between 300 and 20000 (kbyte) \n");
 					myexit(-1);
 				}
 				mylog(log_info,"decode-buf=%d\n",fec_buff_num);
