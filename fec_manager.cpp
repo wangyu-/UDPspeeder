@@ -472,6 +472,7 @@ int fec_decode_manager_t::re_init()
 	for(int i=0;i<(int)fec_buff_num;i++)
 		fec_data[i].used=0;
 	ready_for_output=0;
+	index=0;
 	return 0;
 }
 
