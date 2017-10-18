@@ -10,8 +10,8 @@
 #include "log.h"
 #include "packet.h"
 
-int iv_min=2;
-int iv_max=18;//< 256;
+int iv_min=4;
+int iv_max=32;//< 256;
 u64_t packet_send_count=0;
 u64_t dup_packet_send_count=0;
 u64_t packet_recv_count=0;

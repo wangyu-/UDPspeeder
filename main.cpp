@@ -1149,7 +1149,7 @@ void print_help()
 	char git_version_buf[100]={0};
 	strncpy(git_version_buf,gitversion,10);
 
-	printf("UDPspeeder\n");
+	printf("UDPspeeder V2\n");
 	printf("git version:%s    ",git_version_buf);
 	printf("build date:%s %s\n",__DATE__,__TIME__);
 	printf("repository: https://github.com/wangyu-/UDPspeeder\n");
@@ -1159,29 +1159,39 @@ void print_help()
 	printf("    run as server : ./this_program -s -l server_listen_ip:server_port -r remote_ip:remote_port  [options]\n");
 	printf("\n");
 	printf("common option,must be same on both sides:\n");
-	printf("    -k,--key              <string>        key for simple xor encryption,default:\"secret key\"\n");
+	printf("    -k,--key              <string>        key for simple xor encryption. if not set,xor is disabled\n");
 
 	printf("main options:\n");
-	//printf("    -d                    <number>        duplicated packet number, -d 0 means no duplicate. default value:0\n");
-	//printf("    -t                    <number>        duplicated packet delay time, unit: 0.1ms,default value:20(2ms)\n");
-	printf("    -j                    <number>        simulated jitter.randomly delay first packet for 0~jitter_value*0.1 ms,to\n");
-	printf("                                          create simulated jitter.default value:0.do not use if you dont\n");
-	printf("                                          know what it means\n");
-	printf("    --report              <number>        turn on udp send/recv report,and set a time interval for reporting,unit:s\n");
+	printf("    -f,--fec              x:y             forward error correction,send y redundant packets for every x packets\n");
+	printf("    --timeout             <number>        how long could a packet be held in queue before doing fec,unit: ms\n");
+	printf("    --mode                <number>        fec-mode,available values: 0,1 ; 0 cost less bandwidth,1 cost less latency\n");
+	printf("    --report              <number>        turn on send/recv report,and set a period for reporting,unit:s\n");
+
 	printf("advanced options:\n");
-	//printf("    -t                    tmin:tmax       simliar to -t above,but delay randomly between tmin and tmax\n");
-	printf("    -j                    jmin:jmax       simliar to -j above,but create jitter randomly between jmin and jmax\n");
-	printf("    --random-drop         <number>        simulate packet loss ,unit:0.01%%\n");
-	//printf("    --disable-filter                      disable duplicate packet filter.\n");
-	//printf("    -m                    <number>        max pending packets,to prevent the program from eating up all your memory,\n");
-	//printf("                                          default value:0(disabled).\n");
-	printf("other options:\n");
+	printf("    --mtu                 <number>        mtu. for mode 0,the program will split packet to segment smaller than mtu_value.\n");
+	printf("                                          for mode 1,no packet will be split,the program just check if the mtu is exceed.\n");
+	printf("                                          default value:1250 \n");
+	printf("    -j,--jitter           <number>        simulated jitter.randomly delay first packet for 0~<number> ms,default value:0.\n");
+	printf("                                          do not use if you dont know what it means.\n");
+	printf("    -i,--interval         <number>        scatter each fec group to a interval of <number> ms,to protect burst packet loss.\n");
+	printf("                                          default value:0.do not use if you dont know what it means.\n");
+	printf("    --random-drop         <number>        simulate packet loss ,unit:0.01%%. default value: 0\n");
+	printf("    --disable-obscure     <number>        disable obscure,to save a bit bandwidth and cpu\n");
+//	printf("    --disable-xor         <number>        disable xor\n");
+
+	printf("developer options:\n");
+	printf("    -j ,--jitter          jmin:jmax       similiar to -j above,but create jitter randomly between jmin and jmax\n");
+	printf("    -i,--interval         imin:imax       similiar to -i above,but scatter randomly between imin and imax\n");
+    printf("    -q,--queue-len        <number>        max fec queue len,only for mode 1\n");
+    printf("    --fix-latency         <number>        try to stabilize latency,only for mode 1\n");
+    printf("    --delay-capacity      <number>        max number of delayed packets\n");
+	printf("    --disable-fec         <number>        completely disable fec,turn the program into a normal udp tunnel\n");
+	printf("    --sock-buf            <number>        buf size for socket,>=10 and <=10240,unit:kbyte,default:1024\n");
+	printf("log and help options:\n");
 	printf("    --log-level           <number>        0:never    1:fatal   2:error   3:warn \n");
 	printf("                                          4:info (default)     5:debug   6:trace\n");
 	printf("    --log-position                        enable file name,function name,line number in log\n");
 	printf("    --disable-color                       disable log color\n");
-	printf("    --sock-buf            <number>        buf size for socket,>=10 and <=10240,unit:kbyte,default:1024\n");
-	//printf("    -p                                    use multi-process mode instead of epoll.very costly,only for test,do dont use\n");
 	printf("    -h,--help                             print this help message\n");
 
 	//printf("common options,these options must be same on both side\n");
@@ -1198,14 +1208,19 @@ void process_arg(int argc, char *argv[])
 		{"disable-color", no_argument,    0, 1},
 		{"disable-filter", no_argument,    0, 1},
 		{"disable-fec", no_argument,    0, 1},
-		{"disable-obs", no_argument,    0, 1},
+		{"disable-obscure", no_argument,    0, 1},
 		{"disable-xor", no_argument,    0, 1},
 		{"fix-latency", no_argument,    0, 1},
 		{"sock-buf", required_argument,    0, 1},
 		{"random-drop", required_argument,    0, 1},
 		{"report", required_argument,    0, 1},
 		{"delay-capacity", required_argument,    0, 1},
-		{"mtu", required_argument,    0, 'm'},
+		{"mtu", required_argument,    0, 1},
+		{"mode", required_argument,   0,1},
+		{"timeout", required_argument,   0,1},
+		{"queue-len", required_argument,   0,'q'},
+		{"fec", required_argument,   0,'f'},
+		{"jitter", required_argument,   0,'j'},
 		{NULL, 0, 0, 0}
       };
     int option_index = 0;
@@ -1267,7 +1282,7 @@ void process_arg(int argc, char *argv[])
 	}
 
 	int no_l = 1, no_r = 1;
-	while ((opt = getopt_long(argc, argv, "l:r:d:t:hcsk:j:m:f:p:n:i:",long_options,&option_index)) != -1)
+	while ((opt = getopt_long(argc, argv, "l:r:hcsk:j:f:p:n:i:",long_options,&option_index)) != -1)
 	{
 		//string opt_key;
 		//opt_key+=opt;
@@ -1282,16 +1297,6 @@ void process_arg(int argc, char *argv[])
 				myexit(-1);
 			}
 			break;
-/*
-		case 'm':
-			sscanf(optarg,"%d\n",&max_pending_packet);
-			if(max_pending_packet<1000)
-			{
-				mylog(log_fatal,"max_pending_packet must be >1000\n");
-				myexit(-1);
-			}
-			break;
-*/
 		case 'j':
 			if (strchr(optarg, ':') == 0)
 			{
@@ -1359,34 +1364,7 @@ void process_arg(int argc, char *argv[])
 				}
 			}
 			break;
-		case 't':
-			sscanf(optarg,"%d",&fec_type);
-			if(fec_type!=0&&fec_type!=1)
-			{
-				mylog(log_fatal,"mode should be 0 or 1\n");
-				myexit(-1);
-			}
-			break;
-		case 'm':
-			sscanf(optarg,"%d",&fec_mtu);
-			if(fec_mtu<100||fec_mtu>2000)
-			{
-				mylog(log_fatal,"fec_mtu should be between 100 and 2000\n");
-				myexit(-1);
-			}
-			break;
-		case 'p':
-			sscanf(optarg,"%d",&fec_pending_time);
-			if(fec_pending_time<0||fec_pending_time>1000)
-			{
-
-					mylog(log_fatal,"fec_pending_time should be between 0 and 1000(1s)\n");
-					myexit(-1);
-			}
-			fec_pending_time*=1000;
-			break;
-
-		case 'n':
+		case 'q':
 			sscanf(optarg,"%d",&fec_pending_num);
 			if(fec_pending_num<1||fec_pending_num>10000)
 			{
@@ -1394,18 +1372,6 @@ void process_arg(int argc, char *argv[])
 					mylog(log_fatal,"fec_pending_num should be between 1 and 10000\n");
 					myexit(-1);
 			}
-			break;
-			/*
-		case 'd':
-			dup_num=-1;
-			sscanf(optarg,"%d\n",&dup_num);
-			if(dup_num<0 ||dup_num>5)
-			{
-				mylog(log_fatal,"dup_num must be between 0 and 5\n");
-				myexit(-1);
-			}
-			dup_num+=1;
-			break;*/
 		case 'c':
 			is_client = 1;
 			break;
@@ -1462,20 +1428,19 @@ void process_arg(int argc, char *argv[])
 			{
 				disable_fec=1;
 			}
-			else if(strcmp(long_options[option_index].name,"disable-obs")==0)
+			else if(strcmp(long_options[option_index].name,"disable-obscure")==0)
 			{
+				mylog(log_info,"obscure disabled\n");
 				disable_obscure=1;
 			}
 			else if(strcmp(long_options[option_index].name,"disable-xor")==0)
 			{
+				mylog(log_info,"xor disabled\n");
 				disable_xor=1;
-			}
-			else if(strcmp(long_options[option_index].name,"disable-filter")==0)
-			{
-				disable_replay_filter=1;
 			}
 			else if(strcmp(long_options[option_index].name,"fix-latency")==0)
 			{
+				mylog(log_info,"fix-latency enabled\n");
 				fix_latency=1;
 			}
 
@@ -1525,6 +1490,35 @@ void process_arg(int argc, char *argv[])
 					mylog(log_fatal,"sock-buf value must be between 1 and 10240 (kbyte) \n");
 					myexit(-1);
 				}
+			}
+			else if(strcmp(long_options[option_index].name,"mode")==0)
+			{
+				sscanf(optarg,"%d",&fec_type);
+				if(fec_type!=0&&fec_type!=1)
+				{
+					mylog(log_fatal,"mode should be 0 or 1\n");
+					myexit(-1);
+				}
+			}
+			else if(strcmp(long_options[option_index].name,"mtu")==0)
+			{
+				sscanf(optarg,"%d",&fec_mtu);
+				if(fec_mtu<100||fec_mtu>2000)
+				{
+					mylog(log_fatal,"fec_mtu should be between 100 and 2000\n");
+					myexit(-1);
+				}
+			}
+			else if(strcmp(long_options[option_index].name,"timeout")==0)
+			{
+				sscanf(optarg,"%d",&fec_pending_time);
+				if(fec_pending_time<0||fec_pending_time>1000)
+				{
+
+						mylog(log_fatal,"fec_pending_time should be between 0 and 1000(1s)\n");
+						myexit(-1);
+				}
+				fec_pending_time*=1000;
 			}
 			else
 			{
