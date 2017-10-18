@@ -373,6 +373,7 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 		assert(ready_for_output==0);
     	ready_for_output=1;
     	first_packet_time_for_output=first_packet_time;
+    	first_packet_time=0;
     	seq++;
     	counter=0;
     	output_n=actual_data_num+actual_redundant_num;
@@ -413,8 +414,9 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     		int input_buf_idx=counter-1;
     		assert(ready_for_output==0);
     		ready_for_output=1;
-    		//first_packet_time_for_output=0;
+    		first_packet_time_for_output=0;
     		output_n=1;
+
 
     		int tmp_idx=0;
     		write_u32(input_buf[input_buf_idx]+tmp_idx,seq);

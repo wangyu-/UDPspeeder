@@ -129,7 +129,7 @@ public:
 	fec_encode_manager_t();
 	~fec_encode_manager_t();
 
-	int get_first_packet_time()
+	my_time_t get_first_packet_time()
 	{
 		return first_packet_time_for_output;
 	}

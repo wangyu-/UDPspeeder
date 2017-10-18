@@ -190,18 +190,21 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 			my_time_t common_latency=0;
 			my_time_t first_packet_time=conn_info.fec_encode_manager.get_first_packet_time();
 
-			if(fix_latency==1&&conn_info.fec_encode_manager.get_type()==0&&first_packet_time!=0)
+			if(fix_latency==1&&conn_info.fec_encode_manager.get_type()==0)
 			{
 				my_time_t current_time=get_current_time_us();
 				my_time_t tmp;
+				assert(first_packet_time!=0);
+				//mylog(log_info,"current_time=%llu first_packlet_time=%llu   fec_pending_time=%llu\n",current_time,first_packet_time,(my_time_t)fec_pending_time);
 				if((my_time_t)fec_pending_time >=(current_time - first_packet_time))
 				{
 					tmp=(my_time_t)fec_pending_time-(current_time - first_packet_time);
-					mylog(log_info,"delay=%llu\n",tmp);
+					//mylog(log_info,"tmp=%llu\n",tmp);
 				}
 				else
 				{
 					tmp=0;
+					//mylog(log_info,"0\n");
 				}
 				common_latency+=tmp;
 			}
@@ -1186,9 +1189,9 @@ void print_help()
 	printf("developer options:\n");
 	printf("    -j ,--jitter          jmin:jmax       similiar to -j above,but create jitter randomly between jmin and jmax\n");
 	printf("    -i,--interval         imin:imax       similiar to -i above,but scatter randomly between imin and imax\n");
-    printf("    -q,--queue-len        <number>        max fec queue len,only for mode 1\n");
+    printf("    -q,--queue-len        <number>        max fec queue len,only for mode 0\n");
     printf("    --decode-buf         <number>         size of buffer of fec decoder,unit:packet,default:2000\n");
-    printf("    --fix-latency         <number>        try to stabilize latency,only for mode 1\n");
+    printf("    --fix-latency         <number>        try to stabilize latency,only for mode 0\n");
     printf("    --delay-capacity      <number>        max number of delayed packets\n");
 	printf("    --disable-fec         <number>        completely disable fec,turn the program into a normal udp tunnel\n");
 	printf("    --sock-buf            <number>        buf size for socket,>=10 and <=10240,unit:kbyte,default:1024\n");
