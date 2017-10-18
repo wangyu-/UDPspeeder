@@ -17,6 +17,8 @@ const int decode_fast_send=1;
 int short_packet_optimize=1;
 int header_overhead=40;
 
+u32_t fec_buff_num=2000;// how many packet can fec_decode_manager hold. shouldnt be very large,or it will cost huge memory
+
 blob_encode_t::blob_encode_t()
 {
 	clear();
@@ -463,11 +465,6 @@ int fec_encode_manager_t::output(int &n,char ** &s_arr,int *&len)
 		ready_for_output=0;
 	}
 	return 0;
-}
-
-fec_decode_manager_t::fec_decode_manager_t()
-{
-	re_init();
 }
 
 int fec_decode_manager_t::re_init()

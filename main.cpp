@@ -1183,6 +1183,7 @@ void print_help()
 	printf("    -j ,--jitter          jmin:jmax       similiar to -j above,but create jitter randomly between jmin and jmax\n");
 	printf("    -i,--interval         imin:imax       similiar to -i above,but scatter randomly between imin and imax\n");
     printf("    -q,--queue-len        <number>        max fec queue len,only for mode 1\n");
+    printf("    --decode-buf         <number>         size of buffer of fec decoder,unit:packet,default:2000\n");
     printf("    --fix-latency         <number>        try to stabilize latency,only for mode 1\n");
     printf("    --delay-capacity      <number>        max number of delayed packets\n");
 	printf("    --disable-fec         <number>        completely disable fec,turn the program into a normal udp tunnel\n");
@@ -1218,9 +1219,11 @@ void process_arg(int argc, char *argv[])
 		{"mtu", required_argument,    0, 1},
 		{"mode", required_argument,   0,1},
 		{"timeout", required_argument,   0,1},
+		{"--decode-buf", required_argument,   0,1},
 		{"queue-len", required_argument,   0,'q'},
 		{"fec", required_argument,   0,'f'},
 		{"jitter", required_argument,   0,'j'},
+
 		{NULL, 0, 0, 0}
       };
     int option_index = 0;
@@ -1456,6 +1459,7 @@ void process_arg(int argc, char *argv[])
 					mylog(log_fatal,"random_drop must be between 0 10000 \n");
 					myexit(-1);
 				}
+				mylog(log_info,"random_drop=%d\n",random_drop);
 			}
 			else if(strcmp(long_options[option_index].name,"delay-capacity")==0)
 			{
@@ -1490,6 +1494,16 @@ void process_arg(int argc, char *argv[])
 					mylog(log_fatal,"sock-buf value must be between 1 and 10240 (kbyte) \n");
 					myexit(-1);
 				}
+			}
+			else if(strcmp(long_options[option_index].name,"decode-buf")==0)
+			{
+				sscanf(optarg,"%d",&fec_buff_num);
+				if(fec_buff_num<100 || fec_buff_num>20000)
+				{
+					mylog(log_fatal,"decode-buf value must be between 100 and 20000 (kbyte) \n");
+					myexit(-1);
+				}
+				mylog(log_info,"decode-buf=%d\n",fec_buff_num);
 			}
 			else if(strcmp(long_options[option_index].name,"mode")==0)
 			{

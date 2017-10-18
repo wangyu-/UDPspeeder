@@ -12,11 +12,11 @@
 #include "log.h"
 #include "lib/rs.h"
 
-const int max_blob_packet_num=20000;//how many packet can be contain in a blob_t ,can be set very large
-const u32_t anti_replay_buff_size=20000;//can be set very large
+const int max_blob_packet_num=30000;//how many packet can be contain in a blob_t ,can be set very large
+const u32_t anti_replay_buff_size=30000;//can be set very large
 
 const int max_fec_packet_num=255;// this is the limitation of the rs lib
-const u32_t fec_buff_num=2000;// how many packet can fec_decode_manager hold. shouldnt be very large,or it will cost huge memory
+extern u32_t fec_buff_num;
 
 
 struct anti_replay_t
@@ -162,10 +162,11 @@ struct fec_group_t
 class fec_decode_manager_t
 {
 	anti_replay_t anti_replay;
-	fec_data_t fec_data[fec_buff_num+10];
+	fec_data_t *fec_data;
 	int index;
 	unordered_map<u32_t, fec_group_t> mp;
 	blob_decode_t blob_decode;
+
 
 
 	int output_n;
@@ -174,8 +175,21 @@ class fec_decode_manager_t
 	char *output_s_arr_buf[max_fec_packet_num+100];
 	int output_len_arr_buf[max_fec_packet_num+100];
 	int ready_for_output;
+
 public:
-	fec_decode_manager_t();
+	fec_decode_manager_t()
+	{
+		fec_data=new fec_data_t[fec_buff_num+5];
+		re_init();
+	}
+	fec_decode_manager_t(const fec_decode_manager_t &b)
+	{
+		assert(0==1);//not allowed to copy
+	}
+	~fec_decode_manager_t()
+	{
+		delete fec_data;
+	}
 	int re_init();
 	int input(char *s,int len);
 	int output(int &n,char ** &s_arr,int* &len_arr);
