@@ -41,7 +41,7 @@ It is able to detect and correct multiple symbol errors. By adding t check symbo
 
 ![](/images/en/rs.png)
 
-check wikipedia for more info, https://en.wikipedia.org/wiki/Reed–Solomon_error_correction
+Check wikipedia for more info, https://en.wikipedia.org/wiki/Reed–Solomon_error_correction
 
 # Getting Started
 
@@ -64,10 +64,6 @@ Now connecting to UDP port 3333 at the client side is equivalent to connecting t
 ##### Note
 
 `-f20:10` means sending 10 redundant packets for every 20 original packets.
-
-### speed-up any traffic with Openvpn+udpspeeder
-
-Check [UDPspeeder + openvpn config guide](/doc/udpspeeder_openvpn.md).
 
 # Advanced Topic
 ### Usage
@@ -113,4 +109,6 @@ log and help options:
     --disable-color                       disable log color
     -h,--help                             print this help message
 ```
+### Speed-up any traffic with Openvpn+udpspeeder
 
+Check [UDPspeeder + openvpn config guide](/doc/udpspeeder_openvpn.md).
