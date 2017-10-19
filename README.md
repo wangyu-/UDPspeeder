@@ -109,6 +109,6 @@ log and help options:
     --disable-color                       disable log color
     -h,--help                             print this help message
 ```
-### Speed-up any traffic with Openvpn+udpspeeder
+### Speed-Up any traffic with OpenVPN+UDPspeeder
 
 Check [UDPspeeder + openvpn config guide](/doc/udpspeeder_openvpn.md).
