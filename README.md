@@ -19,11 +19,11 @@ tested on a link with 100ms latency and 10% packet loss at both direction
 # Supported Platforms
 Linux host (including desktop Linux,Android phone/tablet,OpenWRT router,or Raspberry PI).
 
-Windows and Mac support will be added in furture,before its done,you can run UDPspeeder inside [this](https://github.com/wangyu-/udp2raw-tunnel/releases/download/20170918.0/lede-17.01.2-x86_virtual_machine_image_with_udp2raw_pre_installed.zip) 7.5mb virtual machine image.
+For Windows and MacOS You can run UDPspeeder inside [this](https://github.com/wangyu-/udp2raw-tunnel/releases/download/20170918.0/lede-17.01.2-x86_virtual_machine_image_with_udp2raw_pre_installed.zip) 7.5mb virtual machine image.
 
 # How does it work
 
-UDPspeeder use (FEC)Forward Error Correction to defend again packet loss.It improves your connection at the cost of addtional bandwidth.The algorithm for FEC is Reed-Solomon.
+UDPspeeder uses FEC(Forward Error Correction) to improve your connection's quality,at the cost of addtional bandwidth.The algorithm for FEC is Reed-Solomon.
 
 # Getting Started
 
@@ -32,15 +32,18 @@ Download binary release from https://github.com/wangyu-/UDPspeeder/releases
 
 ### Running 
 Assume your server ip is 44.55.66.77, you have a service listening on udp port 7777.
+
 ```bash
 # Run at server side:
-./speederv2 -s -l0.0.0.0:4096 -r 127.0.0.1:7777  
+./speederv2 -s -l0.0.0.0:4096 -r 127.0.0.1:7777  -f20:10
 
 # Run at client side
-./speederv2 -c -l0.0.0.0:3333  -r44.55.66.77:4096 -
+./speederv2 -c -l0.0.0.0:3333  -r44.55.66.77:4096 -f20:10
 ```
 
-Now connecting to UDP port 3333 at the client side is equivalent to connecting to port 7777 at the server side,and the connection is boosted.
+Now connecting to UDP port 3333 at the client side is equivalent to connecting to port 7777 at the server side,and the connection is boosted by UDPspeeder.
+
+Note：-f20:10 means sending 10 redundant packets for every 20 original packets.
 
 # Advanced Topic
 ### Usage
