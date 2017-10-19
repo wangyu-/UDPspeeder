@@ -33,10 +33,10 @@ int debug_force_flush_fec=0;
 
 int fec_data_num=20;
 int fec_redundant_num=10;
-int fec_mtu=1200;
+int fec_mtu=1250;
 int fec_pending_num=200;
-int fec_pending_time=10*1000; //10ms
-int fec_type=0;
+int fec_pending_time=8*1000; //8ms
+int fec_type=1;
 
 int jitter_min=0*1000;
 int jitter_max=0*1000;
@@ -1170,8 +1170,8 @@ void print_help()
 
 	printf("main options:\n");
 	printf("    -f,--fec              x:y             forward error correction,send y redundant packets for every x packets\n");
-	printf("    --timeout             <number>        how long could a packet be held in queue before doing fec,unit: ms\n");
-	printf("    --mode                <number>        fec-mode,available values: 0,1 ; 0 cost less bandwidth,1 cost less latency\n");
+	printf("    --timeout             <number>        how long could a packet be held in queue before doing fec,unit: ms,default :8ms\n");
+	printf("    --mode                <number>        fec-mode,available values: 0,1 ; 0 cost less bandwidth,1 cost less latency(default)\n");
 	printf("    --report              <number>        turn on send/recv report,and set a period for reporting,unit:s\n");
 
 	printf("advanced options:\n");
@@ -1190,7 +1190,7 @@ void print_help()
 	printf("    -j ,--jitter          jmin:jmax       similiar to -j above,but create jitter randomly between jmin and jmax\n");
 	printf("    -i,--interval         imin:imax       similiar to -i above,but scatter randomly between imin and imax\n");
     printf("    -q,--queue-len        <number>        max fec queue len,only for mode 0\n");
-    printf("    --decode-buf         <number>         size of buffer of fec decoder,unit:packet,default:2000\n");
+    printf("    --decode-buf          <number>        size of buffer of fec decoder,unit:packet,default:2000\n");
     printf("    --fix-latency         <number>        try to stabilize latency,only for mode 0\n");
     printf("    --delay-capacity      <number>        max number of delayed packets\n");
 	printf("    --disable-fec         <number>        completely disable fec,turn the program into a normal udp tunnel\n");
