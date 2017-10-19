@@ -7,16 +7,16 @@ When used alone,UDPspeeder speeds-up only udp connection.Nevertheless,if you use
 
 [简体中文](/doc/README.md)
 
-# Effect
+# Efficacy
 tested on a link with 100ms latency and 10% packet loss at both direction
 
 ### Ping Packet Loss
 ![](/images/en/ping_compare3.PNG)
 
-### Scp Copy Speed
+### SCP Copy Speed
 ![](/images/en/scp_compare.PNG)
 
-# Support Platforms
+# Supported Platforms
 Linux host (including desktop Linux,Android phone/tablet,OpenWRT router,or Raspberry PI).
 
 Windows and Mac support will be added in furture,before its done,you can run UDPspeeder inside [this](https://github.com/wangyu-/udp2raw-tunnel/releases/download/20170918.0/lede-17.01.2-x86_virtual_machine_image_with_udp2raw_pre_installed.zip) 7.5mb virtual machine image.
@@ -40,7 +40,7 @@ Assume your server ip is 44.55.66.77, you have a service listening on udp port 7
 ./speederv2 -c -l0.0.0.0:3333  -r44.55.66.77:4096 -
 ```
 
-Now the connection is boosted,connecting to UDP port 3333 at the client side is equivalent to connecting to port 7777 at the server side
+Now connecting to UDP port 3333 at the client side is equivalent to connecting to port 7777 at the server side,and the connection is boosted.
 
 # Advanced Topic
 ### Usage
@@ -74,7 +74,7 @@ developer options:
     -j ,--jitter          jmin:jmax       similiar to -j above,but create jitter randomly between jmin and jmax
     -i,--interval         imin:imax       similiar to -i above,but scatter randomly between imin and imax
     -q,--queue-len        <number>        max fec queue len,only for mode 0
-    --decode-buf         <number>         size of buffer of fec decoder,unit:packet,default:2000
+    --decode-buf          <number>        size of buffer of fec decoder,unit:packet,default:2000
     --fix-latency         <number>        try to stabilize latency,only for mode 0
     --delay-capacity      <number>        max number of delayed packets
     --disable-fec         <number>        completely disable fec,turn the program into a normal udp tunnel
@@ -88,6 +88,6 @@ log and help options:
 ```
 
 # Application
-## Boost any traffic (including tcp/udp/icmp) by using UDPspeedeer +openvpn
+## Boost any traffic with UDPspeeder +openvpn
 
 ![image_vpn](/images/en/udpspeeder+openvpn.PNG)
