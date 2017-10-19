@@ -1,5 +1,5 @@
 # UDPspeeder
-Network Speed-Up Tool. Boost your Connection on a High Lantency High Packet-Loss Link by using Forward Error Correction
+Network Speed-Up Tool. Boost your Connection on a High Lantency High Packet-Loss Link by using Forward Error Correction.
 
 When used alone,UDPspeeder speeds-up only udp connection.Nevertheless,if you used UDPspeeder + any UDP based VPN together,you can speed-up any traffic(include tcp/udp/icmp)。
 
