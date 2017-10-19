@@ -66,7 +66,7 @@ Now connecting to UDP port 3333 at the client side is equivalent to connecting t
 `-f20:10` means sending 10 redundant packets for every 20 original packets.
 
 # Advanced Topic
-### Usage
+### Full Options
 ```
 UDPspeeder V2
 git version:f479ca2779    build date:Oct 19 2017 01:37:08
