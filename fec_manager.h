@@ -167,18 +167,18 @@ class fec_decode_manager_t
 {
 	anti_replay_t anti_replay;
 	fec_data_t *fec_data;
-	int index;
 	unordered_map<u32_t, fec_group_t> mp;
 	blob_decode_t blob_decode;
 
-
+	int index;
 
 	int output_n;
 	char ** output_s_arr;
 	int * output_len_arr;
-	char *output_s_arr_buf[max_fec_packet_num+100];
-	int output_len_arr_buf[max_fec_packet_num+100];
 	int ready_for_output;
+
+	char *output_s_arr_buf[max_fec_packet_num+100];//only for type=1,for type=0 the buf inside blot_t is used
+	int output_len_arr_buf[max_fec_packet_num+100];//same
 
 public:
 	fec_decode_manager_t()

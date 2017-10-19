@@ -574,10 +574,13 @@ int fec_decode_manager_t::input(char *s,int len)
 		}
 	}
 
+	//mylog(log_info,"mp.size()=%d index=%d\n",mp.size(),index);
+
 	if(fec_data[index].used!=0)
 	{
 		u32_t tmp_seq=fec_data[index].seq;
 		anti_replay.set_invaild(tmp_seq);
+
 		if(mp.find(tmp_seq)!=mp.end())
 		{
 			mp.erase(tmp_seq);

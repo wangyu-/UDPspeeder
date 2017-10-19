@@ -26,7 +26,7 @@ typedef int i32_t;
 
 int mtu_warn=1350;
 
-int disable_mtu_warn=0;
+int disable_mtu_warn=1;
 int disable_fec=0;
 
 int debug_force_flush_fec=0;
