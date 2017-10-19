@@ -7,7 +7,7 @@ When used alone,UDPspeeder speeds-up only udp connection.Nevertheless,if you use
 
 or
 
-![image_vpn](/images/en/udpspeeder+openvpn.PNG)
+![image_vpn](/images/en/udpspeeder+openvpn3.PNG)
 
 [简体中文](/doc/README.md)
 
