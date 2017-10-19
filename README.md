@@ -18,7 +18,7 @@ tested on a link with 100ms latency and 10% packet loss at both direction
 ![](/images/en/ping_compare3.PNG)
 
 ### SCP Copy Speed
-![](/images/en/scp_compare.PNG)
+![](/images/en/scp_compare2.PNG)
 
 # Supported Platforms
 Linux host (including desktop Linux,Android phone/tablet,OpenWRT router,or Raspberry PI).
@@ -47,7 +47,9 @@ Assume your server ip is 44.55.66.77, you have a service listening on udp port 7
 
 Now connecting to UDP port 3333 at the client side is equivalent to connecting to port 7777 at the server side,and the connection is boosted by UDPspeeder.
 
-Note：-f20:10 means sending 10 redundant packets for every 20 original packets.
+##### Note
+
+`-f20:10` means sending 10 redundant packets for every 20 original packets.
 
 # Advanced Topic
 ### Usage
@@ -93,8 +95,4 @@ log and help options:
     --disable-color                       disable log color
     -h,--help                             print this help message
 ```
-
-# Application
-## Boost any traffic with UDPspeeder +openvpn
-
 
