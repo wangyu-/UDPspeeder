@@ -48,7 +48,7 @@ check wikipedia for more info, https://en.wikipedia.org/wiki/Reed–Solomon_erro
 ### Installing
 Download binary release from https://github.com/wangyu-/UDPspeeder/releases
 
-### Running 
+### Running (speed-up UDP only)
 Assume your server ip is 44.55.66.77, you have a service listening on udp port 7777.
 
 ```bash
@@ -64,6 +64,10 @@ Now connecting to UDP port 3333 at the client side is equivalent to connecting t
 ##### Note
 
 `-f20:10` means sending 10 redundant packets for every 20 original packets.
+
+### speed-up any traffic with Openvpn+udpspeeder
+
+Check [UDPspeeder + openvpn config guide](/doc/udpspeeder_openvpn.md).
 
 # Advanced Topic
 ### Usage
