@@ -33,7 +33,7 @@ int debug_force_flush_fec=0;
 
 int fec_data_num=20;
 int fec_redundant_num=10;
-int fec_mtu=1250;
+int fec_mtu=1200;
 int fec_pending_num=200;
 int fec_pending_time=10*1000; //10ms
 int fec_type=0;
