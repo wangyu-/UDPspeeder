@@ -1,7 +1,7 @@
 # UDPspeeder
 ![image0](/images/cn/speedercn.PNG)
 
-双边加速工具，降低丢包率，软件本身的功能是加速UDP；不过，配合vpn可以加速全流量(包括TCP/UDP/ICMP)。通过合理配置，可以加速游戏，降低游戏的丢包和延迟；也可以加速下载和看视频这种大流量的应用。
+双边网络加速工具，软件本身的功能是加速UDP；不过，配合vpn可以加速全流量(包括TCP/UDP/ICMP)。通过合理配置，可以加速游戏，降低游戏的丢包和延迟；也可以加速下载和看视频这种大流量的应用。
 
 我自己稳定用了几个月，用来加速美服的Brawl Stars和亚服的Mobile Legend，效果不错，加速前卡得几乎没法玩，加速后就没怎么卡过了。用来看视频也基本满速。
 
@@ -10,6 +10,8 @@
 配合vpn加速全流量的原理图(已测试支持VPN的有OpenVPN、L2TP、$\*\*\*VPN):
 
 ![image0](/images/Capture2.PNG)
+
+可以和[udp2raw](https://github.com/wangyu-/udp2raw-tunnel)串联使用，在加速的同时把UDP伪装成TCP，防止UDP被运营商QOS或屏蔽。
 #### 效果
 ![image0](/images/Capture8.PNG)
 
@@ -33,10 +35,6 @@
 模拟丢包，模拟延迟，模拟jitter。便于通过实验找出应用卡顿的原因。
 
 client支持多个udp连接，server也支持多个client
-
-如果你需要绕过UDP屏蔽/QoS，或者需要连接复用/连接保持功能，或者是加密。解决方案在另一个repo(可以跟UDPspeeder一起使用)：
-
-https://github.com/wangyu-/udp2raw-tunnel
 
 # 简明操作说明
 
