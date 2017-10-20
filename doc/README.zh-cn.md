@@ -39,7 +39,7 @@ client支持多个udp连接，server也支持多个client
 # 简明操作说明
 
 ### 环境要求
-Linux主机，可以是桌面版，可以是android手机/平板，可以是openwrt路由器，也可以是树莓派。在windows和mac上配合虚拟机可以稳定使用（speeder跑在Linux里，其他应用照常跑在window里，桥接模式测试可用）。
+Linux主机，可以是桌面版，可以是android手机/平板，可以是openwrt路由器，也可以是树莓派。在windows和mac上配合虚拟机可以稳定使用（speeder跑在Linux里，其他应用照常跑在window里，桥接模式测试可用），可以使用[这个](https://github.com/wangyu-/udp2raw-tunnel/releases/download/20170918.0/lede-17.01.2-x86_virtual_machine_image_with_udp2raw_pre_installed.zip)虚拟机镜像，大小只有7.5mb，免去在虚拟机里装系统的麻烦。
 
 android版需要通过terminal运行。
 
@@ -134,17 +134,21 @@ mode 0使用起来可以不用关注mtu，因为fec编码器会帮你把包切�
 ##### -i 选项
 指定一个时间窗口，长度为n毫秒。同一个fec分组的数据在发送时候会被均匀分散到这n毫秒中。可以对抗突发性的丢包。
 
-
 ##### --random-drop 选项
 随机丢包。模拟恶劣的网络环境时使用。
 
+##### -k选项
+指定一个字符串，server/client间所有收发的包都会被异或，改变协议特征，防止UDPspeeder的协议被运营商针对。
+
 # 使用经验
 
-### FEC还是多倍发包，如何选择
+### 在FEC和多倍发包之间如何选择
 
 对于游戏，游戏的流量本身不大，延迟很重要，多倍发包是最有效的解决方案，多倍发包不会引入额外的延迟。
 
 对于其他日常应用（延迟要求一般），在合理配置的情况下，FEC的效果肯定好过多倍发包。不过需要根据网络的最大丢包来配置FEC参数，才能有稳定的效果。如果配置不当，对于--mode 1可能会完全没有效果；对于--mode 0，可能效果会比不用UDPspeeder还差。
+
+对于游戏以外的应用，推荐使用FEC。但是，如果FEC版的默认参数在你那边效果很差，而你又不会调，可以先用多倍发包。
 
 ### V2版如何多倍发包
 
@@ -153,8 +157,8 @@ mode 0使用起来可以不用关注mtu，因为fec编码器会帮你把包切�
 2倍发包的完整参数：
 
 ```
-./speederv2 -s -l0.0.0.0:4096 -r127.0.0.1:7777  -f20:10 -k "passwd"
-./speederv2 -c -l0.0.0.0:3333 -r44.55.66.77:4096 -f20:10 -k "passwd"
+./speederv2 -s -l0.0.0.0:4096 -r127.0.0.1:7777  -f1:1 -k "passwd" --mode 0 -q1
+./speederv2 -c -l0.0.0.0:3333 -r44.55.66.77:4096 -f1:1 -k "passwd" --mode 0 -q1
 ```
 
 如果你只需要多倍发包，可以直接用回V1版，V1版配置更简单，占用内存更小，而且经过了几个月的考验，很稳定。
@@ -171,16 +175,15 @@ mode 0使用起来可以不用关注mtu，因为fec编码器会帮你把包切�
 
 ### 根据CPU处理能力来调整FEC参数
 
-FEC算法很吃CPU,初次使用建议关于UDPspeeder的CPU占用。如果CPU占用过高，可以在冗余度不变的情况下把FEC分组大小调小，否则的话效果可能很差。
+FEC算法很吃CPU,初次使用建议关注UDPspeeder的CPU占用。如果CPU被打满，可以在冗余度不变的情况下把FEC分组大小调小，否则的话效果可能很差。
 
 比如-f20:10和-f10:5，都是1.5倍的冗余度，而-f20:10的FEC分组大小是30个包，-f10:5的FEC分组大小是15个包。-f20:10更费CPU,但是在一般情况下效果更稳定。把分组调小可以节省CPU。
 
-另外，fec分组大小不宜过大，否则不但很耗CPU,还有其他副作用，建议控制在50以下。
+另外，fec分组大小不宜过大，否则不但很耗CPU,还有其他副作用，建议x+y<50。
 
 # 应用
 
 #### UDPspeeder + openvpn加速任何流量
-如果你只是需要玩游戏，效果预期会kcp/finalspeed方案更好。可以优化tcp游戏的延迟（通过冗余发包，避免了上层的重传）。比如魔兽世界用的是tcp连接。
 ![image0](/images/Capture2.PNG)
 
 具体配置见，[UDPspeeder + openvpn config guide](/doc/udpspeeder_openvpn.md).
