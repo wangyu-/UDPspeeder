@@ -1,7 +1,5 @@
 # UDPspeeder
 ![image0](/images/cn/speedercn.PNG)
-或
-![image0](/images/Capture2.PNG)
 
 双边加速工具，降低丢包率，软件本身的功能是加速UDP；不过，配合vpn可以加速全流量(包括TCP/UDP/ICMP)。通过合理配置，可以加速游戏，降低游戏的丢包和延迟；也可以加速下载和看视频这种大流量的应用。
 
