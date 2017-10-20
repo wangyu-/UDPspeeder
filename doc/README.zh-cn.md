@@ -1,5 +1,7 @@
 # UDPspeeder
 ![image0](/images/cn/speedercn.PNG)
+或
+![image0](/images/Capture2.PNG)
 
 双边加速工具，降低丢包率，软件本身的功能是加速UDP；不过，配合vpn可以加速全流量(包括TCP/UDP/ICMP)。通过合理配置，可以加速游戏，降低游戏的丢包和延迟；也可以加速下载和看视频这种大流量的应用。
 
@@ -14,9 +16,9 @@
 #### 原理简介
 主要原理是通过冗余数据来对抗网络的丢包，发送冗余数据的方式支持FEC(Forward Error Correction)和多倍发包,其中FEC算法是Reed-Solomon。
 
+对于FEC方式的原理图:
+
 ![image0](/images/en/fec.PNG)
-
-
 
 #### 其他功能
 在多个冗余包之间引入延迟（时间可配）来对抗突发性的丢包，避开中间路由器因为瞬时buffer长度过长而连续丢掉所有副本。
@@ -129,12 +131,6 @@ log and help options:
 #### UDPspeeder + openvpn加速任何流量
 如果你只是需要玩游戏，效果预期会kcp/finalspeed方案更好。可以优化tcp游戏的延迟（通过冗余发包，避免了上层的重传）。比如魔兽世界用的是tcp连接。
 ![image0](/images/Capture2.PNG)
-
-跟openvpn via kcptun方式的对比：
-
-kcptun在udp层有RS code，也是一种冗余传输，通过openvpn把流量转成tcp，再通过kcptun加速是有一定效果的。但是tcp只支持按序到达。按序到达的意思是,如果你发了1 2 3 4 5 6 ,6个包，如果第一个包丢了，那么必须等第一个包重传成功以后 2 3 4 5 6 才能到达；只要有一个包不到，后续数据包就要一直等待。用tcp承载udp流量会破坏udp的实时性。会造成游戏卡顿更严重。
-
-udp协议本身是ip协议加上了端口之后的直接封装，udp继承了ip协议的实时/乱序到达特性，更适合中转vpn。
 
 #### UDPspeeder + kcptun/finalspeed + $*** 同时加速tcp和udp流量
 如果你需要用加速的tcp看视频和下载文件，这样效果比vpn方案更好。不论是速度，还是流量的耗费上。
