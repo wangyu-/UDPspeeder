@@ -7,6 +7,9 @@
 
 最新的版本是v2版，在v1版的基础上增加了fec功能。如果你用的是v1版（路由器固件里自带的集成版很可能是v1版的），请看[v1版主页](/doc/README.zh-cn.v1.md)
 
+配合vpn加速全流量的原理图(已测试支持VPN的有OpenVPN、L2TP、$\*\*\*VPN):
+
+![image0](/images/Capture2.PNG)
 #### 效果
 ![image0](/images/Capture8.PNG)
 
