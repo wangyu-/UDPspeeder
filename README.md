@@ -9,7 +9,7 @@ or
 
 ![image_vpn](/images/en/udpspeeder+openvpn3.PNG)
 
-[简体中文](/doc/README.md)
+[简体中文](/doc/README.zh-cn.md)
 
 # Efficacy
 tested on a link with 100ms latency and 10% packet loss at both direction
