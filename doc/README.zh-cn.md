@@ -10,7 +10,7 @@
 #### 效果
 ![image0](/images/Capture8.PNG)
 
-![image0](/images/cn/scp_compare.PNG)
+![image0](/images/cn/scp_compare2.PNG)
 #### 原理简介
 目前原理是多倍发包。以后会做各种优化，比如：对高频率的短包先合并再冗余；FEC（Forward Error Correction），在包速低的时候多倍发包，包速高时用FEC。
 
