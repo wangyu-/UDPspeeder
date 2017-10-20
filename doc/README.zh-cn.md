@@ -11,7 +11,7 @@
 
 ![image0](/images/Capture2.PNG)
 
-可以和[udp2raw](https://github.com/wangyu-/udp2raw-tunnel)串联使用，在加速的同时把UDP伪装成TCP，防止UDP被运营商QOS或屏蔽。
+另外，可以和[udp2raw](https://github.com/wangyu-/udp2raw-tunnel)串联使用，在加速的同时把UDP伪装成TCP，防止UDP被运营商QOS或屏蔽。
 #### 效果
 ![image0](/images/Capture8.PNG)
 
