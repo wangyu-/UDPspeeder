@@ -1,41 +1,45 @@
 # UDPspeeder
-![image0](/images/Capture7.PNG)
-UDP双边加速工具，降低丢包率，配合vpn可以加速任何协议，尤其适用于加速游戏和网页打开速度；同时也是一个UDP连接的调试和统计工具。
+![image0](/images/cn/speedercn.PNG)
 
-这个是我自己稳定用了一个月的项目，用来加速美服的Brawl Stars和亚服的Mobile Legend，效果不错。加速前卡得几乎没法玩，加速后就没怎么卡过了。
+双边网络加速工具，软件本身的功能是加速UDP；不过，配合vpn可以加速全流量(包括TCP/UDP/ICMP)。通过合理配置，可以加速游戏，降低游戏的丢包和延迟；也可以加速下载和看视频这种大流量的应用。用1.5倍的流量，就可以把10%的丢包率降低到万分之一以下。跟 kcptun/finalspeed/BBR 等现有方案比，主要优势是可以加速 UDP 和 ICMP，现有方案几乎都只能加速 TCP。
+
+我自己稳定用了几个月，用来加速美服的Brawl Stars和亚服的Mobile Legend，效果不错，加速前卡得几乎没法玩，加速后就没怎么卡过了。用来看视频也基本满速。
+
+最新的版本是v2版，在v1版的基础上增加了FEC功能，更省流量。如果你用的是v1版（路由器固件里自带的集成版很可能是v1版的），请看[v1版主页](/doc/README.zh-cn.v1.md)
+
+配合vpn加速全流量的原理图(已测试支持VPN的有OpenVPN、L2TP、$\*\*\*VPN):
+
+![image0](/images/Capture2.PNG)
+
+另外，可以和udp2raw串联使用，在加速的同时把UDP伪装成TCP，防止UDP被运营商QOS或屏蔽。udp2raw: https://github.com/wangyu-/udp2raw-tunnel
 #### 效果
 ![image0](/images/Capture8.PNG)
+
+![image0](/images/cn/scp_compare.PNG)
 #### 原理简介
-目前原理是多倍发包。以后会做各种优化，比如：对高频率的短包先合并再冗余；FEC（Forward Error Correction），在包速低的时候多倍发包，包速高时用FEC。
+主要原理是通过冗余数据来对抗网络的丢包，发送冗余数据的方式支持FEC(Forward Error Correction)和多倍发包,其中FEC算法是Reed-Solomon。
 
-跟net-speeder比，优势在于client和server会把收到的多余包自动去掉，这个过程对上层透明，没有兼容性问题。而且发出的冗余数据包会做长度和内容的随机化，抓包是看不出发了冗余数据的，所以不用担心vps被封的问题。
+对于FEC方式的原理图:
 
-每个冗余数据包都是间隔数毫秒（可配置）以后延迟发出的，可以避开中间路由器因为瞬时buffer长度过长而连续丢掉所有副本。
-
-模拟一定的延迟抖动,这样上层应用计算出来的RTT方差会更大，以等待后续冗余包的到达，不至于发生在冗余包到达之前就触发重传的尴尬。
-
-#### 适用场景
-绝大部分流量不高的情况。程序本身加速udp，但是配合openvpn可以加速任何流量。网络状况不好时，游戏卡得没法玩，或者网页卡得没法打开，使用起来效果最好。对于解决语音通话的断断续续效果也不错。不适合大流量的场景，比如BT下载和在线看视频。 无论从自己使用效果的角度，还是从国际出口带宽占用的角度，都建议不要在大流量环境使用。
+![image0](/images/en/fec.PNG)
 
 #### 其他功能
+对包的内容和长度做随机化（可以理解为混淆），从抓包看不出你发送了冗余数据，不用担心vps被封。
+
+在多个冗余包之间引入延迟（时间可配）来对抗突发性的丢包，避开中间路由器因为瞬时buffer长度过长而连续丢掉所有副本。
+
+模拟一定的延迟抖动（时间可配）,这样上层应用计算出来的RTT方差会更大，以等待后续冗余包的到达，不至于发生在冗余包到达之前就触发重传的尴尬。
+
 输出UDP收发情况报告，可以看出丢包率。
 
 模拟丢包，模拟延迟，模拟jitter。便于通过实验找出应用卡顿的原因。
 
-重复包过滤功能可以关掉，模拟网络本身有重复包的情况。用来测试应用对重复报的支持情况。
-
 client支持多个udp连接，server也支持多个client
-
-目前有amd64,x86,ar71xx,树莓派armv7和android的binary
-
-如果你需要绕过UDP屏蔽/QoS，或者需要连接复用/连接保持功能，或者是加密。解决方案在另一个repo(可以跟UDPspeeder一起使用)：
-
-https://github.com/wangyu-/udp2raw-tunnel
 
 # 简明操作说明
 
 ### 环境要求
-Linux主机，可以是桌面版，可以是android手机/平板，可以是openwrt路由器，也可以是树莓派。在windows和mac上配合虚拟机可以稳定使用（speeder跑在Linux里，其他应用照常跑在window里，桥接模式测试可用）。
+Linux主机，可以是桌面版，可以是android手机/平板，可以是openwrt路由器，也可以是树莓派。在windows和mac上配合虚拟机可以稳定使用（speeder跑在Linux里，其他应用照常跑在window里，桥接模式测试可用），可以使用[这个](https://github.com/wangyu-/udp2raw-tunnel/releases/download/20170918.0/lede-17.01.2-x86_virtual_machine_image_with_udp2raw_pre_installed.zip)虚拟机镜像，大小只有7.5mb，免去在虚拟机里装系统的麻烦。
 
 android版需要通过terminal运行。
 
@@ -48,26 +52,32 @@ https://github.com/wangyu-/UDPspeeder/releases
 假设你有一个server，ip为44.55.66.77，有一个服务监听在udp 7777端口。 假设你需要加速本地到44.55.66.77:7777的流量。
 ```
 在client端运行:
-./speeder_ar71xx -l0.0.0.0:3333 -r 44.55.66.77:8855 -c  -d2 -k "passwd"
+./speederv2 -c -l0.0.0.0:3333 -r44.55.66.77:4096 -f20:10 -k "passwd"
 
 在server端运行:
-./speeder_amd64 -l0.0.0.0:8855 -r127.0.0.1:7777 -s -d2 -k "passwd"
+./speederv2 -s -l0.0.0.0:4096 -r127.0.0.1:7777  -f20:10 -k "passwd"
 ```
 
 现在client和server之间建立起了tunnel。想要连接44.55.66.77:7777，只需要连接 127.0.0.1:3333。来回的所有的udp流量会被加速。
 
-###### 注:
+###### 备注:
 
--d2 表示除了本来的包以外，额外再发2个冗余包。可调。
+-f20:10 表示对每20个原始数据发送10个冗余包。
 
 -k 指定一个字符串，server/client间所有收发的包都会被异或，改变协议特征，防止UDPspeeder的协议被运营商针对。
+
+###### 注意
+
+要为UDPspeeder加速的应用设置好MTU(不是在UDPspeeder中，是在被加速的应用中)，建议设置为1200。 
+
+另外，如果被加速的应用不能调整MTU，也可以在UDPspeeder中通过`--mode 0 --mtu 1200`设置MTU。关于`--mode 0`和`--mtu`的具体含义请看下文。
 
 # 进阶操作说明
 
 ### 命令选项
 ```
-UDPspeeder
-git version:b4bd385e88    build date:Sep 11 2017 10:29:25
+UDPspeeder V2
+git version:99f6099e86    build date:Oct 19 2017 13:35:38
 repository: https://github.com/wangyu-/UDPspeeder
 
 usage:
@@ -75,76 +85,131 @@ usage:
     run as server : ./this_program -s -l server_listen_ip:server_port -r remote_ip:remote_port  [options]
 
 common option,must be same on both sides:
-    -k,--key              <string>        key for simple xor encryption,default:"secret key"
+    -k,--key              <string>        key for simple xor encryption. if not set,xor is disabled
 main options:
-    -d                    <number>        duplicated packet number, -d 0 means no duplicate. default value:0
-    -t                    <number>        duplicated packet delay time, unit: 0.1ms,default value:20(2ms)
-    -j                    <number>        simulated jitter.randomly delay first packet for 0~jitter_value*0.1 ms,to
-                                          create simulated jitter.default value:0.do not use if you dont
-                                          know what it means
-    --report              <number>        turn on udp send/recv report,and set a time interval for reporting,unit:s
+    -f,--fec              x:y             forward error correction,send y redundant packets for every x packets
+    --timeout             <number>        how long could a packet be held in queue before doing fec,unit: ms,default :8ms
+    --mode                <number>        fec-mode,available values: 0,1 ; 0 cost less bandwidth,1 cost less latency(default)
+    --report              <number>        turn on send/recv report,and set a period for reporting,unit:s
 advanced options:
-    -t                    tmin:tmax       simliar to -t above,but delay randomly between tmin and tmax
-    -j                    jmin:jmax       simliar to -j above,but create jitter randomly between jmin and jmax
-    --random-drop         <number>        simulate packet loss ,unit:0.01%
-    --disable-filter                      disable duplicate packet filter.
-    -m                    <number>        max pending packets,to prevent the program from eating up all your memory,
-                                          default value:0(disabled).
-other options:
-    --log-level           <number>        0:never    1:fatal   2:error   3:warn 
+    --mtu                 <number>        mtu. for mode 0,the program will split packet to segment smaller than mtu_value.
+                                          for mode 1,no packet will be split,the program just check if the mtu is exceed.
+                                          default value:1250
+    -j,--jitter           <number>        simulated jitter.randomly delay first packet for 0~<number> ms,default value:0.
+                                          do not use if you dont know what it means.
+    -i,--interval         <number>        scatter each fec group to a interval of <number> ms,to protect burst packet loss.
+                                          default value:0.do not use if you dont know what it means.
+    --random-drop         <number>        simulate packet loss ,unit:0.01%. default value: 0
+    --disable-obscure     <number>        disable obscure,to save a bit bandwidth and cpu
+developer options:
+    -j ,--jitter          jmin:jmax       similiar to -j above,but create jitter randomly between jmin and jmax
+    -i,--interval         imin:imax       similiar to -i above,but scatter randomly between imin and imax
+    -q,--queue-len        <number>        max fec queue len,only for mode 0
+    --decode-buf          <number>        size of buffer of fec decoder,unit:packet,default:2000
+    --fix-latency         <number>        try to stabilize latency,only for mode 0
+    --delay-capacity      <number>        max number of delayed packets
+    --disable-fec         <number>        completely disable fec,turn the program into a normal udp tunnel
+    --sock-buf            <number>        buf size for socket,>=10 and <=10240,unit:kbyte,default:1024
+log and help options:
+    --log-level           <number>        0:never    1:fatal   2:error   3:warn
                                           4:info (default)     5:debug   6:trace
     --log-position                        enable file name,function name,line number in log
     --disable-color                       disable log color
-    --sock-buf            <number>        buf size for socket,>=10 and <=10240,unit:kbyte,default:1024
     -h,--help                             print this help message
 
 ```
 ### 包发送选项，两端设置可以不同。 只影响本地包发送。
-##### -d 选项
-设置冗余包数量。
-##### -t 选项
-为冗余包的发送，增加一个延迟.对中间路由buffer做优化，应对瞬时Buffer过长导致的连续丢包.对于多个冗余包，依次在前一个包的基础上增加这个延迟。
-##### -j 选项
-为原始数据的发送，增加一个延迟抖动值。这样上层应用计算出来的RTT方差会更大，以等待后续冗余包的到达，不至于发生在冗余包到达之前就触发重传的尴尬。配合-t选项使用。正常情况下跨国网络本身的延迟抖动就很大。可以不用设-j
+##### -f 选项
+设置fec参数，影响数据的冗余度。
+##### --timeout 选项
+指定fec编码器在编码时候最多可以引入多大的延迟。越高fec越有效率，加速游戏时调低可以降低延迟。
+
+#####  --mode 选项
+fec编码器的工作模式。对于mode 0，编码器会积攒一定数量的packet，然后把他们合并再切成等长的片段（切分长度由--mtu指定）。对于mode 1，编码器不会做任何切分,而是会把packet按最大长度对齐，fec冗余包的长度为对齐后的长度（最大长度）。
+
+mode 0更省流量，在丢包率正常的情况下效果和mode 1是一样的；mode 1延迟更低，在极高丢包的情况下表现更好。
+
+mode 0使用起来可以不用关注mtu，因为fec编码器会帮你把包切分到合理的大小。用mode 1时必须合理设置上层应用的mtu。
+
+mode 0模式的流量消耗基本完全透明。mode 1因为涉及到数据按最大长度对齐，所以流量消耗不是完全可预期。不过就实际使用来看，mode 1消耗的额外流量不多。
 
 ##### --report  选项
 数据发送和接受报告。开启后可以根据此数据推测出包速和丢包率等特征。
 
-##### 加强版 -t 选项
-跟普通-t类似，允许设置最大值最小值，用随机延迟发送冗余包。
+##### -j 选项
+为原始数据的发送，增加一个延迟抖动值。这样上层应用计算出来的RTT方差会更大，以等待后续冗余包的到达，不至于发生在冗余包到达之前就触发重传的尴尬。配合-t选项使用。正常情况下跨国网络本身的延迟抖动就很大。可以不用设-j
 
-##### 加强版 -j 选项
-允许给jitter选项设置最大值最小值。在这个区间随机化jitter。如果最大值最小值一样就是模拟延迟。可以模拟高延迟、高jitter的网络环境。
+##### -i 选项
+指定一个时间窗口，长度为n毫秒。同一个fec分组的数据在发送时候会被均匀分散到这n毫秒中。可以对抗突发性的丢包。
 
 ##### --random-drop 选项
 随机丢包。模拟恶劣的网络环境时使用。
 
-### 包接收选项，两端设置可以不同。只影响本地包接受
-##### --disable-filter    
-关闭重复包过滤器。这样配合-d 选项可以模拟有重复包的网络环境。
+##### -k选项
+指定一个字符串，server/client间所有收发的包都会被异或，改变协议特征，防止UDPspeeder的协议被运营商针对。
+
+# 使用经验
+
+### 在FEC和多倍发包之间如何选择
+
+对于游戏，游戏的流量本身不大，延迟很重要，多倍发包是最有效的解决方案，多倍发包不会引入额外的延迟。
+
+对于其他日常应用（延迟要求一般），在合理配置的情况下，FEC的效果肯定好过多倍发包。不过需要根据网络的最大丢包来配置FEC参数，才能有稳定的效果。如果配置不当，对于--mode 1可能会完全没有效果；对于--mode 0，可能效果会比不用UDPspeeder还差。
+
+对于游戏以外的应用，推荐使用FEC。但是，如果FEC版的默认参数在你那边效果很差，而你又不会调，可以先用多倍发包。
+
+### V2版如何多倍发包
+
+只要在设置-f参数时把x设置为1，fec算法就退化为多倍发包了。例如-f1:1,表示2倍发包，-f1:2表示3倍发包，以此类推。另外可以加上`--mode 0 -q1`参数，防止fec编码器试图积攒和合并数据，获得最低的延迟。
+
+2倍发包的完整参数：
+
+```
+./speederv2 -s -l0.0.0.0:4096 -r127.0.0.1:7777  -f1:1 -k "passwd" --mode 0 -q1
+./speederv2 -c -l0.0.0.0:3333 -r44.55.66.77:4096 -f1:1 -k "passwd" --mode 0 -q1
+```
+
+如果你只需要多倍发包，可以直接用回V1版，V1版配置更简单，占用内存更小，而且经过了几个月的考验，很稳定。
+
+### 根据网络丢包合理设置FEC参数
+
+默认的FEC参数为-f20:10，对每20个包，额外发送10个冗余包，也就是1.5倍发包。已经可以适应绝大多数的网络情况了，对于10%的网络丢包，可以降低到0.01%以下；对于20%的网络丢包，可以降低到2.5%。
+
+如果你的网络丢包很低，比如在3%以下，可以尝试调低参数。比如-f20:5，也就是1.2倍发包，这个参数已经足够把3%的丢包降低到0.01%以下了。
+
+如果网络丢包超过20%，需要把-f20:10调大。
+
+如果你实在不会配，那么也可以用回V1版。
+
+### 根据CPU处理能力来调整FEC参数
+
+FEC算法很吃CPU,初次使用建议关注UDPspeeder的CPU占用。如果CPU被打满，可以在冗余度不变的情况下把FEC分组大小调小，否则的话效果可能很差。
+
+比如-f20:10和-f10:5，都是1.5倍的冗余度，而-f20:10的FEC分组大小是30个包，-f10:5的FEC分组大小是15个包。-f20:10更费CPU,但是在一般情况下效果更稳定。把分组调小可以节省CPU。
+
+另外，fec分组大小不宜过大，否则不但很耗CPU,还有其他副作用，建议x+y<50。
 
 # 应用
 
 #### UDPspeeder + openvpn加速任何流量
-如果你只是需要玩游戏，效果预期会kcp/finalspeed方案更好。可以优化tcp游戏的延迟（通过冗余发包，避免了上层的重传）。比如魔兽世界用的是tcp连接。
 ![image0](/images/Capture2.PNG)
 
-跟openvpn via kcptun方式的对比：
+具体配置见，[UDPspeeder + openvpn config guide](/doc/udpspeeder_openvpn.md).
 
-kcptun在udp层有RS code，也是一种冗余传输，通过openvpn把流量转成tcp，再通过kcptun加速是有一定效果的。但是tcp只支持按序到达。按序到达的意思是,如果你发了1 2 3 4 5 6 ,6个包，如果第一个包丢了，那么必须等第一个包重传成功以后 2 3 4 5 6 才能到达；只要有一个包不到，后续数据包就要一直等待。用tcp承载udp流量会破坏udp的实时性。会造成游戏卡顿更严重。
+#### UDPspeeder + kcptun/finalspeed + $*** 同时加速tcp和udp流量
+如果你需要用加速的tcp看视频和下载文件，这样效果比UDPspeeder+vpn方案更好（在没有BBR的情况下）。
+![image0](/images/cn/speeder_kcptun.PNG)
 
-udp协议本身是ip协议加上了端口之后的直接封装，udp继承了ip协议的实时/乱序到达特性，更适合中转vpn。
+#### UDPspeeder + openvpn + $*** 混合方案
+也是我正在用的方案。优点是可以随时在vpn和$\*\*\*方案间快速切换。
+实际部署起来比图中看起来的还要简单。不需要改路由表，需要做的只是用openvpn的ip访问$*** server。
 
-#### UDPspeeder + kcptun/finalspeed + ss 同时加速tcp和udp流量
-如果你需要用加速的tcp看视频和下载文件，这样效果比vpn方案更好。不论是速度，还是流量的耗费上。
-![image0](/images/Capture3.PNG)
+![image0](/images/cn/speeder_vpn_s.PNG)
 
-#### UDPspeeder + openvpn + ss 混合方案
-也是我正在用的方案。优点是可以随时在vpn和ss方案间快速切换。
-实际部署起来比图中看起来的还要简单。不需要改路由表，需要做的只是用openvpn的ip访问ss server。
+(也可以把图中的$*** server换成其他的socks5 server，这样连$*** client也不需要了)
 
-![image0](/images/Capture10.PNG)
-(也可以把图中的ss server换成其他的socks5 server，这样连ss client也不需要了)
+另外，这种方案加速TCP时效果可以和BBR叠加，UDPspeeder用来改善丢包率，BBR负责重传，是不错的组合。
+
 # 编译教程
 暂时先参考udp2raw的这篇教程，几乎一样的过程。
 

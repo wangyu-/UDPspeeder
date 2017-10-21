@@ -8,7 +8,7 @@
 #include "delay_manager.h"
 #include "fec_manager.h"
 
-using  namespace std;
+using namespace std;
 
 typedef unsigned long long u64_t;   //this works on most platform,avoid using the PRId64
 typedef long long i64_t;

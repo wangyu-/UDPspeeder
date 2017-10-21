@@ -1,12 +1,15 @@
-# UDPspeeder
+# UDPspeeder (v1)
 ![image0](/images/Capture7.PNG)
 UDP双边加速工具，降低丢包率，配合vpn可以加速任何协议，尤其适用于加速游戏和网页打开速度；同时也是一个UDP连接的调试和统计工具。
 
 这个是我自己稳定用了一个月的项目，用来加速美服的Brawl Stars和亚服的Mobile Legend，效果不错。加速前卡得几乎没法玩，加速后就没怎么卡过了。
+
+注：目前最新版是v2版，这个是v1版的主页
+
 #### 效果
 ![image0](/images/Capture8.PNG)
 #### 原理简介
-目前原理是多倍发包。以后会做各种优化，比如：对高频率的短包先合并再冗余；FEC（Forward Error Correction），在包速低的时候多倍发包，包速高时用FEC。
+目前原理是多倍发包。以后会做各种优化，比如：对高频率的短包先合并再冗余；FEC（Forward Error Correction），在包速低的时候多倍发包，包速高时用FEC(这些功能在v2版里已经实现)。
 
 跟net-speeder比，优势在于client和server会把收到的多余包自动去掉，这个过程对上层透明，没有兼容性问题。而且发出的冗余数据包会做长度和内容的随机化，抓包是看不出发了冗余数据的，所以不用担心vps被封的问题。
 
@@ -135,16 +138,16 @@ kcptun在udp层有RS code，也是一种冗余传输，通过openvpn把流量转
 
 udp协议本身是ip协议加上了端口之后的直接封装，udp继承了ip协议的实时/乱序到达特性，更适合中转vpn。
 
-#### UDPspeeder + kcptun/finalspeed + ss 同时加速tcp和udp流量
+#### UDPspeeder + kcptun/finalspeed + $*** 同时加速tcp和udp流量
 如果你需要用加速的tcp看视频和下载文件，这样效果比vpn方案更好。不论是速度，还是流量的耗费上。
-![image0](/images/Capture3.PNG)
+![image0](/images/cn/speeder_kcptun.PNG)
 
-#### UDPspeeder + openvpn + ss 混合方案
-也是我正在用的方案。优点是可以随时在vpn和ss方案间快速切换。
-实际部署起来比图中看起来的还要简单。不需要改路由表，需要做的只是用openvpn的ip访问ss server。
+#### UDPspeeder + openvpn + $*** 混合方案
+也是我正在用的方案。优点是可以随时在vpn和$*** 方案间快速切换。
+实际部署起来比图中看起来的还要简单。不需要改路由表，需要做的只是用openvpn的ip访问$*** server。
 
-![image0](/images/Capture10.PNG)
-(也可以把图中的ss server换成其他的socks5 server，这样连ss client也不需要了)
+![image0](/images/cn/speeder_vpn_s.PNG)
+(也可以把图中的$*** server换成其他的socks5 server，这样连$*** client也不需要了)
 # 编译教程
 暂时先参考udp2raw的这篇教程，几乎一样的过程。
 

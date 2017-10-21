@@ -1,7 +1,7 @@
 # UDPspeeder
 Network Speed-Up Tool. Boost your Connection on a High Lantency High Packet-Loss Link by using Forward Error Correction.
 
-When used alone,UDPspeeder speeds-up only udp connection.Nevertheless,if you used UDPspeeder + any UDP-based VPN together,you can speed-up any traffic(include tcp/udp/icmp)。
+When used alone,UDPspeeder speeds-up only UDP connection.Nevertheless,if you used UDPspeeder + any UDP-based VPN together,you can speed-up any traffic(include TCP/UDP/ICMP),currently OpenVPN/L2TP/ShadowVPN are confirmed to be supported。
 
 ![](/images/en/udpspeeder.PNG)
 
@@ -9,7 +9,7 @@ or
 
 ![image_vpn](/images/en/udpspeeder+openvpn3.PNG)
 
-[简体中文](/doc/README.md)
+[简体中文](/doc/README.zh-cn.md)
 
 # Efficacy
 tested on a link with 100ms latency and 10% packet loss at both direction
@@ -28,6 +28,8 @@ For Windows and MacOS You can run UDPspeeder inside [this](https://github.com/wa
 # How does it work
 
 UDPspeeder uses FEC(Forward Error Correction) to improve your connection's quality,at the cost of addtional bandwidth.The algorithm for FEC is called Reed-Solomon.
+
+![image0](/images/en/fec.PNG)
 
 ### Reed-Solomon
 
@@ -53,10 +55,10 @@ Assume your server ip is 44.55.66.77, you have a service listening on udp port 7
 
 ```bash
 # Run at server side:
-./speederv2 -s -l0.0.0.0:4096 -r 127.0.0.1:7777  -f20:10
+./speederv2 -s -l0.0.0.0:4096 -r 127.0.0.1:7777  -f20:10 -k "passwd"
 
 # Run at client side
-./speederv2 -c -l0.0.0.0:3333  -r44.55.66.77:4096 -f20:10
+./speederv2 -c -l0.0.0.0:3333  -r44.55.66.77:4096 -f20:10 -k "passwd"
 ```
 
 Now connecting to UDP port 3333 at the client side is equivalent to connecting to port 7777 at the server side,and the connection is boosted by UDPspeeder.
@@ -65,6 +67,7 @@ Now connecting to UDP port 3333 at the client side is equivalent to connecting t
 
 `-f20:10` means sending 10 redundant packets for every 20 original packets.
 
+`-k` enables simple XOR encryption to confuse DPI(Deep Packet Inspection)
 # Advanced Topic
 ### Full Options
 ```
