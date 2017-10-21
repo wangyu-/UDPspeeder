@@ -196,8 +196,6 @@ FEC算法很吃CPU,初次使用建议关注UDPspeeder的CPU占用。如果CPU被
 
 具体配置见，[UDPspeeder + openvpn config guide](/doc/udpspeeder_openvpn.md).
 
-另外，这种方案加速TCP时效果可以和BBR叠加，UDPspeeder用来改善丢包率，BBR负责重传，是不错的组合。
-
 #### UDPspeeder + kcptun/finalspeed + $*** 同时加速tcp和udp流量
 如果你需要用加速的tcp看视频和下载文件，这样效果比UDPspeeder+vpn方案更好（在没有BBR的情况下）。
 ![image0](/images/cn/speeder_kcptun.PNG)
@@ -209,6 +207,8 @@ FEC算法很吃CPU,初次使用建议关注UDPspeeder的CPU占用。如果CPU被
 ![image0](/images/cn/speeder_vpn_s.PNG)
 
 (也可以把图中的$*** server换成其他的socks5 server，这样连$*** client也不需要了)
+
+另外，这种方案加速TCP时效果可以和BBR叠加，UDPspeeder用来改善丢包率，BBR负责重传，是不错的组合。
 
 # 编译教程
 暂时先参考udp2raw的这篇教程，几乎一样的过程。
