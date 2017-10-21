@@ -29,6 +29,8 @@ For Windows and MacOS You can run UDPspeeder inside [this](https://github.com/wa
 
 UDPspeeder uses FEC(Forward Error Correction) to improve your connection's quality,at the cost of addtional bandwidth.The algorithm for FEC is called Reed-Solomon.
 
+![image0](/images/en/fec.PNG)
+
 ### Reed-Solomon
 
 `
