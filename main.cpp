@@ -1292,7 +1292,7 @@ void process_arg(int argc, char *argv[])
 	}
 
 	int no_l = 1, no_r = 1;
-	while ((opt = getopt_long(argc, argv, "l:r:hcsk:j:f:p:n:i:",long_options,&option_index)) != -1)
+	while ((opt = getopt_long(argc, argv, "l:r:hcsk:j:f:p:n:i:q:",long_options,&option_index)) != -1)
 	{
 		//string opt_key;
 		//opt_key+=opt;
@@ -1382,6 +1382,7 @@ void process_arg(int argc, char *argv[])
 					mylog(log_fatal,"fec_pending_num should be between 1 and 10000\n");
 					myexit(-1);
 			}
+			break;
 		case 'c':
 			is_client = 1;
 			break;
@@ -1578,7 +1579,7 @@ void process_arg(int argc, char *argv[])
 		program_mode=server_mode;
 	}
 
-	mylog(log_info,"jitter_min=%d jitter_max=%d output_interval_min=%d output_interval_max=%d fec_pending_num=%d fec_data_num=%d fec_redundant_num=%d fec_mtu=%d fec_pending_time=%d fec_type=%d\n",
+	mylog(log_info,"jitter_min=%d jitter_max=%d output_interval_min=%d output_interval_max=%d fec_pending_time=%d fec_data_num=%d fec_redundant_num=%d fec_mtu=%d fec_pending_num=%d fec_type=%d\n",
 			jitter_min/1000,jitter_max/1000,output_interval_min/1000,output_interval_max/1000,fec_pending_time/1000,
 			fec_data_num,fec_redundant_num,fec_mtu,fec_pending_num,fec_type);
 }
