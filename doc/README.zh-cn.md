@@ -66,6 +66,10 @@ https://github.com/wangyu-/UDPspeeder/releases
 
 -k 指定一个字符串，server/client间所有收发的包都会被异或，改变协议特征，防止UDPspeeder的协议被运营商针对。
 
+注意要为UDPspeeder加速的应用设置好MTU(不是在UDPspeeder中，是在被加速的应用中)，建议设置为1200。 
+
+另外，如果被加速的应用不能调整MTU，也可以在UDPspeeder中通过`--mode 0 --mtu 1200`设置MTU。关于`--mode 0`和`--mtu`的具体含义请看下文。
+
 # 进阶操作说明
 
 ### 命令选项
