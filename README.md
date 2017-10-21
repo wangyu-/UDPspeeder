@@ -1,7 +1,7 @@
 # UDPspeeder
 Network Speed-Up Tool. Boost your Connection on a High Lantency High Packet-Loss Link by using Forward Error Correction.
 
-When used alone,UDPspeeder speeds-up only UDP connection.Nevertheless,if you used UDPspeeder + any UDP-based VPN together,you can speed-up any traffic(include TCP/UDP/ICMP)。
+When used alone,UDPspeeder speeds-up only UDP connection.Nevertheless,if you used UDPspeeder + any UDP-based VPN together,you can speed-up any traffic(include TCP/UDP/ICMP),currently OpenVPN/L2TP/ShadowVPN are confirmed to be supported。
 
 ![](/images/en/udpspeeder.PNG)
 
