@@ -51,6 +51,6 @@ void fec_encode(void *code, void *src[], void *dst, int index, int sz) ;
 int fec_decode(void *code, void *pkt[], int index[], int sz) ;
 
 int get_k(void *code);
-int get_n(void *codev);
+int get_n(void *code);
 
 /* end of file */
