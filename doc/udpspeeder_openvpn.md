@@ -1,6 +1,6 @@
 
 # UDPspeeder + openvpn config guide
-![image_vpn](/images/en/udpspeeder+openvpn.PNG)
+![image_vpn](/images/en/udpspeeder+openvpn3.PNG)
 
 # UDPspeeder command
 #### run at server side
