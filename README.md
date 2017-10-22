@@ -20,7 +20,7 @@ udp2raw：https://github.com/wangyu-/udp2raw-tunnel
 tested on a link with 100ms latency and 10% packet loss at both direction
 
 ### Ping Packet Loss
-![](/images/en/ping_compare3.PNG)
+![](/images/en/ping_compare_mode1.png)
 
 ### SCP Copy Speed
 ![](/images/en/scp_compare2.PNG)
