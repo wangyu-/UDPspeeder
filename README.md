@@ -11,6 +11,11 @@ or
 
 [简体中文](/doc/README.zh-cn.md)
 
+###### Note
+You can use udp2raw with UDPspeeder together to avoid UDP being blocked or being throttled.
+udp2raw：https://github.com/wangyu-/udp2raw-tunnel
+
+
 # Efficacy
 tested on a link with 100ms latency and 10% packet loss at both direction
 
