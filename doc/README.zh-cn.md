@@ -192,12 +192,28 @@ FEC算法很吃CPU,初次使用建议关注UDPspeeder的CPU占用。如果CPU被
 
 另外，fec分组大小不宜过大，否则不但很耗CPU,还有其他副作用，建议x+y<50。
 
+### UDPspeeder和BBR/锐速配合
+
+UDPspeeder和BBR/锐速可以配合使用，UDPspeeder工作在IP层负责降低丢包率，BBR/锐速工作在TCP层负责优化拥塞和重传。这种情况下，可以调低UDPspeeder的冗余度，能把丢包率降低到5%以内就可以了，剩下的交给BBR/锐速解决，这样预计可以节省一些流量。
+
+对下文的`UDPspeeder + openvpn`和`UDPspeeder + openvpn + $***`方法有效。不过有一点区别，具体见下文。
+
+### UDPspeeder和Kcptun配合
+
+UDPspeeder和Kcptun配合,UDPspeeder和Kcptun可以并联也可以串联。
+
+并联的情况下，让kcptun负责加速TCP,UDPspeeder负责加速UDP。见下文的`UDPspeeder + kcptun + $*** 同时加速tcp和udp流量`。
+
+串联的情况。UDPspeeder的FEC可以对两个方向设置不通的FEC参数，可以调整的FEC参数比Kcptun多一些。所以串联时可以考虑关掉Kcptun的FEC,让UDPspeeder接管FEC功能。这样UDPspeeder工作在UDP层负责降低丢包率，Kcptun工作在应用层用kcp算法负责优化拥塞和重传。
+
 # 应用
 
 #### UDPspeeder + openvpn加速任何流量
 ![image0](/images/Capture2.PNG)
 
 具体配置见，[UDPspeeder + openvpn config guide](/doc/udpspeeder_openvpn.md).
+
+可以和BBR/锐速叠加，不过BBR/锐速部署在VPS上只对从本地到VPS的流量有效，对从本地到第三方服务器的流量无效。
 
 #### UDPspeeder + kcptun/finalspeed + $*** 同时加速tcp和udp流量
 如果你需要用加速的tcp看视频和下载文件，这样效果比UDPspeeder+vpn方案更好（在没有BBR的情况下）。
@@ -211,7 +227,7 @@ FEC算法很吃CPU,初次使用建议关注UDPspeeder的CPU占用。如果CPU被
 
 (也可以把图中的$*** server换成其他的socks5 server，这样连$*** client也不需要了)
 
-另外，这种方案加速TCP时效果可以和BBR叠加，UDPspeeder用来改善丢包率，BBR负责重传，是不错的组合。
+可以和BBR/锐速叠加，BBR/锐速只要部署在VPS上就有效。
 
 # 编译教程
 暂时先参考udp2raw的这篇教程，几乎一样的过程。
