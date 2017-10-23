@@ -206,6 +206,8 @@ UDPspeeder和Kcptun配合,UDPspeeder和Kcptun可以并联也可以串联。
 
 串联的情况。UDPspeeder的FEC可以对两个方向设置不通的FEC参数，可以调整的FEC参数比Kcptun多一些。所以串联时可以考虑关掉Kcptun的FEC,让UDPspeeder接管FEC功能。这样UDPspeeder工作在UDP层负责降低丢包率，Kcptun工作在应用层用kcp算法负责优化拥塞和重传。
 
+如果发Issue问Kcptun+UDPspeeder相关的问题，一定要说明是并联还是串联。
+
 # 应用
 
 #### UDPspeeder + openvpn加速任何流量
