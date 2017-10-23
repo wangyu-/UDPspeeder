@@ -88,7 +88,7 @@ txqueuelen 4000     ##### suggested
 ```
 
 ##### Note:
-If you use the `redirect-gateway` option of OpenVPN,you may need to add a route exception to your remote server ip at client side.Otherwise OpenVPN may hijack UDPspeeder 's traffic.
+If you use the `redirect-gateway` option of OpenVPN,you may need to add a route exception for your remote server ip at client side.Otherwise OpenVPN may hijack UDPspeeder 's traffic.
 
 For example,depend on your network environment,the command may looks like:
 ```
