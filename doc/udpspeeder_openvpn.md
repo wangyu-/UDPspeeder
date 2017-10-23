@@ -86,3 +86,16 @@ sndbuf 2000000      ##### important
 rcvbuf 2000000      ##### important
 txqueuelen 4000     ##### suggested
 ```
+
+#### Note
+If you use the `redirect-gateway` option of OpenVPN,at client side,you may need to add a route exception to your remote server ip.Otherwise OpenVPN may hijack UDPspeeder 's traffic.
+
+For example,depend on your network environment,the command may looks like:
+```
+ip route add 44.55.66.77 via 44.55.66.1
+```
+or
+
+```
+ip route add 44.55.66.77 dev XXX
+```
