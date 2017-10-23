@@ -4,15 +4,15 @@
 
 # UDPspeeder command
 
+#### run at server side
+```
+./speederv2 -s -l0.0.0.0:8855 -r 127.0.0.1:7777 -f20:10
+```
+
 #### run at client side
 assume server ip is 45.66.77.88
 ```
 ./speederv2 -c -l0.0.0.0:3333 -r 45.66.77.88:8855 -f20:10
-```
-
-#### run at server side
-```
-./speederv2 -s -l0.0.0.0:8855 -r 127.0.0.1:7777 -f20:10
 ```
 
 # openvpn config
