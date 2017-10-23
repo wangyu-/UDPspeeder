@@ -73,6 +73,9 @@ Now connecting to UDP port 3333 at the client side is equivalent to connecting t
 `-f20:10` means sending 10 redundant packets for every 20 original packets.
 
 `-k` enables simple XOR encryption to confuse DPI(Deep Packet Inspection)
+
+To run stably,pay attention to MTU.
+
 # Advanced Topic
 ### Full Options
 ```
