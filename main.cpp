@@ -469,8 +469,10 @@ int client_event_loop()
 					socklen_t udp_new_addr_len = sizeof(sockaddr_in);
 					if ((data_len = recvfrom(local_listen_fd, data, max_data_len, 0,
 							(struct sockaddr *) &udp_new_addr_in, &udp_new_addr_len)) == -1) {
-						mylog(log_error,"recv_from error,this shouldnt happen at client\n");
-						myexit(1);
+						mylog(log_error,"recv_from error,this shouldnt happen,err=%s\n",strerror(errno));
+						continue;
+						//mylog(log_error,"recv_from error,this shouldnt happen at client\n");
+						//myexit(1);
 					};
 
 					if(!disable_mtu_warn&&data_len>=mtu_warn)
@@ -702,8 +704,9 @@ int server_event_loop()
 				socklen_t udp_new_addr_len = sizeof(sockaddr_in);
 				if ((data_len = recvfrom(local_listen_fd, data, max_data_len, 0,
 						(struct sockaddr *) &udp_new_addr_in, &udp_new_addr_len)) == -1) {
-					mylog(log_error,"recv_from error,this shouldnt happen at client\n");
-					myexit(1);
+					mylog(log_error,"recv_from error,this shouldnt happen,err=%s\n",strerror(errno));
+					continue;
+					//myexit(1);
 				};
 				mylog(log_trace,"Received packet from %s:%d,len: %d\n", inet_ntoa(udp_new_addr_in.sin_addr),
 						ntohs(udp_new_addr_in.sin_port),data_len);
