@@ -248,7 +248,7 @@ UDPspeeder和Kcptun配合,UDPspeeder和Kcptun可以并联也可以串联。
 
 ![image0](/images/cn/speeder_vpn_s.PNG)
 
-(也可以把图中的$*** server换成其他的socks5 server，这样连$*** client也不需要了)
+(也可以把图中的$*** server换成其他的socks5 server，这样就不需要$*** client了)
 
 可以和BBR/锐速叠加，BBR/锐速只要部署在VPS上就有效。
 
