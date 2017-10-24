@@ -19,6 +19,17 @@ const int max_fec_packet_num=255;// this is the limitation of the rs lib
 extern u32_t fec_buff_num;
 
 
+/*begin for first time init or dynamic update*/
+extern int g_fec_data_num;
+extern int g_fec_redundant_num;
+extern int g_fec_mtu;
+extern int g_fec_pending_num;
+extern int g_fec_pending_time; //8ms
+extern int g_fec_type;
+extern int dynamic_update_fec;
+/*end for first time init or dynamic update*/
+
+
 struct anti_replay_t
 {
 
@@ -98,7 +109,7 @@ class fec_encode_manager_t
 private:
 	u32_t seq;
 
-	int type;
+	int fec_type;
 	int fec_data_num,fec_redundant_num;
 	int fec_mtu;
 	int fec_pending_num;
@@ -134,9 +145,14 @@ public:
 		return first_packet_time_for_output;
 	}
 
+	int get_pending_time()
+	{
+		return fec_pending_time;
+	}
+
 	int get_type()
 	{
-		return type;
+		return fec_type;
 	}
 	u64_t get_timer_fd64();
 	int re_init(int data_num,int redundant_num,int mtu,int pending_num,int pending_time,int type);

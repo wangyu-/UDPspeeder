@@ -21,6 +21,7 @@
 #include <sys/wait.h>
 #include <sys/socket.h>    //for socket ofcourse
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <stdlib.h> //for exit(0);
 #include <errno.h> //For errno - the error number
 #include <netinet/tcp.h>   //Provides declarations for tcp header
@@ -211,6 +212,7 @@ int set_timer_ms(int epollfd,int &timer_fd,u32_t timer_interval);
 
 int round_up_div(int a,int b);
 
+int create_fifo(char * file);
 /*
 int create_new_udp(int &new_udp_fd,int remote_address_uint32,int remote_port);
 */
