@@ -19,7 +19,7 @@
 #### 原理简介
 主要原理是通过冗余数据来对抗网络的丢包，发送冗余数据的方式支持FEC(Forward Error Correction)和多倍发包,其中FEC算法是Reed-Solomon。
 
-对于FEC方式的原理图:
+FEC方式的原理图:
 
 ![image0](/images/en/fec.PNG)
 
