@@ -9,13 +9,18 @@ or
 
 ![image_vpn](/images/en/udpspeeder+openvpn3.PNG)
 
-[简体中文](/doc/README.zh-cn.md)
+[简体中文](/doc/README.zh-cn.md)(内容更丰富)
+
+###### Note
+You can use udp2raw with UDPspeeder together to bypass UDP firewalls.
+udp2raw：https://github.com/wangyu-/udp2raw-tunnel
+
 
 # Efficacy
 tested on a link with 100ms latency and 10% packet loss at both direction
 
 ### Ping Packet Loss
-![](/images/en/ping_compare3.PNG)
+![](/images/en/ping_compare_mode1.png)
 
 ### SCP Copy Speed
 ![](/images/en/scp_compare2.PNG)
@@ -27,7 +32,7 @@ For Windows and MacOS You can run UDPspeeder inside [this](https://github.com/wa
 
 # How does it work
 
-UDPspeeder uses FEC(Forward Error Correction) to improve your connection's quality,at the cost of addtional bandwidth.The algorithm for FEC is called Reed-Solomon.
+UDPspeeder uses FEC(Forward Error Correction) to reduce packet loss rate,at the cost of addtional bandwidth.The algorithm for FEC is called Reed-Solomon.
 
 ![image0](/images/en/fec.PNG)
 
@@ -68,6 +73,9 @@ Now connecting to UDP port 3333 at the client side is equivalent to connecting t
 `-f20:10` means sending 10 redundant packets for every 20 original packets.
 
 `-k` enables simple XOR encryption to confuse DPI(Deep Packet Inspection)
+
+To run stably,pay attention to MTU.
+
 # Advanced Topic
 ### Full Options
 ```

@@ -1,12 +1,14 @@
 
 # UDPspeeder + openvpn config guide
-![image_vpn](/images/en/udpspeeder+openvpn.PNG)
+![image_vpn](/images/en/udpspeeder+openvpn3.PNG)
 
 # UDPspeeder command
+
 #### run at server side
 ```
 ./speederv2 -s -l0.0.0.0:8855 -r 127.0.0.1:7777 -f20:10
 ```
+
 #### run at client side
 assume server ip is 45.66.77.88
 ```
@@ -84,3 +86,17 @@ sndbuf 2000000      ##### important
 rcvbuf 2000000      ##### important
 txqueuelen 4000     ##### suggested
 ```
+
+##### Note:
+If you use the `redirect-gateway` option of OpenVPN,you may need to add a route exception for your remote server ip at client side.Otherwise OpenVPN may hijack UDPspeeder 's traffic.
+
+For example,depend on your network environment,the command may looks like:
+```
+ip route add 44.55.66.77 via 44.55.66.1
+```
+or
+
+```
+ip route add 44.55.66.77 dev XXX
+```
+(run at client side)
