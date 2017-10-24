@@ -200,7 +200,7 @@ FEC算法很吃CPU,初次使用建议关注UDPspeeder的CPU占用。如果CPU被
 
 ### UDPspeeder和BBR/锐速配合
 
-UDPspeeder和BBR/锐速可以配合使用，UDPspeeder工作在IP层负责降低丢包率，BBR/锐速工作在TCP层负责优化拥塞和重传。这种情况下，可以调低UDPspeeder的冗余度，能把丢包率降低到5%以内就可以了，剩下的交给BBR/锐速解决，这样预计可以节省一些流量。
+UDPspeeder和BBR/锐速可以配合使用，UDPspeeder工作在IP层负责降低丢包率，BBR/锐速工作在TCP层负责优化拥塞和重传。这种情况下，可以调低UDPspeeder的冗余度，能把丢包率降低到5%以内就可以了，剩下的交给BBR/锐速解决，这样预计可以节省一些流量。如果是UDPspeeder跟Linux默认的Cubic一起用，最少也要把丢包率降低到1%以下才能有明显效果。
 
 对下文的`UDPspeeder + openvpn`和`UDPspeeder + openvpn + $***`方法有效。不过有一点区别，具体见下文。
 
