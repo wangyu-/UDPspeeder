@@ -9,7 +9,7 @@ or
 
 ![image_vpn](/images/en/udpspeeder+openvpn3.PNG)
 
-[简体中文](/doc/README.zh-cn.md)
+[简体中文](/doc/README.zh-cn.md)(内容更丰富)
 
 ###### Note
 You can use udp2raw with UDPspeeder together to bypass UDP firewalls.
