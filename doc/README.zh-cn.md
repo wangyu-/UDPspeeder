@@ -262,8 +262,24 @@ UDPspeeder和Kcptun配合,UDPspeeder和Kcptun可以并联也可以串联。
 需要在服务端开启ipforward和NAT。在客户端改路由表（可以手动修改，也可以由OpenVPN的redirect-gateway选项自动加好）。
 
 #### UDPspeeder + kcptun/finalspeed + $*** 同时加速tcp和udp流量
-如果你需要用加速的tcp看视频和下载文件，这样效果比UDPspeeder+vpn方案更好（在没有BBR的情况下）。
+如果你需要用加速的tcp看视频和下载文件，这样效果可能比没有BBR的UDPspeeder+vpn方案更好。另外，如果你需要玩游戏，但是嫌配VPN麻烦，也可以用这种方案。
 ![image0](/images/cn/speeder_kcptun.PNG)
+
+具体配置方法简介:
+
+假设$\*\*\*  server监听在在44.55.66.77的443端口(tcp和udp同时)。用kcptun把tcp 443映射到本地的tcp 1234；用UDPspeeder把udp 443的映射到本地的udp 1234。
+然后让$\*\*\* client 去连127.0.0.1:1234就可以了。tcp和udp都被加速了。完整命令：
+```
+run at server side:
+./kcp_server  -l ":4000" -t "127.0.0.1:443" -mode fast2
+./speederv2 -s -l0.0.0.0:4001 -r127.0.0.1:443  -f20:10 -k "passwd"
+
+run at client side:
+./kcp_client  -l ":1234" -r "44.55.66.77:4000" -mode fast2
+./speederv2 -c -l0.0.0.0:1234 -r44.55.66.77:4001 -f20:10 -k "passwd"
+```
+
+这就是全部的命令了。issue里有很多人困惑于怎么把tcp和udp流量"分开",其实就是这么简单。
 
 #### UDPspeeder + openvpn + $*** 混合方案
 也是我正在用的方案。优点是可以随时在vpn和$\*\*\*方案间快速切换。
