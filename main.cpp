@@ -704,6 +704,7 @@ int client_event_loop()
 		}
 		delay_manager.check();
 	}
+	delete &conn_info;
 	return 0;
 }
 
