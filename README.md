@@ -80,7 +80,7 @@ To run stably,pay attention to MTU.
 ### Full Options
 ```
 UDPspeeder V2
-git version:f479ca2779    build date:Oct 19 2017 01:37:08
+git version:8e7a8aed92    build date:Oct 25 2017 02:00:54
 repository: https://github.com/wangyu-/UDPspeeder
 
 usage:
@@ -91,13 +91,13 @@ common option,must be same on both sides:
     -k,--key              <string>        key for simple xor encryption. if not set,xor is disabled
 main options:
     -f,--fec              x:y             forward error correction,send y redundant packets for every x packets
-    --timeout             <number>        how long could a packet be held in queue before doing fec,unit: ms
-    --mode                <number>        fec-mode,available values: 0,1 ; 0 cost less bandwidth,1 cost less latency
+    --timeout             <number>        how long could a packet be held in queue before doing fec,unit: ms,default :8ms
+    --mode                <number>        fec-mode,available values: 0,1 ; 0 cost less bandwidth,1 cost less latency(default)
     --report              <number>        turn on send/recv report,and set a period for reporting,unit:s
 advanced options:
     --mtu                 <number>        mtu. for mode 0,the program will split packet to segment smaller than mtu_value.
                                           for mode 1,no packet will be split,the program just check if the mtu is exceed.
-                                          default value:1250 
+                                          default value:1250
     -j,--jitter           <number>        simulated jitter.randomly delay first packet for 0~<number> ms,default value:0.
                                           do not use if you dont know what it means.
     -i,--interval         <number>        scatter each fec group to a interval of <number> ms,to protect burst packet loss.
@@ -105,6 +105,9 @@ advanced options:
     --random-drop         <number>        simulate packet loss ,unit:0.01%. default value: 0
     --disable-obscure     <number>        disable obscure,to save a bit bandwidth and cpu
 developer options:
+    --fifo                <string>        use a fifo(named pipe) for sending commands to the running program,so that you
+                                          can change fec encode parameters dynamically,check readme.md in repository for
+                                          supported commands.
     -j ,--jitter          jmin:jmax       similiar to -j above,but create jitter randomly between jmin and jmax
     -i,--interval         imin:imax       similiar to -i above,but scatter randomly between imin and imax
     -q,--queue-len        <number>        max fec queue len,only for mode 0
@@ -114,11 +117,21 @@ developer options:
     --disable-fec         <number>        completely disable fec,turn the program into a normal udp tunnel
     --sock-buf            <number>        buf size for socket,>=10 and <=10240,unit:kbyte,default:1024
 log and help options:
-    --log-level           <number>        0:never    1:fatal   2:error   3:warn 
+    --log-level           <number>        0:never    1:fatal   2:error   3:warn
                                           4:info (default)     5:debug   6:trace
     --log-position                        enable file name,function name,line number in log
     --disable-color                       disable log color
     -h,--help                             print this help message
+
+```
+#### `--fifo` option
+Use a fifo(named pipe) for sending commands to the running program. For example `--fifo fifo.file`,you can use following commands to change parameters dynamically:
+```
+echo fec 19:9 >fifo.file
+echo mtu 1100 >fifo.file
+echo timeout 5 >fifo.file
+echo queue-len 100 >fifo.file
+echo mode 0 >fifo.file
 ```
 ### Speed-Up any traffic with OpenVPN+UDPspeeder
 
