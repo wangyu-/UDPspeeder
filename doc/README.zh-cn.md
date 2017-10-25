@@ -281,7 +281,7 @@ run at client side:
 
 这就是全部的命令了。issue里有很多人困惑于怎么把tcp和udp流量"分开",其实很简单就可以做到。
 
-如果只需要加速UDP，不需要加速TCP，可以把kcptun换成其他的端口转发方式，比如socat/ssh tunnel/iptables。
+如果只需要加速UDP，不需要加速TCP，可以把kcptun换成其他的任意端口转发方式，比如ncat/socat/ssh tunnel/iptables。
 
 #### UDPspeeder + openvpn + $*** 混合方案，也适用于其他VPN
 也是我正在用的方案。优点是可以随时在vpn和$\*\*\*方案间快速切换。
