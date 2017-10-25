@@ -268,7 +268,7 @@ UDPspeeder和Kcptun配合,UDPspeeder和Kcptun可以并联也可以串联。
 具体配置方法简介:
 
 假设$\*\*\*  server监听在在44.55.66.77的443端口(tcp和udp同时)。用kcptun把tcp 443映射到本地的tcp 1234；用UDPspeeder把udp 443的映射到本地的udp 1234。
-然后让$\*\*\* client 去连127.0.0.1:1234就可以了。tcp和udp都被加速了。完整命令：
+然后让$\*\*\* client 去连127.0.0.1:1234就可以了,tcp和udp都被加速了。完整命令：
 ```
 run at server side:
 ./kcp_server  -l ":4000" -t "127.0.0.1:443" -mode fast2
