@@ -302,6 +302,84 @@ int from_fec_to_normal(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 	//my_send(dest,data,len);
 	return 0;
 }
+int print_parameter()
+{
+	mylog(log_info,"jitter_min=%d jitter_max=%d output_interval_min=%d output_interval_max=%d fec_timeout=%d fec_data_num=%d fec_redundant_num=%d fec_mtu=%d fec_queue_len=%d fec_mode=%d\n",
+			jitter_min/1000,jitter_max/1000,output_interval_min/1000,output_interval_max/1000,g_fec_timeout/1000,
+			g_fec_data_num,g_fec_redundant_num,g_fec_mtu,g_fec_queue_len,g_fec_mode);
+	return 0;
+}
+int handle_command(char *s)
+{
+	int len=strlen(s);
+	while(len>=1&&s[len-1]=='\n')
+		s[len-1]=0;
+	mylog(log_info,"got data from fifo,len=%d,s=[%s]\n",len,s);
+	int a=-1,b=-1;
+	if(strncmp(s,"fec",strlen("fec"))==0)
+	{
+		mylog(log_info,"got command [fec]\n");
+		sscanf(s,"fec %d:%d",&a,&b);
+		if(a<1||b<0||a+b>254)
+		{
+			mylog(log_warn,"invaild value\n");
+			return -1;
+		}
+		g_fec_data_num=a;
+		g_fec_redundant_num=b;
+	}
+	else if(strncmp(s,"mtu",strlen("mtu"))==0)
+	{
+		mylog(log_info,"got command [mtu]\n");
+		sscanf(s,"mtu %d",&a);
+		if(a<100||a>2000)
+		{
+			mylog(log_warn,"invaild value\n");
+			return -1;
+		}
+		g_fec_mtu=a;
+	}
+	else if(strncmp(s,"queue-len",strlen("queue-len"))==0)
+	{
+		mylog(log_info,"got command [queue-len]\n");
+		sscanf(s,"queue-len %d",&a);
+		if(a<1||a>10000)
+		{
+			mylog(log_warn,"invaild value\n");
+			return -1;
+		}
+		g_fec_queue_len=a;
+	}
+	else if(strncmp(s,"mode",strlen("mode"))==0)
+	{
+		mylog(log_info,"got command [mode]\n");
+		sscanf(s,"mode %d",&a);
+		if(a!=0&&a!=1)
+		{
+			mylog(log_warn,"invaild value\n");
+			return -1;
+		}
+		g_fec_mode=a;
+	}
+	else if(strncmp(s,"timeout",strlen("timeout"))==0)
+	{
+		mylog(log_info,"got command [timeout]\n");
+		sscanf(s,"timeout %d",&a);
+		if(a<0||a>1000)
+		{
+			mylog(log_warn,"invaild value\n");
+			return -1;
+		}
+		g_fec_timeout=a*1000;
+	}
+	else
+	{
+		mylog(log_info,"unknown command\n");
+	}
+	print_parameter();
+
+	return 0;
+}
 int client_event_loop()
 {
 	//char buf[buf_len];
@@ -441,19 +519,13 @@ int client_event_loop()
 			{
 				char buf[buf_len];
 				int len=read (fifo_fd, buf, sizeof (buf));
-				assert(len>=0);
+				if(len<0)
+				{
+					mylog(log_warn,"fifo read failed len=%d,errno=%s\n",len,strerror(errno));
+					continue;
+				}
 				buf[len]=0;
-				while(len>=1&&buf[len-1]=='\n')
-					buf[len-1]=0;
-				mylog(log_info,"got data from fifo,len=%d,s=[%s]\n",len,buf);
-				if(0)
-				{
-				}
-				else
-				{
-					mylog(log_info,"unknown command\n");
-				}
-
+				handle_command(buf);
 			}
 			else if (events[idx].data.u64 == (u64_t)local_listen_fd||events[idx].data.u64 == conn_info.fec_encode_manager.get_timer_fd64())
 			{
@@ -742,19 +814,13 @@ int server_event_loop()
 			{
 				char buf[buf_len];
 				int len=read (fifo_fd, buf, sizeof (buf));
-				assert(len>=0);
+				if(len<0)
+				{
+					mylog(log_warn,"fifo read failed len=%d,errno=%s\n",len,strerror(errno));
+					continue;
+				}
 				buf[len]=0;
-				while(len>=1&&buf[len-1]=='\n')
-					buf[len-1]=0;
-				mylog(log_info,"got data from fifo,len=%d,s=[%s]\n",len,buf);
-				if(0)
-				{
-				}
-				else
-				{
-					mylog(log_info,"unknown command\n");
-				}
-
+				handle_command(buf);
 			}
 
 			else if (events[idx].data.u64 == (u64_t)local_listen_fd)
@@ -1165,7 +1231,7 @@ int unit_test()
 		int * len;
 		fec_decode_manager.output(n,s_arr,len);
 
-		fec_encode_manager.re_init(3,2,g_fec_mtu,g_fec_pending_num,g_fec_pending_time,1);
+		fec_encode_manager.re_init(3,2,g_fec_mtu,g_fec_queue_len,g_fec_timeout,1);
 
 		fec_encode_manager.input((char *) a.c_str(), a.length());
 		fec_encode_manager.output(n,s_arr,len);
@@ -1442,8 +1508,8 @@ void process_arg(int argc, char *argv[])
 			}
 			break;
 		case 'q':
-			sscanf(optarg,"%d",&g_fec_pending_num);
-			if(g_fec_pending_num<1||g_fec_pending_num>10000)
+			sscanf(optarg,"%d",&g_fec_queue_len);
+			if(g_fec_queue_len<1||g_fec_queue_len>10000)
 			{
 
 					mylog(log_fatal,"fec_pending_num should be between 1 and 10000\n");
@@ -1582,8 +1648,8 @@ void process_arg(int argc, char *argv[])
 			}
 			else if(strcmp(long_options[option_index].name,"mode")==0)
 			{
-				sscanf(optarg,"%d",&g_fec_type);
-				if(g_fec_type!=0&&g_fec_type!=1)
+				sscanf(optarg,"%d",&g_fec_mode);
+				if(g_fec_mode!=0&&g_fec_mode!=1)
 				{
 					mylog(log_fatal,"mode should be 0 or 1\n");
 					myexit(-1);
@@ -1600,14 +1666,14 @@ void process_arg(int argc, char *argv[])
 			}
 			else if(strcmp(long_options[option_index].name,"timeout")==0)
 			{
-				sscanf(optarg,"%d",&g_fec_pending_time);
-				if(g_fec_pending_time<0||g_fec_pending_time>1000)
+				sscanf(optarg,"%d",&g_fec_timeout);
+				if(g_fec_timeout<0||g_fec_timeout>1000)
 				{
 
 						mylog(log_fatal,"fec_pending_time should be between 0 and 1000(1s)\n");
 						myexit(-1);
 				}
-				g_fec_pending_time*=1000;
+				g_fec_timeout*=1000;
 			}
 			else if(strcmp(long_options[option_index].name,"fifo")==0)
 			{
@@ -1652,9 +1718,8 @@ void process_arg(int argc, char *argv[])
 		program_mode=server_mode;
 	}
 
-	mylog(log_info,"jitter_min=%d jitter_max=%d output_interval_min=%d output_interval_max=%d fec_pending_time=%d fec_data_num=%d fec_redundant_num=%d fec_mtu=%d fec_pending_num=%d fec_type=%d\n",
-			jitter_min/1000,jitter_max/1000,output_interval_min/1000,output_interval_max/1000,g_fec_pending_time/1000,
-			g_fec_data_num,g_fec_redundant_num,g_fec_mtu,g_fec_pending_num,g_fec_type);
+	print_parameter();
+
 }
 
 int main(int argc, char *argv[])

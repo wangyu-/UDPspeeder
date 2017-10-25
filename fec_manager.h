@@ -23,9 +23,9 @@ extern u32_t fec_buff_num;
 extern int g_fec_data_num;
 extern int g_fec_redundant_num;
 extern int g_fec_mtu;
-extern int g_fec_pending_num;
-extern int g_fec_pending_time; //8ms
-extern int g_fec_type;
+extern int g_fec_queue_len;
+extern int g_fec_timeout; //8ms
+extern int g_fec_mode;
 extern int dynamic_update_fec;
 /*end for first time init or dynamic update*/
 
@@ -109,11 +109,11 @@ class fec_encode_manager_t
 private:
 	u32_t seq;
 
-	int fec_type;
+	int fec_mode;
 	int fec_data_num,fec_redundant_num;
 	int fec_mtu;
-	int fec_pending_num;
-	int fec_pending_time;
+	int fec_queue_len;
+	int fec_timeout;
 
 	my_time_t first_packet_time;
 	my_time_t first_packet_time_for_output;
@@ -147,12 +147,12 @@ public:
 
 	int get_pending_time()
 	{
-		return fec_pending_time;
+		return fec_timeout;
 	}
 
 	int get_type()
 	{
-		return fec_type;
+		return fec_mode;
 	}
 	u64_t get_timer_fd64();
 	int re_init(int data_num,int redundant_num,int mtu,int pending_num,int pending_time,int type);
