@@ -252,7 +252,7 @@ UDPspeeder和Kcptun配合,UDPspeeder和Kcptun可以并联也可以串联。
 
 # 应用
 
-#### UDPspeeder + OpenVPN加速任何流量,也适用于其他VPN
+#### UDPspeeder + OpenVPN加速任何流量，也适用于其他VPN
 ![image0](/images/Capture2.PNG)
 
 具体配置见，[UDPspeeder + openvpn config guide](/doc/udpspeeder_openvpn.md).
@@ -281,7 +281,7 @@ run at client side:
 
 这就是全部的命令了。issue里有很多人困惑于怎么把tcp和udp流量"分开",其实很简单就可以做到。
 
-#### UDPspeeder + openvpn + $*** 混合方案,也适用于其他VPN
+#### UDPspeeder + openvpn + $*** 混合方案，也适用于其他VPN
 也是我正在用的方案。优点是可以随时在vpn和$\*\*\*方案间快速切换。
 实际部署起来比图中看起来的还要简单。不需要改路由表，不需要写iptables规则和开启NAT，需要做的只是用openvpn分配的ip访问$*** server。
 
