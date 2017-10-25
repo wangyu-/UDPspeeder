@@ -1320,8 +1320,9 @@ void print_help()
 //	printf("    --disable-xor         <number>        disable xor\n");
 
 	printf("developer options:\n");
-	printf("    --fifo                <string>        use a fifo(named pipe) for sending commands to the running program,so that you can change\n");
-	printf("                                          fec encoder parameters dynamically,check readme.md in repository for supported commands.\n");
+	printf("    --fifo                <string>        use a fifo(named pipe) for sending commands to the running program,so that you\n");
+	printf("                                          can change fec encode parameters dynamically,check readme.md in repository for\n");
+	printf("                                          supported commands.\n");
 	printf("    -j ,--jitter          jmin:jmax       similiar to -j above,but create jitter randomly between jmin and jmax\n");
 	printf("    -i,--interval         imin:imax       similiar to -i above,but scatter randomly between imin and imax\n");
     printf("    -q,--queue-len        <number>        max fec queue len,only for mode 0\n");
