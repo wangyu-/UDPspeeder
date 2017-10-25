@@ -80,7 +80,7 @@ https://github.com/wangyu-/UDPspeeder/releases
 ### 命令选项
 ```
 UDPspeeder V2
-git version:99f6099e86    build date:Oct 19 2017 13:35:38
+git version:8e7a8aed92    build date:Oct 25 2017 02:00:54
 repository: https://github.com/wangyu-/UDPspeeder
 
 usage:
@@ -105,6 +105,9 @@ advanced options:
     --random-drop         <number>        simulate packet loss ,unit:0.01%. default value: 0
     --disable-obscure     <number>        disable obscure,to save a bit bandwidth and cpu
 developer options:
+    --fifo                <string>        use a fifo(named pipe) for sending commands to the running program,so that you
+                                          can change fec encode parameters dynamically,check readme.md in repository for
+                                          supported commands.
     -j ,--jitter          jmin:jmax       similiar to -j above,but create jitter randomly between jmin and jmax
     -i,--interval         imin:imax       similiar to -i above,but scatter randomly between imin and imax
     -q,--queue-len        <number>        max fec queue len,only for mode 0
@@ -158,6 +161,16 @@ UDPspeeder默认情况下会对每个发出的数据包随机填充和异或一�
 
 ##### `-q,--queue-len`
 编码器在做FEC前最多积攒多少个数据包，只对mode 0有效。除非是使用下文`V2版如何多倍发包`里面提到的用法，不建议改动。
+#### `--fifo` option
+用fifo(命名管道)向运行中的程序发送command. 例如`--fifo fifo.file`,可用的command有：
+```
+echo fec 19:9 >fifo.file
+echo mtu 1100 >fifo.file
+echo timeout 5 >fifo.file
+echo queue-len 100 >fifo.file
+echo mode 0 >fifo.file
+```
+可以动态改变fec编码器参数。
 
 # 使用经验
 
@@ -202,6 +215,10 @@ FEC算法很吃CPU,初次使用建议关注UDPspeeder的CPU占用。如果CPU被
 
 另外，fec分组大小不宜过大，否则不但很耗CPU,还有其他副作用，建议x+y<50。
 
+### 改变FEC参数而无需重启程序
+
+`--fifo`选项可以在运行时动态无缝改变FEC参数，无需重启程序，也不会断流。
+
 ### 为什么使用之后效果反而变差了？
 
 有可能是你用了mode 0参数，而又没调好参数。
@@ -221,7 +238,7 @@ UDPspeeder和Kcptun配合,UDPspeeder和Kcptun可以并联也可以串联。
 
 并联的情况下，让kcptun负责加速TCP,UDPspeeder负责加速UDP。见下文的`UDPspeeder + kcptun + $*** 同时加速tcp和udp流量`。
 
-串联的情况。UDPspeeder的FEC跟Kcptun自带的相比：可以对两个方向设置不通的FEC参数、有一个更省流量的mode 0模式、可以调整的FEC参数多一些；但是UDPspeeder本身不优化拥塞和重传算法。所以UDPspeeder和Kcptun也可以配合使用，结合两者的优点。
+串联的情况。UDPspeeder的FEC跟Kcptun自带的相比：可以对两个方向设置不同的FEC参数、有一个更省流量的mode 0模式、可以动态改变FEC参数；但是UDPspeeder本身不优化拥塞和重传算法。所以UDPspeeder和Kcptun也可以配合使用，结合两者的优点。
 
 串联时可以关掉Kcptun的FEC,让UDPspeeder接管FEC功能。这样UDPspeeder工作在UDP层负责降低丢包率，Kcptun工作在应用层用kcp算法负责优化拥塞和重传，能起到和`UDPspeeder+BBR/锐速`类似的效果。
 
