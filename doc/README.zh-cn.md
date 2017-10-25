@@ -283,6 +283,8 @@ run at client side:
 
 如果只需要加速UDP，不需要加速TCP，可以把kcptun换成其他的任意端口转发方式，比如ncat/socat/ssh tunnel/iptables。
 
+另外，如果没有kcptun只有BBR/锐速的话，也可以把kcptun换成ncat/socat/ssh tunnel/iptables。这样，TCP流量由锐速/BBR加速，UDP由UDPspeeder加速。
+
 #### UDPspeeder + openvpn + $*** 混合方案，也适用于其他VPN
 也是我正在用的方案。优点是可以随时在vpn和$\*\*\*方案间快速切换。
 实际部署起来比图中看起来的还要简单。不需要改路由表，不需要写iptables规则和开启NAT，需要做的只是用openvpn分配的ip访问$*** server。
