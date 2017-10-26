@@ -39,7 +39,7 @@ mute 20
 
 comp-lzo no
 
-fragment 1200       ##### very important    you can turn it up a bit. but,the lower the safer
+fragment 1200       ##### very important    you can turn it up a bit. but, the lower the safer
 mssfix 1200         ##### very important
 
 sndbuf 2000000      ##### important
@@ -79,7 +79,7 @@ mute 20
 
 comp-lzo no
 
-fragment 1200       ##### very important    you can turn it up a bit. but,the lower the safer
+fragment 1200       ##### very important    you can turn it up a bit. but, the lower the safer
 mssfix 1200         ##### very important
 
 sndbuf 2000000      ##### important
@@ -88,9 +88,9 @@ txqueuelen 4000     ##### suggested
 ```
 
 ##### Note:
-If you use the `redirect-gateway` option of OpenVPN,you may need to add a route exception for your remote server ip at client side.Otherwise OpenVPN may hijack UDPspeeder 's traffic.
+If you use the `redirect-gateway` option of OpenVPN, you may need to add a route exception for your remote server ip at client side.Otherwise OpenVPN may hijack UDPspeeder 's traffic.
 
-For example,depend on your network environment,the command may looks like:
+For example, depend on your network environment, the command may looks like:
 ```
 ip route add 44.55.66.77 via 44.55.66.1
 ```

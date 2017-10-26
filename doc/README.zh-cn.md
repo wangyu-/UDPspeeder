@@ -17,7 +17,7 @@
 
 ![image0](/images/cn/scp_compare.PNG)
 #### 原理简介
-主要原理是通过冗余数据来对抗网络的丢包，发送冗余数据的方式支持FEC(Forward Error Correction)和多倍发包,其中FEC算法是Reed-Solomon。
+主要原理是通过冗余数据来对抗网络的丢包，发送冗余数据的方式支持FEC(Forward Error Correction)和多倍发包，其中FEC算法是Reed-Solomon。
 
 FEC方式的原理图:
 
@@ -28,7 +28,7 @@ FEC方式的原理图:
 
 在多个冗余包之间引入延迟（时间可配）来对抗突发性的丢包，避开中间路由器因为瞬时buffer长度过长而连续丢掉所有副本。
 
-模拟一定的延迟抖动（时间可配）,这样上层应用计算出来的RTT方差会更大，以等待后续冗余包的到达，不至于发生在冗余包到达之前就触发重传的尴尬。
+模拟一定的延迟抖动（时间可配），这样上层应用计算出来的RTT方差会更大，以等待后续冗余包的到达，不至于发生在冗余包到达之前就触发重传的尴尬。
 
 输出UDP收发情况报告，可以看出丢包率。
 
@@ -132,7 +132,7 @@ log and help options:
 指定fec编码器在编码时候最多可以引入多大的延迟。越高fec越有效率，加速游戏时调低可以降低延迟。
 
 #####  `--mode` 选项 和 `--mtu`选项
-fec编码器的工作模式。对于mode 0，编码器会积攒一定数量的packet，然后把他们合并再切成等长的片段（切分长度由--mtu指定）。对于mode 1，编码器不会做任何切分,而是会把packet按最大长度对齐，fec冗余包的长度为对齐后的长度（最大长度）。
+fec编码器的工作模式。对于mode 0，编码器会积攒一定数量的packet，然后把他们合并再切成等长的片段（切分长度由--mtu指定）。对于mode 1，编码器不会做任何切分，而是会把packet按最大长度对齐，fec冗余包的长度为对齐后的长度（最大长度）。
 
 mode 0更省流量，在丢包率正常的情况下效果和mode 1是一样的；mode 1延迟更低，在极高丢包的情况下表现更好。
 
@@ -142,7 +142,7 @@ mode 0模式的流量消耗基本完全透明。mode 1因为涉及到数据按�
 
 mode 0模式数据包一般不会乱序，除非网络本身有严重乱序；mode 1模式被恢复的数据包可能会乱序，不过UDP本来就允许乱序，对绝大多数应用没有影响。mode 0模式反而可以纠正一些乱序情况。
 
-mode 0模式允许你发送的数据包大小超过物理接口的MTU而几乎不引起性能损失（而普通的ip分片做不到这点），目前最高支持到2000字节，2000字节已经可以应对任何应用了，因为一般网络的MTU只有1400多。之所以支持到2000字节是为了省程序内部开的静态buff(静态buff避免malloc提高性能),如果你是开发者，通过重新编译，支持到UDP协议的极限(
+mode 0模式允许你发送的数据包大小超过物理接口的MTU而几乎不引起性能损失（而普通的ip分片做不到这点），目前最高支持到2000字节，2000字节已经可以应对任何应用了，因为一般网络的MTU只有1400多。之所以支持到2000字节是为了省程序内部开的静态buff(静态buff避免malloc提高性能)，如果你是开发者，通过重新编译，支持到UDP协议的极限(
 65507字节)也没问题。
 
 ##### `--report`  选项
@@ -168,13 +168,13 @@ UDPspeeder默认情况下会对每个发出的数据包随机填充和异或一�
 ##### `-q,--queue-len`
 编码器在做FEC前最多积攒多少个数据包，只对mode 0有效。除非是使用下文`V2版如何多倍发包`里面提到的用法，不建议改动。
 #### `--fifo` option
-用fifo(命名管道)向运行中的程序发送command. 例如`--fifo fifo.file`,可用的command有：
+用fifo(命名管道)向运行中的程序发送command。例如`--fifo fifo.file`，可用的command有：
 ```
-echo fec 19:9 >fifo.file
-echo mtu 1100 >fifo.file
-echo timeout 5 >fifo.file
-echo queue-len 100 >fifo.file
-echo mode 0 >fifo.file
+echo fec 19:9 > fifo.file
+echo mtu 1100 > fifo.file
+echo timeout 5 > fifo.file
+echo queue-len 100 > fifo.file
+echo mode 0 > fifo.file
 ```
 可以动态改变fec编码器参数。可以从程序的log里看到command是否发送成功。
 
@@ -182,7 +182,7 @@ echo mode 0 >fifo.file
 
 ### 在FEC和多倍发包之间如何选择
 
-对于游戏，游戏的流量本身不大，延迟很重要，多倍发包是最佳解决方案，多倍发包不会引入额外的延迟。FEC编码器需要先积攒一些数据，才可以做FEC,延迟无法避免；对于多倍发包，没有这个问题，所以没有延迟。
+对于游戏，游戏的流量本身不大，延迟很重要，多倍发包是最佳解决方案，多倍发包不会引入额外的延迟。FEC编码器需要先积攒一些数据，才可以做FEC，延迟无法避免；对于多倍发包，没有这个问题，所以没有延迟。
 
 对于其他日常应用（延迟要求一般），在合理配置的情况下，FEC的效果肯定好过多倍发包。不过需要根据网络的最大丢包来配置FEC参数，才能有稳定的效果。如果配置不当，对于--mode 1可能会完全没有效果；对于--mode 0，可能效果会比不用UDPspeeder还差。
 
@@ -190,7 +190,7 @@ echo mode 0 >fifo.file
 
 ### V2版如何多倍发包
 
-只要在设置-f参数时把x设置为1，fec算法就退化为多倍发包了。例如-f1:1,表示2倍发包，-f1:2表示3倍发包，以此类推。另外可以加上`--mode 0 -q1`参数，防止fec编码器试图积攒和合并数据，获得最低的延迟。
+只要在设置-f参数时把x设置为1，fec算法就退化为多倍发包了。例如-f1:1，表示2倍发包，-f1:2表示3倍发包，以此类推。另外可以加上`--mode 0 -q1`参数，防止fec编码器试图积攒和合并数据，获得最低的延迟。
 
 2倍发包的完整参数：
 
@@ -215,11 +215,11 @@ echo mode 0 >fifo.file
 
 ### 根据CPU处理能力来调整FEC参数
 
-FEC算法很吃CPU,初次使用建议关注UDPspeeder的CPU占用。如果CPU被打满，可以在冗余度不变的情况下把FEC分组大小调小，否则的话效果可能很差。
+FEC算法很吃CPU，初次使用建议关注UDPspeeder的CPU占用。如果CPU被打满，可以在冗余度不变的情况下把FEC分组大小调小，否则的话效果可能很差。
 
-比如-f20:10和-f10:5，都是1.5倍的冗余度，而-f20:10的FEC分组大小是30个包，-f10:5的FEC分组大小是15个包。-f20:10更费CPU,但是在一般情况下效果更稳定。把分组调小可以节省CPU。
+比如-f20:10和-f10:5，都是1.5倍的冗余度，而-f20:10的FEC分组大小是30个包，-f10:5的FEC分组大小是15个包。-f20:10更费CPU，但是在一般情况下效果更稳定。把分组调小可以节省CPU。
 
-另外，fec分组大小不宜过大，否则不但很耗CPU,还有其他副作用，建议x+y<50。
+另外，fec分组大小不宜过大，否则不但很耗CPU，还有其他副作用，建议x+y<50。
 
 ### 改变FEC参数而不断线
 
@@ -240,13 +240,13 @@ UDPspeeder和BBR/锐速可以配合使用，UDPspeeder工作在IP层负责降低
 
 ### UDPspeeder和Kcptun配合
 
-UDPspeeder和Kcptun配合,UDPspeeder和Kcptun可以并联也可以串联。
+UDPspeeder和Kcptun配合，UDPspeeder和Kcptun可以并联也可以串联。
 
-并联的情况下，让kcptun负责加速TCP,UDPspeeder负责加速UDP。见下文的`UDPspeeder + kcptun + $*** 同时加速tcp和udp流量`。
+并联的情况下，让kcptun负责加速TCP，UDPspeeder负责加速UDP。见下文的`UDPspeeder + kcptun + $*** 同时加速tcp和udp流量`。
 
 串联的情况。UDPspeeder的FEC跟Kcptun自带的相比：可以对两个方向设置不同的FEC参数、有一个更省流量的mode 0模式、可以动态改变FEC参数；但是UDPspeeder本身不优化拥塞和重传算法。所以UDPspeeder和Kcptun也可以配合使用，结合两者的优点。
 
-串联时可以关掉Kcptun的FEC,让UDPspeeder接管FEC功能。这样UDPspeeder工作在UDP层负责降低丢包率，Kcptun工作在应用层用kcp算法负责优化拥塞和重传，能起到和`UDPspeeder+BBR/锐速`类似的效果。
+串联时可以关掉Kcptun的FEC，让UDPspeeder接管FEC功能。这样UDPspeeder工作在UDP层负责降低丢包率，Kcptun工作在应用层用kcp算法负责优化拥塞和重传，能起到和`UDPspeeder+BBR/锐速`类似的效果。
 
 如果发Issue问Kcptun+UDPspeeder相关的问题，一定要说明是并联还是串联。
 
@@ -268,7 +268,7 @@ UDPspeeder和Kcptun配合,UDPspeeder和Kcptun可以并联也可以串联。
 具体配置方法简介:
 
 假设$\*\*\*  server监听在在44.55.66.77的443端口(tcp和udp同时)。用kcptun把tcp 443映射到本地的tcp 1234；用UDPspeeder把udp 443的映射到本地的udp 1234。
-然后让$\*\*\* client 去连127.0.0.1:1234就可以了,tcp和udp都被加速了。完整命令：
+然后让$\*\*\* client 去连127.0.0.1:1234就可以了，tcp和udp都被加速了。完整命令：
 ```
 run at server side:
 ./kcp_server  -l ":4000" -t "127.0.0.1:443" -mode fast2
@@ -279,7 +279,7 @@ run at client side:
 ./speederv2 -c -l0.0.0.0:1234 -r44.55.66.77:4001 -f20:10 -k "passwd"
 ```
 
-这就是全部的命令了。issue里有很多人困惑于怎么把tcp和udp流量"分开",其实很简单就可以做到。
+这就是全部的命令了。issue里有很多人困惑于怎么把tcp和udp流量"分开"，其实很简单就可以做到。
 
 如果只需要加速UDP，不需要加速TCP，可以把kcptun换成其他的任意端口转发方式，比如ncat/socat/ssh tunnel/iptables。
 
