@@ -46,7 +46,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef unsigned long u_dword;
+typedef unsigned long u_long;
 /*
  * compatibility stuff
  */
@@ -75,7 +75,7 @@ struct timeval {
 };
 #define gettimeofday(x, dummy) { (x)->ticks = clock() ; }
 #define DIFF_T(a,b) (1+ 1000000*(a.ticks - b.ticks) / CLOCKS_PER_SEC )
-typedef unsigned long u_dword ;
+typedef unsigned long u_long ;
 typedef unsigned short u_short ;
 #else /* typically, unix systems */
 #include <sys/time.h>
@@ -89,12 +89,12 @@ typedef unsigned short u_short ;
 	t = x.tv_usec + 1000000* (x.tv_sec & 0xff ) ; \
 	}
 #define TOCK(t) \
-	{ u_dword t1 ; TICK(t1) ; \
+	{ u_long t1 ; TICK(t1) ; \
 	  if (t1 < t) t = 256000000 + t1 - t ; \
 	  else t = t1 - t ; \
 	  if (t == 0) t = 1 ;}
 	
-u_dword ticks[10];	/* vars for timekeeping */
+u_long ticks[10];	/* vars for timekeeping */
 #else
 #define DEB(x)
 #define DDB(x)
@@ -640,7 +640,7 @@ init_fec()
 #define FEC_MAGIC	0xFECC0DEC
 
 struct fec_parms {
-    u_dword magic ;
+    u_long magic ;
     int k, n ;		/* parameters of the code */
     gf *enc_matrix ;
 } ;

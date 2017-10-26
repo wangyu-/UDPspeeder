@@ -68,7 +68,7 @@ int delay_manager_t::add(my_time_t delay,const dest_t &dest,char *data,int len)
 	tmp.data=(char *)malloc(delay_data.len+100);
     if(!tmp.data)
     {
-        mylog(log_trace, "malloc() returned null in delay_manager_t::add()");
+        mylog(log_warn, "malloc() returned null in delay_manager_t::add()");
         return -1;
     }
 	memcpy(tmp.data,data,delay_data.len);
