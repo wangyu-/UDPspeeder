@@ -51,6 +51,10 @@ void* get_code(int k,int n)
 	if (table==0)
 	{
 		table=(void* (*)[256]) malloc(sizeof(void*)*256*256);
+		if(!table)
+		{
+		    return table;
+		}
 		memset(table,0,sizeof(void*)*256*256);
 	}
 	if(table[k][n]==0)
