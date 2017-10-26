@@ -115,8 +115,11 @@ extern int about_to_exit;
 enum raw_mode_t{mode_faketcp=0,mode_udp,mode_icmp,mode_end};
 extern raw_mode_t raw_mode;
 enum program_mode_t {unset_mode=0,client_mode,server_mode};
-extern program_mode_t program_mode;
+extern program_mode_t client_or_server;
 extern unordered_map<int, const char*> raw_mode_tostring ;
+
+enum working_mode_t {unset_mode=0,tunnel_mode,tun_dev_mode};
+extern working_mode_t working_mode;
 
 extern int delay_capacity;
 

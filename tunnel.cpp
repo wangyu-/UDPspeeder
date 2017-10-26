@@ -65,7 +65,7 @@ int new_connected_socket(int &fd,u32_t ip,int port)
 	return 0;
 }
 
-int client_event_loop()
+int tunnel_client_event_loop()
 {
 	//char buf[buf_len];
 	int i, j, k;int ret;
@@ -392,7 +392,7 @@ int client_event_loop()
 	return 0;
 }
 
-int server_event_loop()
+int tunnel_server_event_loop()
 {
 	//char buf[buf_len];
 	int i, j, k;int ret;

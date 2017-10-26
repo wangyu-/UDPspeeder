@@ -41,7 +41,6 @@ int time_mono_test=0;
 int socket_buf_size=1024*1024;
 
 
-
 int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,my_time_t *&out_delay)
 {
 
@@ -899,11 +898,11 @@ void process_arg(int argc, char *argv[])
 	}
 	if(is_client==1)
 	{
-		program_mode=client_mode;
+		client_or_server=client_mode;
 	}
 	else
 	{
-		program_mode=server_mode;
+		client_or_server=server_mode;
 	}
 
 	print_parameter();

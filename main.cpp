@@ -14,20 +14,9 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
+	working_mode=tun_dev_mode;
 
-	/*
-	if(argc==1||argc==0)
-	{
-		printf("this_program classic\n");
-		printf("this_program fec\n");
-		return 0;
-	}*/
-	/*
-	if(argc>=2&&strcmp(argv[1],"fec")!=0)
-	{
-		printf("running into classic mode!\n");
-		return classic::main(argc,argv);
-	}*/
+
 
 	assert(sizeof(u64_t)==8);
 	assert(sizeof(i64_t)==8);
@@ -43,13 +32,25 @@ int main(int argc, char *argv[])
 	local_ip_uint32=inet_addr(local_ip);
 	remote_ip_uint32=inet_addr(remote_ip);
 
-	if(program_mode==client_mode)
+	if(working_mode==tunnel_mode)
 	{
-		client_event_loop();
+		if(client_or_server==client_mode)
+		{
+			tunnel_client_event_loop();
+		}
+		else
+		{
+			tunnel_server_event_loop();
+		}
 	}
 	else
 	{
-		server_event_loop();
+		if(client_or_server==client_mode)
+		{
+		}
+		else
+		{
+		}
 	}
 
 	return 0;

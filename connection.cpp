@@ -47,7 +47,7 @@ void conv_manager_t::clear()
 {
 	//if(disable_conv_clear) return ;//////what was the purpose of this code?
 
-	if(program_mode==server_mode)
+	if(client_or_server==server_mode)
 	{
 		for(auto it=conv_to_u64.begin();it!=conv_to_u64.end();it++)
 		{
@@ -111,7 +111,7 @@ int conv_manager_t::erase_conv(u32_t conv)
 	//if(disable_conv_clear) return 0;
 	assert(conv_last_active_time.find(conv)!=conv_last_active_time.end());
 	u64_t u64=conv_to_u64[conv];
-	if(program_mode==server_mode)
+	if(client_or_server==server_mode)
 	{
 		server_clear_function(u64);
 	}

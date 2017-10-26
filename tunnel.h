@@ -11,7 +11,7 @@
 
 #include "misc.h"
 
-int client_event_loop();
-int server_event_loop();
+int tunnel_client_event_loop();
+int tunnel_server_event_loop();
 
 #endif /* TUNNEL_H_ */
