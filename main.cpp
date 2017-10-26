@@ -53,10 +53,10 @@ conn_manager_t conn_manager;
 delay_manager_t delay_manager;
 fd_manager_t fd_manager;
 
-int time_mono_test=1;
+int time_mono_test=0;
 
 
-const int disable_conv_clear=0;
+//const int disable_conv_clear=0;
 
 int socket_buf_size=1024*1024;
 
