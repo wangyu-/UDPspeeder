@@ -22,7 +22,7 @@ char iptables_rule[200]="";
 
 program_mode_t client_or_server=unset_mode;//0 unset; 1client 2server
 
-working_mode_t working_mode=unset_mode;
+working_mode_t working_mode=unset_working_mode;
 
 struct random_fd_t
 {

@@ -14,7 +14,7 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-	working_mode=tun_dev_mode;
+	working_mode=tunnel_mode;
 
 
 

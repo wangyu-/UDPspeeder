@@ -44,7 +44,7 @@
 #include <stdarg.h>
 #include <assert.h>
 #include <linux/if_packet.h>
-
+#include <linux/if_tun.h>
 
 #include<unordered_map>
 #include<unordered_set>
@@ -118,7 +118,7 @@ enum program_mode_t {unset_mode=0,client_mode,server_mode};
 extern program_mode_t client_or_server;
 extern unordered_map<int, const char*> raw_mode_tostring ;
 
-enum working_mode_t {unset_mode=0,tunnel_mode,tun_dev_mode};
+enum working_mode_t {unset_working_mode=0,tunnel_mode,tun_dev_mode};
 extern working_mode_t working_mode;
 
 extern int delay_capacity;

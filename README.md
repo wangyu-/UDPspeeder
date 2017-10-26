@@ -1,7 +1,8 @@
 # UDPspeeder
 Network Speed-Up Tool. Boost your Connection on a High Lantency High Packet-Loss Link by using Forward Error Correction.
 
-When used alone,UDPspeeder speeds-up only UDP connection.Nevertheless,if you used UDPspeeder + any UDP-based VPN together,you can speed-up any traffic(include TCP/UDP/ICMP),currently OpenVPN/L2TP/ShadowVPN are confirmed to be supported。
+When used alone, UDPspeeder speeds-up only UDP connection. Nevertheless, if you used UDPspeeder + any UDP-based VPN together,
+you can speed-up any traffic(include TCP/UDP/ICMP), currently OpenVPN/L2TP/ShadowVPN are confirmed to be supported。
 
 ![](/images/en/udpspeeder.PNG)
 
@@ -26,13 +27,13 @@ tested on a link with 100ms latency and 10% packet loss at both direction
 ![](/images/en/scp_compare2.PNG)
 
 # Supported Platforms
-Linux host (including desktop Linux,Android phone/tablet,OpenWRT router,or Raspberry PI).
+Linux host (including desktop Linux,Android phone/tablet, OpenWRT router, or Raspberry PI).
 
 For Windows and MacOS You can run UDPspeeder inside [this](https://github.com/wangyu-/udp2raw-tunnel/releases/download/20170918.0/lede-17.01.2-x86_virtual_machine_image_with_udp2raw_pre_installed.zip) 7.5mb virtual machine image.
 
 # How does it work
 
-UDPspeeder uses FEC(Forward Error Correction) to reduce packet loss rate,at the cost of addtional bandwidth.The algorithm for FEC is called Reed-Solomon.
+UDPspeeder uses FEC(Forward Error Correction) to reduce packet loss rate, at the cost of addtional bandwidth. The algorithm for FEC is called Reed-Solomon.
 
 ![image0](/images/en/fec.PNG)
 
@@ -66,7 +67,7 @@ Assume your server ip is 44.55.66.77, you have a service listening on udp port 7
 ./speederv2 -c -l0.0.0.0:3333  -r44.55.66.77:4096 -f20:10 -k "passwd"
 ```
 
-Now connecting to UDP port 3333 at the client side is equivalent to connecting to port 7777 at the server side,and the connection is boosted by UDPspeeder.
+Now connecting to UDP port 3333 at the client side is equivalent to connecting to port 7777 at the server side, and the connection is boosted by UDPspeeder.
 
 ##### Note
 
@@ -74,7 +75,7 @@ Now connecting to UDP port 3333 at the client side is equivalent to connecting t
 
 `-k` enables simple XOR encryption to confuse DPI(Deep Packet Inspection)
 
-To run stably,pay attention to MTU.
+To run stably, pay attention to MTU.
 
 # Advanced Topic
 ### Full Options
@@ -125,14 +126,14 @@ log and help options:
 
 ```
 #### `--fifo` option
-Use a fifo(named pipe) for sending commands to the running program. For example `--fifo fifo.file`,you can use following commands to change parameters dynamically:
+Use a fifo(named pipe) for sending commands to the running program. For example `--fifo fifo.file`, you can use following commands to change parameters dynamically:
 ```
-echo fec 19:9 >fifo.file
-echo mtu 1100 >fifo.file
-echo timeout 5 >fifo.file
-echo queue-len 100 >fifo.file
-echo mode 0 >fifo.file
+echo fec 19:9 > fifo.file
+echo mtu 1100 > fifo.file
+echo timeout 5 > fifo.file
+echo queue-len 100 > fifo.file
+echo mode 0 > fifo.file
 ```
-### Speed-Up any traffic with OpenVPN+UDPspeeder
+### Speed-Up any traffic with OpenVPN + UDPspeeder
 
 Check [UDPspeeder + openvpn config guide](/doc/udpspeeder_openvpn.md).
