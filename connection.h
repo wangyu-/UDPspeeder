@@ -107,7 +107,7 @@ struct conn_info_t     //stores info for a raw connection.for client ,there is o
 	fec_encode_manager_t fec_encode_manager;
 	fec_decode_manager_t fec_decode_manager;
 	my_timer_t timer;
-	ip_port_t ip_port;
+	//ip_port_t ip_port;
 	u64_t last_active_time;
 	stat_t stat;
 	conn_info_t()

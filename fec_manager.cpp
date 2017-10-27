@@ -146,11 +146,11 @@ fec_encode_manager_t::fec_encode_manager_t()
 	}
 	timer_fd64=fd_manager.create(timer_fd);
 
-	re_init(fec_data_num,fec_redundant_num,fec_mtu,fec_queue_len,fec_timeout,fec_mode);
+	reset_fec_parameter(g_fec_data_num,g_fec_redundant_num,g_fec_mtu,g_fec_queue_len,g_fec_timeout,g_fec_mode);
 
-	seq=(u32_t)get_true_random_number(); //TODO temp solution for a bug.
+
 }
-int fec_encode_manager_t::re_init(int data_num,int redundant_num,int mtu,int queue_len,int timeout,int mode)
+int fec_encode_manager_t::reset_fec_parameter(int data_num,int redundant_num,int mtu,int queue_len,int timeout,int mode)
 {
 	fec_data_num=data_num;
 	fec_redundant_num=redundant_num;
@@ -160,15 +160,8 @@ int fec_encode_manager_t::re_init(int data_num,int redundant_num,int mtu,int que
 	fec_mode=mode;
 
 	assert(data_num+redundant_num<max_fec_packet_num);
-	counter=0;
-	blob_encode.clear();
-	ready_for_output=0;
-	//seq=0;
 
-	itimerspec zero_its;
-	memset(&zero_its, 0, sizeof(zero_its));
-
-	timerfd_settime(timer_fd, TFD_TIMER_ABSTIME, &zero_its, 0);
+	clear();
 
 	return 0;
 }
@@ -489,15 +482,12 @@ int fec_encode_manager_t::output(int &n,char ** &s_arr,int *&len)
 	}
 	return 0;
 }
-
+/*
 int fec_decode_manager_t::re_init()
 {
-	for(int i=0;i<(int)fec_buff_num;i++)
-		fec_data[i].used=0;
-	ready_for_output=0;
-	index=0;
+	clear();
 	return 0;
-}
+}*/
 
 int fec_decode_manager_t::input(char *s,int len)
 {
