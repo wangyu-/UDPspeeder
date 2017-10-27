@@ -9,14 +9,13 @@
 #include "fec_manager.h"
 #include "misc.h"
 #include "tunnel.h"
+#include "tun_dev.h"
 using namespace std;
 
 
 int main(int argc, char *argv[])
 {
-	working_mode=tunnel_mode;
-
-
+	//working_mode=tunnel_mode;
 
 	assert(sizeof(u64_t)==8);
 	assert(sizeof(i64_t)==8);
@@ -47,9 +46,11 @@ int main(int argc, char *argv[])
 	{
 		if(client_or_server==client_mode)
 		{
+			tun_dev_client_event_loop();
 		}
 		else
 		{
+			tun_dev_server_event_loop();
 		}
 	}
 

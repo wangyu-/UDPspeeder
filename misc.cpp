@@ -38,7 +38,7 @@ fd_manager_t fd_manager;
 int time_mono_test=0;
 
 
-int socket_buf_size=1024*1024;
+
 
 
 int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,my_time_t *&out_delay)
@@ -551,6 +551,7 @@ void process_arg(int argc, char *argv[])
 		{"fec", required_argument,   0,'f'},
 		{"jitter", required_argument,   0,'j'},
 		{"fifo", required_argument,    0, 1},
+		{"tun-dev", optional_argument,    0, 1},
 		{NULL, 0, 0, 0}
       };
     int option_index = 0;
@@ -868,6 +869,12 @@ void process_arg(int argc, char *argv[])
 
 				mylog(log_info,"fifo_file =%s \n",fifo_file);
 			}
+			else if(strcmp(long_options[option_index].name,"tun-dev")==0)
+			{
+				//sscanf(optarg,"%s",fifo_file);
+				mylog(log_info,"enabled tun-dev mode\n");
+				working_mode=tun_dev_mode;
+			}
 			else
 			{
 				mylog(log_fatal,"unknown option\n");
@@ -880,12 +887,6 @@ void process_arg(int argc, char *argv[])
 		}
 	}
 
-	if (no_l)
-		mylog(log_fatal,"error: -i not found\n");
-	if (no_r)
-		mylog(log_fatal,"error: -o not found\n");
-	if (no_l || no_r)
-		myexit(-1);
 	if (is_client == 0 && is_server == 0)
 	{
 		mylog(log_fatal,"-s -c hasnt been set\n");
@@ -903,6 +904,30 @@ void process_arg(int argc, char *argv[])
 	else
 	{
 		client_or_server=server_mode;
+	}
+
+
+	if(working_mode==tunnel_mode)
+	{
+		if (no_l)
+			mylog(log_fatal,"error: -l not found\n");
+		if (no_r)
+			mylog(log_fatal,"error: -r not found\n");
+		if (no_l || no_r)
+			myexit(-1);
+	}
+	else if(working_mode==tun_dev_mode)
+	{
+		if(client_or_server==client_mode&&no_r)
+		{
+			mylog(log_fatal,"error: -r not found\n");
+			myexit(-1);
+		}
+		else if(client_or_server==server_mode&&no_l)
+		{
+			mylog(log_fatal,"error: -l not found\n");
+			myexit(-1);
+		}
 	}
 
 	print_parameter();

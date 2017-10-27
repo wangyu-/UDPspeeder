@@ -122,7 +122,7 @@ enum working_mode_t {unset_working_mode=0,tunnel_mode,tun_dev_mode};
 extern working_mode_t working_mode;
 
 extern int delay_capacity;
-
+extern int socket_buf_size;
 
 typedef u32_t id_t;
 
@@ -219,5 +219,9 @@ int create_fifo(char * file);
 /*
 int create_new_udp(int &new_udp_fd,int remote_address_uint32,int remote_port);
 */
+
+int new_listen_socket(int &fd,u32_t ip,int port);
+
+int new_connected_socket(int &fd,u32_t ip,int port);
 
 #endif /* COMMON_H_ */

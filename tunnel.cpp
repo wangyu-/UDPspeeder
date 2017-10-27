@@ -7,63 +7,6 @@
 
 #include "tunnel.h"
 
-int init_listen_socket()
-{
-	local_listen_fd =socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
-	int yes = 1;
-	//setsockopt(udp_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
-
-	struct sockaddr_in local_me={0};
-
-	socklen_t slen = sizeof(sockaddr_in);
-	//memset(&local_me, 0, sizeof(local_me));
-	local_me.sin_family = AF_INET;
-	local_me.sin_port = htons(local_port);
-	local_me.sin_addr.s_addr = local_ip_uint32;
-
-	if (bind(local_listen_fd, (struct sockaddr*) &local_me, slen) == -1) {
-		mylog(log_fatal,"socket bind error\n");
-		//perror("socket bind error");
-		myexit(1);
-	}
-	setnonblocking(local_listen_fd);
-    set_buf_size(local_listen_fd,socket_buf_size);
-
-    mylog(log_debug,"local_listen_fd=%d\n,",local_listen_fd);
-
-	return 0;
-}
-int new_connected_socket(int &fd,u32_t ip,int port)
-{
-	char ip_port[40];
-	sprintf(ip_port,"%s:%d",my_ntoa(ip),port);
-
-	struct sockaddr_in remote_addr_in = { 0 };
-
-	socklen_t slen = sizeof(sockaddr_in);
-	//memset(&remote_addr_in, 0, sizeof(remote_addr_in));
-	remote_addr_in.sin_family = AF_INET;
-	remote_addr_in.sin_port = htons(port);
-	remote_addr_in.sin_addr.s_addr = ip;
-
-	fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (fd < 0) {
-		mylog(log_warn, "[%s]create udp_fd error\n", ip_port);
-		return -1;
-	}
-	setnonblocking(fd);
-	set_buf_size(fd, socket_buf_size);
-
-	mylog(log_debug, "[%s]created new udp_fd %d\n", ip_port, fd);
-	int ret = connect(fd, (struct sockaddr *) &remote_addr_in, slen);
-	if (ret != 0) {
-		mylog(log_warn, "[%s]fd connect fail\n",ip_port);
-		close(fd);
-		return -1;
-	}
-	return 0;
-}
 
 int tunnel_client_event_loop()
 {
@@ -79,7 +22,7 @@ int tunnel_client_event_loop()
     //conn_info.conv_manager.reserve();
 	//conn_info.fec_encode_manager.re_init(fec_data_num,fec_redundant_num,fec_mtu,fec_pending_num,fec_pending_time,fec_type);
 
-	init_listen_socket();
+    new_listen_socket(local_listen_fd,local_ip_uint32,local_port);
 
 	epoll_fd = epoll_create1(0);
 	assert(epoll_fd>0);
@@ -402,7 +345,7 @@ int tunnel_server_event_loop()
 
 //    conn_info_t conn_info;
 
-	init_listen_socket();
+	new_listen_socket(local_listen_fd,local_ip_uint32,local_port);
 
 	epoll_fd = epoll_create1(0);
 	assert(epoll_fd>0);

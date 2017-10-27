@@ -5,11 +5,12 @@
  *      Author: root
  */
 
-#ifndef TUN_H_
-#define TUN_H_
+#ifndef TUN_DEV_H_
+#define TUN_DEV_H_
 
 
+int tun_dev_client_event_loop();
 
-
+int tun_dev_server_event_loop();
 
 #endif /* TUN_H_ */

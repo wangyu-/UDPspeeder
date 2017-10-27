@@ -22,7 +22,9 @@ char iptables_rule[200]="";
 
 program_mode_t client_or_server=unset_mode;//0 unset; 1client 2server
 
-working_mode_t working_mode=unset_working_mode;
+working_mode_t working_mode=tunnel_mode;
+
+int socket_buf_size=1024*1024;
 
 struct random_fd_t
 {
@@ -524,5 +526,64 @@ int create_fifo(char * file)
 
 	setnonblocking(fifo_fd);
 	return fifo_fd;
+}
+
+
+int new_listen_socket(int &fd,u32_t ip,int port)
+{
+	fd =socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+	int yes = 1;
+	//setsockopt(udp_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes));
+
+	struct sockaddr_in local_me={0};
+
+	socklen_t slen = sizeof(sockaddr_in);
+	//memset(&local_me, 0, sizeof(local_me));
+	local_me.sin_family = AF_INET;
+	local_me.sin_port = htons(port);
+	local_me.sin_addr.s_addr = ip;
+
+	if (bind(fd, (struct sockaddr*) &local_me, slen) == -1) {
+		mylog(log_fatal,"socket bind error\n");
+		//perror("socket bind error");
+		myexit(1);
+	}
+	setnonblocking(fd);
+    set_buf_size(fd,socket_buf_size);
+
+    mylog(log_debug,"local_listen_fd=%d\n,",fd);
+
+	return 0;
+}
+int new_connected_socket(int &fd,u32_t ip,int port)
+{
+	char ip_port[40];
+	sprintf(ip_port,"%s:%d",my_ntoa(ip),port);
+
+	struct sockaddr_in remote_addr_in = { 0 };
+
+	socklen_t slen = sizeof(sockaddr_in);
+	//memset(&remote_addr_in, 0, sizeof(remote_addr_in));
+	remote_addr_in.sin_family = AF_INET;
+	remote_addr_in.sin_port = htons(port);
+	remote_addr_in.sin_addr.s_addr = ip;
+
+	fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (fd < 0) {
+		mylog(log_warn, "[%s]create udp_fd error\n", ip_port);
+		return -1;
+	}
+	setnonblocking(fd);
+	set_buf_size(fd, socket_buf_size);
+
+	mylog(log_debug, "[%s]created new udp_fd %d\n", ip_port, fd);
+	int ret = connect(fd, (struct sockaddr *) &remote_addr_in, slen);
+	if (ret != 0) {
+		mylog(log_warn, "[%s]fd connect fail\n",ip_port);
+		close(fd);
+		return -1;
+	}
+	return 0;
 }
 

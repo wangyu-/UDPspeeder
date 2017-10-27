@@ -44,7 +44,7 @@ extern fd_manager_t fd_manager;
 
 extern int time_mono_test;
 
-extern int socket_buf_size;
+
 
 
 int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,my_time_t *&out_delay);
