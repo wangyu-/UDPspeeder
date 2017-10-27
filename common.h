@@ -121,8 +121,8 @@ extern unordered_map<int, const char*> raw_mode_tostring ;
 enum working_mode_t {unset_working_mode=0,tunnel_mode,tun_dev_mode};
 extern working_mode_t working_mode;
 
-extern int delay_capacity;
 extern int socket_buf_size;
+
 
 typedef u32_t id_t;
 
@@ -134,8 +134,8 @@ typedef u64_t anti_replay_seq_t;
 
 typedef u64_t fd64_t;
 
-enum dest_type{none=0,type_ip_port,type_fd64,type_ip_port_conv,type_fd64_conv/*,type_fd*/};
-
+//enum dest_type{none=0,type_fd64_ip_port,type_fd64,type_fd64_ip_port_conv,type_fd64_conv/*,type_fd*/};
+enum dest_type{none=0,type_fd64_ip_port,type_fd64,type_fd,type_fd_ip_port/*,type_fd*/};
 
 struct ip_port_t
 {
@@ -146,11 +146,22 @@ struct ip_port_t
 	char * to_s();
 };
 
+struct fd64_ip_port_t
+{
+	fd64_t fd64;
+	ip_port_t ip_port;
+};
+struct fd_ip_port_t
+{
+	int fd;
+	ip_port_t ip_port;
+};
 union inner_t
 {
-	ip_port_t ip_port;
-	//int fd;
 	fd64_t fd64;
+	int fd;
+	fd64_ip_port_t fd64_ip_port;
+	fd_ip_port_t fd_ip_port;
 };
 struct dest_t
 {

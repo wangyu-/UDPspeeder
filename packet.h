@@ -21,7 +21,6 @@ extern u64_t dup_packet_recv_count;
 extern char key_string[1000];
 extern int disable_replay_filter;
 extern int random_drop;
-extern int local_listen_fd;
 extern int disable_obscure;
 extern int disable_xor;
 

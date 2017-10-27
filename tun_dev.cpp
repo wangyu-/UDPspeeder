@@ -9,6 +9,8 @@
 #include "common.h"
 #include "log.h"
 #include "misc.h"
+
+
 int get_tun_fd(char * dev_name)
 {
 	int tun_fd=open("/dev/net/tun",O_RDWR);
@@ -74,18 +76,40 @@ int set_if(char *if_name,char * local_ip,char * remote_ip,int mtu)
 	return 0;
 }
 
+//enum tun_header_t {header_reserved=0,header_normal=1,header_new=2,header_reject=3};
+const char header_normal=1;
+const char header_new_connect=2;
+const char header_reject=3;
+
+int put_header(char header,char *& data,int &len)
+{
+	assert(len>=0);
+	data=data-1;
+	data[0]=header;
+	len+=1;
+	return 0;
+}
+int get_header(char &header,char *& data,int &len)
+{
+	assert(len>=0);
+	if(len<1) return -1;
+	header=data[0];
+	data=data+1;
+	len-=1;
+	return 0;
+}
+
 
 int tun_dev_client_event_loop()
 {
-	char buf[buf_len+1];
-	//char *data=buf+1;
+	char buf0[buf_len+100];
+	char *data=buf0+100;
 	int len;
 	int i,j,k,ret;
 	int epoll_fd,tun_fd;
 
 	int remote_fd;
 	fd64_t remote_fd64;
-
 
 	tun_fd=get_tun_fd("tun11");
 	assert(tun_fd>0);
@@ -128,6 +152,9 @@ int tun_dev_client_event_loop()
 	//dest.inner.ip_port=dest_ip_port;
 	//dest.cook=1;
 
+
+	int got_feed_back=0;
+
 	while(1)////////////////////////
 	{
 
@@ -151,24 +178,57 @@ int tun_dev_client_event_loop()
 		{
 			if(events[idx].data.u64==(u64_t)tun_fd)
 			{
-				len=read(tun_fd,buf,max_data_len);
+				len=read(tun_fd,data,max_data_len);
 				assert(len>=0);
 
 				mylog(log_trace,"Received packet from tun,len: %d\n",len);
 
-				delay_manager.add(0,dest,buf,len);;
+				if(got_feed_back==0)
+					put_header(header_new_connect,data,len);
+				else
+					put_header(header_normal,data,len);
+
+				delay_manager.add(0,dest,data,len);;
 			}
 			else if(events[idx].data.u64==(u64_t)remote_fd64)
 			{
 				fd64_t fd64=events[idx].data.u64;
 				int fd=fd_manager.to_fd(fd64);
 
-				len=recv(fd,buf,max_data_len,0);
+				len=recv(fd,data,max_data_len,0);
+
+				if(len<0)
+				{
+					mylog(log_warn,"recv return %d,errno=%s\n",len,strerror(errno));
+					continue;
+				}
+
+				char header=0;
+				if(get_header(header,data,len)!=0)
+				{
+					mylog(log_warn,"get_header failed\n");
+					continue;
+				}
+				if(header==header_reject)
+				{
+					mylog(log_fatal,"server switched to handle another client,exit\n");
+					myexit(-1);
+					continue;
+				}
+				else if(header==header_normal)
+				{
+					got_feed_back=1;
+				}
+				else
+				{
+					mylog(log_warn,"invalid header\n");
+					continue;
+				}
 
 				mylog(log_trace,"Received packet from udp,len: %d\n",len);
 				assert(len>=0);
 
-				assert(write(tun_fd,buf,len)>0);
+				assert(write(tun_fd,data,len)>=0);
 			}
 		}
 		delay_manager.check();
@@ -180,16 +240,20 @@ int tun_dev_client_event_loop()
 
 int tun_dev_server_event_loop()
 {
-	char buf[buf_len+1];
-	char *data=buf+1;
+	char buf0[buf_len+100];
+	char *data=buf0+100;
 	int len;
 	int i,j,k,ret;
 	int epoll_fd,tun_fd;
+
+	int local_listen_fd;
+	//fd64_t local_listen_fd64;
 
 	tun_fd=get_tun_fd("tun11");
 	assert(tun_fd>0);
 
 	assert(new_listen_socket(local_listen_fd,local_ip_uint32,local_port)==0);
+  //  local_listen_fd64=fd_manager.create(local_listen_fd);
 
 	assert(set_if("tun11","10.0.0.1","10.0.0.2",1000)==0);
 
@@ -222,9 +286,11 @@ int tun_dev_server_event_loop()
 	//ip_port_t dest_ip_port;
 
 	dest_t dest;
-	dest.type=type_ip_port;
-	dest.inner.ip_port.ip=0;
-	dest.inner.ip_port.port=0;
+	dest.type=type_fd_ip_port;
+
+	dest.inner.fd_ip_port.fd=local_listen_fd;
+	dest.inner.fd_ip_port.ip_port.ip=0;
+	dest.inner.fd_ip_port.ip_port.port=0;
 	//dest.conv=conv;
 	//dest.inner.ip_port=dest_ip_port;
 	//dest.cook=1;
@@ -255,36 +321,84 @@ int tun_dev_server_event_loop()
 			{
 				struct sockaddr_in udp_new_addr_in={0};
 				socklen_t udp_new_addr_len = sizeof(sockaddr_in);
-				if ((len = recvfrom(local_listen_fd, buf, max_data_len, 0,
+				if ((len = recvfrom(local_listen_fd, data, max_data_len, 0,
 						(struct sockaddr *) &udp_new_addr_in, &udp_new_addr_len)) == -1) {
 					mylog(log_error,"recv_from error,this shouldnt happen,err=%s,but we can try to continue\n",strerror(errno));
 					continue;
 					//myexit(1);
 				};
+				char header=0;
+				if(get_header(header,data,len)!=0)
+				{
+					mylog(log_warn,"get_header failed\n");
+					continue;
+				}
 
-				dest.inner.ip_port.ip=udp_new_addr_in.sin_addr.s_addr;
-				dest.inner.ip_port.port=ntohs(udp_new_addr_in.sin_port);
+				if((dest.inner.fd_ip_port.ip_port.ip==udp_new_addr_in.sin_addr.s_addr) && (dest.inner.fd_ip_port.ip_port.port=ntohs(udp_new_addr_in.sin_port)))
+				{
+					if(header!=header_new_connect&& header!=header_normal)
+					{
+						mylog(log_warn,"invalid header\n");
+						continue;
+					}
+				}
+				else
+				{
+					if(header==header_new_connect)
+					{
+						mylog(log_info,"new connection from %s:%d \n", inet_ntoa(udp_new_addr_in.sin_addr),
+												ntohs(udp_new_addr_in.sin_port));
+						dest.inner.fd_ip_port.ip_port.ip=udp_new_addr_in.sin_addr.s_addr;
+						dest.inner.fd_ip_port.ip_port.port=ntohs(udp_new_addr_in.sin_port);
+					}
+					else
+					{
+						mylog(log_info,"rejected connection from %s:%d\n", inet_ntoa(udp_new_addr_in.sin_addr),ntohs(udp_new_addr_in.sin_port));
+
+
+						len=1;
+						data[0]=header_reject;
+
+						dest_t tmp_dest;
+						tmp_dest.type=type_fd_ip_port;
+
+						tmp_dest.inner.fd_ip_port.fd=local_listen_fd;
+						tmp_dest.inner.fd_ip_port.ip_port.ip=udp_new_addr_in.sin_addr.s_addr;
+						tmp_dest.inner.fd_ip_port.ip_port.port=ntohs(udp_new_addr_in.sin_port);
+
+						delay_manager.add(0,tmp_dest,data,len);;
+						continue;
+					}
+				}
+
+
 
 				mylog(log_trace,"Received packet from %s:%d,len: %d\n", inet_ntoa(udp_new_addr_in.sin_addr),
 						ntohs(udp_new_addr_in.sin_port),len);
 
-				assert(write(tun_fd,buf,len)>0);
+				ret=write(tun_fd,data,len);
+				if( ret<0 )
+				{
+					mylog(log_warn,"write to tun failed len=%d ret=%d\n errno=%s\n",len,ret,strerror(errno));
+				}
 
 			}
 			else if(events[idx].data.u64==(u64_t)tun_fd)
 			{
-				len=read(tun_fd,buf,max_data_len);
+				len=read(tun_fd,data,max_data_len);
 				assert(len>=0);
 
 				mylog(log_trace,"Received packet from tun,len: %d\n",len);
 
-				if(dest.inner.ip_port.to_u64()==0)
+				if(dest.inner.fd64_ip_port.ip_port.to_u64()==0)
 				{
 					mylog(log_warn,"there is no client yet\n");
 					continue;
 				}
 
-				delay_manager.add(0,dest,buf,len);;
+				put_header(header_normal,data,len);
+
+				delay_manager.add(0,dest,data,len);;
 
 
 			}

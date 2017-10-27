@@ -27,7 +27,7 @@ int random_drop=0;
 
 char key_string[1000]= "";
 
-int local_listen_fd=-1;
+//int local_listen_fd=-1;
 
 
 void encrypt_0(char * input,int &len,char *key)
@@ -162,10 +162,11 @@ int sendto_fd_ip_port (int fd,u32_t ip,int port,char * buf, int len,int flags)
 			(struct sockaddr *) &tmp_sockaddr,
 			sizeof(tmp_sockaddr));
 }
+/*
 int sendto_ip_port (u32_t ip,int port,char * buf, int len,int flags)
 {
 	return sendto_fd_ip_port(local_listen_fd,ip,port,buf,len,flags);
-}
+}*/
 
 int send_fd (int fd,char * buf, int len,int flags)
 {
@@ -182,17 +183,22 @@ int my_send(const dest_t &dest,char *data,int len)
 	}
 	switch(dest.type)
 	{
-		case type_ip_port:
+		case type_fd_ip_port:
 		{
-			return sendto_ip_port(dest.inner.ip_port.ip,dest.inner.ip_port.port,data,len,0);
+			return sendto_fd_ip_port(dest.inner.fd,dest.inner.fd_ip_port.ip_port.ip,dest.inner.fd_ip_port.ip_port.port,data,len,0);
 			break;
 		}
-		case type_ip_port_conv:
+		case type_fd64_ip_port:
 		{
-			char *new_data;
-			int new_len;
-			put_conv(dest.conv,data,len,new_data,new_len);
-			return sendto_ip_port(dest.inner.ip_port.ip,dest.inner.ip_port.port,new_data,new_len,0);
+			if(!fd_manager.exist(dest.inner.fd64)) return -1;
+			int fd=fd_manager.to_fd(dest.inner.fd64);
+
+			return sendto_fd_ip_port(fd,dest.inner.fd64_ip_port.ip_port.ip,dest.inner.fd64_ip_port.ip_port.port,data,len,0);
+			break;
+		}
+		case type_fd:
+		{
+			return send_fd(dest.inner.fd,data,len,0);
 			break;
 		}
 		case type_fd64:
@@ -200,9 +206,25 @@ int my_send(const dest_t &dest,char *data,int len)
 
 			if(!fd_manager.exist(dest.inner.fd64)) return -1;
 			int fd=fd_manager.to_fd(dest.inner.fd64);
+
 			return send_fd(fd,data,len,0);
 			break;
 		}
+		/*
+		case type_fd64_ip_port_conv:
+		{
+			if(!fd_manager.exist(dest.inner.fd64)) return -1;
+			int fd=fd_manager.to_fd(dest.inner.fd64);
+
+			char *new_data;
+			int new_len;
+
+			put_conv(dest.conv,data,len,new_data,new_len);
+			return sendto_fd_ip_port(fd,dest.inner.fd64_ip_port.ip_port.ip,dest.inner.fd64_ip_port.ip_port.port,new_data,new_len,0);
+			break;
+		}*/
+
+		/*
 		case type_fd64_conv:
 		{
 			char *new_data;
@@ -212,7 +234,7 @@ int my_send(const dest_t &dest,char *data,int len)
 			if(!fd_manager.exist(dest.inner.fd64)) return -1;
 			int fd=fd_manager.to_fd(dest.inner.fd64);
 			return send_fd(fd,new_data,new_len,0);
-		}
+		}*/
 		/*
 		case type_fd:
 		{
@@ -362,3 +384,6 @@ int get_conv(u32_t &conv,const char *input,int len_in,char *&output,int &len_out
 	}
 	return 0;
 }
+
+
+

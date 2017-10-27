@@ -37,6 +37,9 @@ fd_manager_t fd_manager;
 
 int time_mono_test=0;
 
+int delay_capacity=0;
+
+
 
 
 

@@ -44,6 +44,8 @@ extern fd_manager_t fd_manager;
 
 extern int time_mono_test;
 
+extern int delay_capacity;
+
 
 
 

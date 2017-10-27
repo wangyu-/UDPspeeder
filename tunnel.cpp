@@ -22,7 +22,11 @@ int tunnel_client_event_loop()
     //conn_info.conv_manager.reserve();
 	//conn_info.fec_encode_manager.re_init(fec_data_num,fec_redundant_num,fec_mtu,fec_pending_num,fec_pending_time,fec_type);
 
+
+	int local_listen_fd;
+	//fd64_t local_listen_fd64;
     new_listen_socket(local_listen_fd,local_ip_uint32,local_port);
+    //local_listen_fd64=fd_manager.create(local_listen_fd);
 
 	epoll_fd = epoll_create1(0);
 	assert(epoll_fd>0);
@@ -316,8 +320,9 @@ int tunnel_client_event_loop()
 
 					u64_t u64=conn_info.conv_manager.find_u64_by_conv(conv);
 					dest_t dest;
-					dest.inner.ip_port.from_u64(u64);
-					dest.type=type_ip_port;
+					dest.inner.fd_ip_port.fd=local_listen_fd;
+					dest.inner.fd_ip_port.ip_port.from_u64(u64);
+					dest.type=type_fd_ip_port;
 					//dest.conv=conv;
 
 					delay_send(out_delay[i],dest,new_data,new_len);
@@ -344,8 +349,10 @@ int tunnel_server_event_loop()
 	int remote_fd;
 
 //    conn_info_t conn_info;
-
-	new_listen_socket(local_listen_fd,local_ip_uint32,local_port);
+	int local_listen_fd;
+//	fd64_t local_listen_fd64;
+    new_listen_socket(local_listen_fd,local_ip_uint32,local_port);
+   // local_listen_fd64=fd_manager.create(local_listen_fd);
 
 	epoll_fd = epoll_create1(0);
 	assert(epoll_fd>0);
@@ -607,10 +614,11 @@ int tunnel_server_event_loop()
 				//conn_info.update_active_time(); //cant put it here
 
 				int  out_n=-2;char **out_arr;int *out_len;my_time_t *out_delay;
+
 				dest_t dest;
-				dest.type=type_ip_port;
-				//dest.conv=conv;
-				dest.inner.ip_port=ip_port;
+				dest.inner.fd_ip_port.fd=local_listen_fd;
+				dest.inner.fd_ip_port.ip_port=ip_port;
+				dest.type=type_fd_ip_port;
 				dest.cook=1;
 
 				if(fd64==conn_info.fec_encode_manager.get_timer_fd64())
