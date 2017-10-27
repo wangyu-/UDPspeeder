@@ -145,6 +145,33 @@ int tun_dev_client_event_loop()
 		myexit(-1);
 	}
 
+
+	ev.events = EPOLLIN;
+	ev.data.u64 = delay_manager.get_timer_fd();
+
+	mylog(log_debug,"delay_manager.get_timer_fd()=%d\n",delay_manager.get_timer_fd());
+	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, delay_manager.get_timer_fd(), &ev);
+	if (ret!= 0) {
+		mylog(log_fatal,"add delay_manager.get_timer_fd() error\n");
+		myexit(-1);
+	}
+
+	int fifo_fd=-1;
+
+	if(fifo_file[0]!=0)
+	{
+		fifo_fd=create_fifo(fifo_file);
+		ev.events = EPOLLIN;
+		ev.data.u64 = fifo_fd;
+
+		ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fifo_fd, &ev);
+		if (ret!= 0) {
+			mylog(log_fatal,"add fifo_fd to epoll error %s\n",strerror(errno));
+			myexit(-1);
+		}
+		mylog(log_info,"fifo_file=%s\n",fifo_file);
+	}
+
 	dest_t dest;
 	dest.type=type_fd64;
 	dest.inner.fd64=remote_fd64;
@@ -188,7 +215,9 @@ int tun_dev_client_event_loop()
 				else
 					put_header(header_normal,data,len);
 
-				delay_manager.add(0,dest,data,len);;
+				do_cook(data,len);
+
+				delay_manager.add(0,dest,data,len);
 			}
 			else if(events[idx].data.u64==(u64_t)remote_fd64)
 			{
@@ -202,6 +231,14 @@ int tun_dev_client_event_loop()
 					mylog(log_warn,"recv return %d,errno=%s\n",len,strerror(errno));
 					continue;
 				}
+
+				if(de_cook(data,len)<0)
+				{
+					mylog(log_warn,"de_cook(data,len)failed \n");
+					continue;
+
+				}
+
 
 				char header=0;
 				if(get_header(header,data,len)!=0)
@@ -229,6 +266,30 @@ int tun_dev_client_event_loop()
 				assert(len>=0);
 
 				assert(write(tun_fd,data,len)>=0);
+			}
+		    else if (events[idx].data.u64 == (u64_t)delay_manager.get_timer_fd())
+		    {
+				uint64_t value;
+				read(delay_manager.get_timer_fd(), &value, 8);
+				mylog(log_trace,"events[idx].data.u64 == (u64_t)delay_manager.get_timer_fd()\n");
+				//printf("<timerfd_triggered, %d>",delay_mp.size());
+				//fflush(stdout);
+			}
+			else if (events[idx].data.u64 == (u64_t)fifo_fd)
+			{
+				char buf[buf_len];
+				int len=read (fifo_fd, buf, sizeof (buf));
+				if(len<0)
+				{
+					mylog(log_warn,"fifo read failed len=%d,errno=%s\n",len,strerror(errno));
+					continue;
+				}
+				buf[len]=0;
+				handle_command(buf);
+			}
+			else
+			{
+				assert(0==1);
 			}
 		}
 		delay_manager.check();
@@ -283,6 +344,32 @@ int tun_dev_server_event_loop()
 		myexit(-1);
 	}
 
+	ev.events = EPOLLIN;
+	ev.data.u64 = delay_manager.get_timer_fd();
+
+	mylog(log_debug,"delay_manager.get_timer_fd()=%d\n",delay_manager.get_timer_fd());
+	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, delay_manager.get_timer_fd(), &ev);
+	if (ret!= 0) {
+		mylog(log_fatal,"add delay_manager.get_timer_fd() error\n");
+		myexit(-1);
+	}
+
+	int fifo_fd=-1;
+
+	if(fifo_file[0]!=0)
+	{
+		fifo_fd=create_fifo(fifo_file);
+		ev.events = EPOLLIN;
+		ev.data.u64 = fifo_fd;
+
+		ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fifo_fd, &ev);
+		if (ret!= 0) {
+			mylog(log_fatal,"add fifo_fd to epoll error %s\n",strerror(errno));
+			myexit(-1);
+		}
+		mylog(log_info,"fifo_file=%s\n",fifo_file);
+	}
+
 	//ip_port_t dest_ip_port;
 
 	dest_t dest;
@@ -322,11 +409,20 @@ int tun_dev_server_event_loop()
 				struct sockaddr_in udp_new_addr_in={0};
 				socklen_t udp_new_addr_len = sizeof(sockaddr_in);
 				if ((len = recvfrom(local_listen_fd, data, max_data_len, 0,
-						(struct sockaddr *) &udp_new_addr_in, &udp_new_addr_len)) == -1) {
+						(struct sockaddr *) &udp_new_addr_in, &udp_new_addr_len)) < 0) {
 					mylog(log_error,"recv_from error,this shouldnt happen,err=%s,but we can try to continue\n",strerror(errno));
 					continue;
 					//myexit(1);
 				};
+
+
+				if(de_cook(data,len)<0)
+				{
+					mylog(log_warn,"de_cook(data,len)failed \n");
+					continue;
+
+				}
+
 				char header=0;
 				if(get_header(header,data,len)!=0)
 				{
@@ -358,6 +454,8 @@ int tun_dev_server_event_loop()
 
 						len=1;
 						data[0]=header_reject;
+
+						do_cook(data,len);
 
 						dest_t tmp_dest;
 						tmp_dest.type=type_fd_ip_port;
@@ -398,9 +496,34 @@ int tun_dev_server_event_loop()
 
 				put_header(header_normal,data,len);
 
+				do_cook(data,len);
+
 				delay_manager.add(0,dest,data,len);;
 
-
+			}
+		    else if (events[idx].data.u64 == (u64_t)delay_manager.get_timer_fd())
+		    {
+				uint64_t value;
+				read(delay_manager.get_timer_fd(), &value, 8);
+				mylog(log_trace,"events[idx].data.u64 == (u64_t)delay_manager.get_timer_fd()\n");
+				//printf("<timerfd_triggered, %d>",delay_mp.size());
+				//fflush(stdout);
+			}
+			else if (events[idx].data.u64 == (u64_t)fifo_fd)
+			{
+				char buf[buf_len];
+				int len=read (fifo_fd, buf, sizeof (buf));
+				if(len<0)
+				{
+					mylog(log_warn,"fifo read failed len=%d,errno=%s\n",len,strerror(errno));
+					continue;
+				}
+				buf[len]=0;
+				handle_command(buf);
+			}
+			else
+			{
+				assert(0==1);
 			}
 		}
 		delay_manager.check();
