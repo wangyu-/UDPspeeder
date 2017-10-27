@@ -472,7 +472,7 @@ int unit_test()
 		int * len;
 		fec_decode_manager.output(n,s_arr,len);
 
-		fec_encode_manager.re_init(3,2,g_fec_mtu,g_fec_queue_len,g_fec_timeout,1);
+		fec_encode_manager.reset_fec_parameter(3,2,g_fec_mtu,g_fec_queue_len,g_fec_timeout,1);
 
 		fec_encode_manager.input((char *) a.c_str(), a.length());
 		fec_encode_manager.output(n,s_arr,len);

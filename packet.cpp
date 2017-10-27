@@ -177,9 +177,7 @@ int my_send(const dest_t &dest,char *data,int len)
 {
 	if(dest.cook)
 	{
-		put_crc32(data,len);
-		if(!disable_obscure)do_obscure(data,len);
-		if(!disable_xor)encrypt_0(data,len,key_string);
+		do_cook(data,len);
 	}
 	switch(dest.type)
 	{
@@ -319,6 +317,14 @@ int put_crc32(char * s,int &len)
 	len+=sizeof(u32_t);
 
 
+	return 0;
+}
+
+int do_cook(char * data,int &len)
+{
+	put_crc32(data,len);
+	if(!disable_obscure)do_obscure(data,len);
+	if(!disable_xor)encrypt_0(data,len,key_string);
 	return 0;
 }
 

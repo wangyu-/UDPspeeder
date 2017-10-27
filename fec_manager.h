@@ -38,9 +38,15 @@ struct anti_replay_t
 	int index;
 	anti_replay_t()
 	{
+		clear();
+	}
+	int clear()
+	{
 		memset(replay_buffer,-1,sizeof(replay_buffer));
+		st.clear();
 		st.rehash(anti_replay_buff_size*3);
 		index=0;
+		return 0;
 	}
 	void set_invaild(u32_t seq)
 	{
@@ -140,6 +146,22 @@ public:
 	fec_encode_manager_t();
 	~fec_encode_manager_t();
 
+	int clear()
+	{
+		counter=0;
+		blob_encode.clear();
+		ready_for_output=0;
+
+		itimerspec zero_its;
+		memset(&zero_its, 0, sizeof(zero_its));
+
+		timerfd_settime(timer_fd, TFD_TIMER_ABSTIME, &zero_its, 0);
+
+		seq=(u32_t)get_true_random_number(); //TODO temp solution for a bug.
+
+		return 0;
+	}
+
 	my_time_t get_first_packet_time()
 	{
 		return first_packet_time_for_output;
@@ -155,7 +177,7 @@ public:
 		return fec_mode;
 	}
 	u64_t get_timer_fd64();
-	int re_init(int data_num,int redundant_num,int mtu,int pending_num,int pending_time,int type);
+	int reset_fec_parameter(int data_num,int redundant_num,int mtu,int pending_num,int pending_time,int type);
 	int input(char *s,int len/*,int &is_first_packet*/);
 	int output(int &n,char ** &s_arr,int *&len);
 };
@@ -200,7 +222,7 @@ public:
 	fec_decode_manager_t()
 	{
 		fec_data=new fec_data_t[fec_buff_num+5];
-		re_init();
+		clear();
 	}
 	fec_decode_manager_t(const fec_decode_manager_t &b)
 	{
@@ -210,7 +232,21 @@ public:
 	{
 		delete fec_data;
 	}
-	int re_init();
+	int clear()
+	{
+		anti_replay.clear();
+		mp.clear();
+		mp.rehash(fec_buff_num*3);
+
+		for(int i=0;i<(int)fec_buff_num;i++)
+			fec_data[i].used=0;
+		ready_for_output=0;
+		index=0;
+
+		return 0;
+	}
+
+	//int re_init();
 	int input(char *s,int len);
 	int output(int &n,char ** &s_arr,int* &len_arr);
 };
