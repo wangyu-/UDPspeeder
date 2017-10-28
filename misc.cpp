@@ -46,6 +46,10 @@ u32_t sub_net_uint32=0;
 char tun_dev[100]="";
 
 
+int keep_reconnect=0;
+
+
+
 
 int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,my_time_t *&out_delay)
 {
@@ -567,6 +571,7 @@ void process_arg(int argc, char *argv[])
 		{"fifo", required_argument,    0, 1},
 		{"sub-net", required_argument,    0, 1},
 		{"tun-dev", required_argument,    0, 1},
+		{"keep-reconnect", no_argument,    0, 1},
 		{NULL, 0, 0, 0}
       };
     int option_index = 0;
@@ -867,6 +872,11 @@ void process_arg(int argc, char *argv[])
 				sscanf(optarg,"%s",fifo_file);
 
 				mylog(log_info,"fifo_file =%s \n",fifo_file);
+			}
+			else if(strcmp(long_options[option_index].name,"keep-reconnect")==0)
+			{
+				keep_reconnect=1;
+				mylog(log_info,"keep_reconnect enabled\n");
 			}
 			else if(strcmp(long_options[option_index].name,"sub-net")==0)
 			{

@@ -46,6 +46,8 @@ extern int time_mono_test;
 
 extern int delay_capacity;
 
+extern int keep_reconnect;
+
 
 int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,my_time_t *&out_delay);
 int from_fec_to_normal(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,my_time_t *&out_delay);
