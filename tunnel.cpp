@@ -70,12 +70,12 @@ int tunnel_client_event_loop()
 		myexit(-1);
 	}
 
-	u64_t fd64=conn_info.fec_encode_manager.get_timer_fd64();
+	u64_t tmp_fd64=conn_info.fec_encode_manager.get_timer_fd64();
 	ev.events = EPOLLIN;
-	ev.data.u64 = fd64;
+	ev.data.u64 = tmp_fd64;
 
 	mylog(log_debug,"conn_info.fec_encode_manager.get_timer_fd64()=%llu\n",conn_info.fec_encode_manager.get_timer_fd64());
-	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd_manager.to_fd(fd64), &ev);
+	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd_manager.to_fd(tmp_fd64), &ev);
 	if (ret!= 0) {
 		mylog(log_fatal,"add fec_encode_manager.get_timer_fd64() error\n");
 		myexit(-1);
@@ -173,6 +173,7 @@ int tunnel_client_event_loop()
 
 				if(events[idx].data.u64 == conn_info.fec_encode_manager.get_timer_fd64())
 				{
+					fd64_t fd64=events[idx].data.u64;
 					mylog(log_trace,"events[idx].data.u64 == conn_info.fec_encode_manager.get_timer_fd64()\n");
 
 					//mylog(log_info,"timer!!!\n");
