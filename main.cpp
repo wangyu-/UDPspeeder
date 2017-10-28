@@ -9,7 +9,7 @@
 #include "fec_manager.h"
 #include "misc.h"
 #include "tunnel.h"
-#include "tun_dev.h"
+//#include "tun_dev.h"
 using namespace std;
 
 
@@ -37,28 +37,13 @@ int main(int argc, char *argv[])
 		sprintf(tun_dev,"tun%u",get_true_random_number()%1000);
 	}
 
-	if(working_mode==tunnel_mode)
+	if(client_or_server==client_mode)
 	{
-		if(client_or_server==client_mode)
-		{
-			tunnel_client_event_loop();
-		}
-		else
-		{
-			tunnel_server_event_loop();
-		}
+		tunnel_client_event_loop();
 	}
 	else
 	{
-		//disable_fec=1;
-		if(client_or_server==client_mode)
-		{
-			tun_dev_client_event_loop();
-		}
-		else
-		{
-			tun_dev_server_event_loop();
-		}
+		tunnel_server_event_loop();
 	}
 
 	return 0;
