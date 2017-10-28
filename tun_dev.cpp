@@ -336,7 +336,7 @@ int tun_dev_client_event_loop()
 				else if(header==header_normal)
 				{
 					if(got_feed_back==0)
-						mylog(log_info,"connect accepted by server\n");
+						mylog(log_info,"connection accepted by server\n");
 					got_feed_back=1;
 				}
 				else
