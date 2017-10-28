@@ -10,6 +10,7 @@
 #include "misc.h"
 #include "tunnel.h"
 //#include "tun_dev.h"
+#include "git_version.h"
 using namespace std;
 
 
