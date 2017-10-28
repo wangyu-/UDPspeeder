@@ -40,7 +40,7 @@ int time_mono_test=0;
 int delay_capacity=0;
 
 
-char sub_net[100]="10.0.0.0";
+char sub_net[100]="10.112.0.0";
 u32_t sub_net_uint32=0;
 
 char tun_dev[100]="";
