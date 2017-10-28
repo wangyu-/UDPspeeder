@@ -40,7 +40,10 @@ int time_mono_test=0;
 int delay_capacity=0;
 
 
+char sub_net[100]="10.0.0.0";
+u32_t sub_net_uint32=0;
 
+char tun_dev[100]="";
 
 
 
@@ -55,13 +58,17 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 	inner_stat_t &inner_stat=conn_info.stat.normal_to_fec;
 	if(disable_fec)
 	{
-		assert(data!=0);
+		if(data==0)
+		{
+			out_n=0;
+			return 0;
+		}
+		//assert(data!=0);
 		inner_stat.input_packet_num++;
 		inner_stat.input_packet_size+=len;
 		inner_stat.output_packet_num++;
 		inner_stat.output_packet_size+=len;
 
-		if(data==0) return 0;
 		out_n=1;
 		static char *data_static;
 		data_static=data;
@@ -554,6 +561,7 @@ void process_arg(int argc, char *argv[])
 		{"fec", required_argument,   0,'f'},
 		{"jitter", required_argument,   0,'j'},
 		{"fifo", required_argument,    0, 1},
+		{"sub-net", required_argument,    0, 1},
 		{"tun-dev", optional_argument,    0, 1},
 		{NULL, 0, 0, 0}
       };
@@ -877,6 +885,15 @@ void process_arg(int argc, char *argv[])
 				//sscanf(optarg,"%s",fifo_file);
 				mylog(log_info,"enabled tun-dev mode\n");
 				working_mode=tun_dev_mode;
+			}
+			else if(strcmp(long_options[option_index].name,"tun-dev")==0)
+			{
+				if(optarg!=0)
+				{
+					sscanf(optarg,"%s",tun_dev);
+					mylog(log_info,"tun_dev =%s \n",tun_dev);
+				}
+				mylog(log_info,"running at tun-dev mode\n");
 			}
 			else
 			{

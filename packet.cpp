@@ -199,6 +199,11 @@ int my_send(const dest_t &dest,char *data,int len)
 			return send_fd(dest.inner.fd,data,len,0);
 			break;
 		}
+		case type_write_fd:
+		{
+			return write(dest.inner.fd,data,len);
+			break;
+		}
 		case type_fd64:
 		{
 
