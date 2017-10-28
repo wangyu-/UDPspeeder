@@ -566,7 +566,7 @@ void process_arg(int argc, char *argv[])
 		{"jitter", required_argument,   0,'j'},
 		{"fifo", required_argument,    0, 1},
 		{"sub-net", required_argument,    0, 1},
-		{"tun-dev", optional_argument,    0, 1},
+		{"tun-dev", required_argument,    0, 1},
 		{NULL, 0, 0, 0}
       };
     int option_index = 0;
