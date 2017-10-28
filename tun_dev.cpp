@@ -48,38 +48,27 @@ int set_if(char *if_name,u32_t local_ip,u32_t remote_ip,int mtu)
     sai.sin_family = AF_INET;
     sai.sin_port = 0;
 
-
-
     sai.sin_addr.s_addr = local_ip;
     memcpy(&ifr.ifr_addr,&sai, sizeof(struct sockaddr));
-    assert(ioctl(sockfd, SIOCSIFADDR, &ifr)==0);
-
-
-
-    //sai.sin_addr.s_addr = local_ip;
-    //memcpy(&ifr.ifr_addr,&sai, sizeof(struct sockaddr));
-    //assert(ioctl(sockfd, SIOCSIFADDR, &ifr)==0);
-
-
+    assert(ioctl(sockfd, SIOCSIFADDR, &ifr)==0); //set source ip
 
     sai.sin_addr.s_addr = remote_ip;
     memcpy(&ifr.ifr_addr,&sai, sizeof(struct sockaddr));
-    assert(ioctl(sockfd, SIOCSIFDSTADDR, &ifr)==0);
+    assert(ioctl(sockfd, SIOCSIFDSTADDR, &ifr)==0);//set dest ip
 
     ifr.ifr_mtu=mtu;
-    assert(ioctl(sockfd, SIOCSIFMTU, &ifr)==0);
+    assert(ioctl(sockfd, SIOCSIFMTU, &ifr)==0);//set mtu
 
 
     assert(ioctl(sockfd, SIOCGIFFLAGS, &ifr)==0);
    // ifr.ifr_flags |= ( IFF_UP|IFF_POINTOPOINT|IFF_RUNNING|IFF_NOARP|IFF_MULTICAST );
-    ifr.ifr_flags |= ( IFF_UP|IFF_POINTOPOINT|IFF_RUNNING|IFF_NOARP|IFF_MULTICAST );
+    ifr.ifr_flags = ( IFF_UP|IFF_POINTOPOINT|IFF_RUNNING|IFF_NOARP|IFF_MULTICAST );//set interface flags
     assert(ioctl(sockfd, SIOCSIFFLAGS, &ifr)==0);
 
     //printf("i m here2\n");
 	return 0;
 }
 
-//enum tun_header_t {header_reserved=0,header_normal=1,header_new=2,header_reject=3};
 const char header_normal=1;
 const char header_new_connect=2;
 const char header_reject=3;
@@ -89,9 +78,6 @@ int put_header(char header,char * data,int &len)
 	assert(len>=0);
 	data[len]=header;
 	len+=1;
-	//data=data-1;
-	//data[0]=header;
-	//len+=1;
 	return 0;
 }
 int get_header(char &header,char * data,int &len)
@@ -111,15 +97,15 @@ int from_normal_to_fec2(conn_info_t & conn_info,dest_t &dest,char * data,int len
 
 	for(int i=0;i<out_n;i++)
 	{
-		//put_header(header,out_arr[i],out_len[i]);
+
 		char tmp_buf[buf_len];
 		int tmp_len=out_len[i];
 		memcpy(tmp_buf,out_arr[i],out_len[i]);
 		put_header(header,tmp_buf,tmp_len);
-		delay_send(out_delay[i],dest,tmp_buf,tmp_len);
+		delay_send(out_delay[i],dest,tmp_buf,tmp_len);//this is slow but safer.just use this one
 
-		//put_header(header,out_arr[i],out_len[i]);
-		//delay_send(out_delay[i],dest,out_arr[i],out_len[i]);
+		//put_header(header,out_arr[i],out_len[i]);//modify in place
+		//delay_send(out_delay[i],dest,out_arr[i],out_len[i]);//warning this is currently okay,but if you modified fec encoder,you  may have to use the above code
 	}
 	return 0;
 }
@@ -140,8 +126,7 @@ int from_fec_to_normal2(conn_info_t & conn_info,dest_t &dest,char * data,int len
 
 int tun_dev_client_event_loop()
 {
-	char buf0[buf_len+100];
-	char *data=buf0+100;
+	char data[buf_len];
 	int len;
 	int i,j,k,ret;
 	int epoll_fd,tun_fd;
@@ -184,8 +169,6 @@ int tun_dev_client_event_loop()
 	}
 
 
-
-
 	ev.events = EPOLLIN;
 	ev.data.u64 = delay_manager.get_timer_fd();
 
@@ -197,24 +180,20 @@ int tun_dev_client_event_loop()
 	}
 
 
-
-
-
     conn_info_t *conn_info_p=new conn_info_t;
     conn_info_t &conn_info=*conn_info_p;  //huge size of conn_info,do not allocate on stack
 
-	u64_t fd64=conn_info.fec_encode_manager.get_timer_fd64();
+	u64_t tmp_timer_fd64=conn_info.fec_encode_manager.get_timer_fd64();
 	ev.events = EPOLLIN;
-	ev.data.u64 = fd64;
+	ev.data.u64 = tmp_timer_fd64;
 
 	mylog(log_debug,"conn_info.fec_encode_manager.get_timer_fd64()=%llu\n",conn_info.fec_encode_manager.get_timer_fd64());
-	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd_manager.to_fd(fd64), &ev);
+	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd_manager.to_fd(tmp_timer_fd64), &ev);
 	if (ret!= 0) {
 		mylog(log_fatal,"add fec_encode_manager.get_timer_fd64() error\n");
 		myexit(-1);
 	}
 
-	//my_timer_t timer;
 	conn_info.timer.add_fd_to_epoll(epoll_fd);
 	conn_info.timer.set_timer_repeat_us(timer_interval*1000);
 
@@ -238,10 +217,6 @@ int tun_dev_client_event_loop()
 		mylog(log_info,"fifo_file=%s\n",fifo_file);
 	}
 
-
-	//dest.conv=conv;
-	//dest.inner.ip_port=dest_ip_port;
-	//dest.cook=1;
 
 	dest_t udp_dest;
 	udp_dest.cook=1;
@@ -285,9 +260,9 @@ int tun_dev_client_event_loop()
 
 			else if(events[idx].data.u64==conn_info.fec_encode_manager.get_timer_fd64())
 			{
+				fd64_t fd64=events[idx].data.u64;
 				mylog(log_trace,"events[idx].data.u64 == conn_info.fec_encode_manager.get_timer_fd64()\n");
 
-				//mylog(log_info,"timer!!!\n");
 				uint64_t value;
 				if(!fd_manager.exist(fd64))   //fd64 has been closed
 				{
@@ -305,7 +280,6 @@ int tun_dev_client_event_loop()
 					continue;
 				}
 				assert(value==1);
-
 
 				char header=(got_feed_back==0?header_new_connect:header_normal);
 				from_normal_to_fec2(conn_info,udp_dest,0,0,header);
@@ -362,7 +336,7 @@ int tun_dev_client_event_loop()
 				else if(header==header_normal)
 				{
 					if(got_feed_back==0)
-						mylog(log_info,"connect accepted by server %d\n",int(header));
+						mylog(log_info,"connect accepted by server\n");
 					got_feed_back=1;
 				}
 				else
@@ -397,7 +371,7 @@ int tun_dev_client_event_loop()
 			}
 			else
 			{
-				//assert(0==1);
+				assert(0==1);
 			}
 		}
 		delay_manager.check();
@@ -409,22 +383,16 @@ int tun_dev_client_event_loop()
 
 int tun_dev_server_event_loop()
 {
-	char buf0[buf_len+100];
-	char *data=buf0+100;
+	char data[buf_len];
 	int len;
 	int i,j,k,ret;
 	int epoll_fd,tun_fd;
-
 	int local_listen_fd;
-	//fd64_t local_listen_fd64;
 
 	tun_fd=get_tun_fd(tun_dev);
 	assert(tun_fd>0);
 
 	assert(new_listen_socket(local_listen_fd,local_ip_uint32,local_port)==0);
-  //  local_listen_fd64=fd_manager.create(local_listen_fd);
-
-	//assert(set_if("tun11","10.0.0.1","10.0.0.2",1000)==0);
 	assert(set_if(tun_dev,htonl((ntohl(sub_net_uint32)&0xFFFFFF00)|1),htonl((ntohl(sub_net_uint32)&0xFFFFFF00 )|2),g_fec_mtu)==0);
 
 	epoll_fd = epoll_create1(0);
@@ -464,23 +432,20 @@ int tun_dev_server_event_loop()
 	}
 
 
-
-
     conn_info_t *conn_info_p=new conn_info_t;
     conn_info_t &conn_info=*conn_info_p;  //huge size of conn_info,do not allocate on stack
 
-	u64_t fd64=conn_info.fec_encode_manager.get_timer_fd64();
+	u64_t tmp_timer_fd64=conn_info.fec_encode_manager.get_timer_fd64();
 	ev.events = EPOLLIN;
-	ev.data.u64 = fd64;
+	ev.data.u64 = tmp_timer_fd64;
 
 	mylog(log_debug,"conn_info.fec_encode_manager.get_timer_fd64()=%llu\n",conn_info.fec_encode_manager.get_timer_fd64());
-	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd_manager.to_fd(fd64), &ev);
+	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, fd_manager.to_fd(tmp_timer_fd64), &ev);
 	if (ret!= 0) {
 		mylog(log_fatal,"add fec_encode_manager.get_timer_fd64() error\n");
 		myexit(-1);
 	}
 
-	//my_timer_t timer;
 	conn_info.timer.add_fd_to_epoll(epoll_fd);
 	conn_info.timer.set_timer_repeat_us(timer_interval*1000);
 
@@ -549,8 +514,9 @@ int tun_dev_server_event_loop()
 			}
 			else if(events[idx].data.u64==conn_info.fec_encode_manager.get_timer_fd64())
 			{
+				assert(udp_dest.inner.fd64_ip_port.ip_port.to_u64()!=0);
 				mylog(log_trace,"events[idx].data.u64 == conn_info.fec_encode_manager.get_timer_fd64()\n");
-
+				uint64_t fd64=events[idx].data.u64;
 				//mylog(log_info,"timer!!!\n");
 				uint64_t value;
 				if(!fd_manager.exist(fd64))   //fd64 has been closed
@@ -653,7 +619,11 @@ int tun_dev_server_event_loop()
 			else if(events[idx].data.u64==(u64_t)tun_fd)
 			{
 				len=read(tun_fd,data,max_data_len);
-				assert(len>=0);
+				if(len<0)
+				{
+					mylog(log_warn,"read from tun_fd return %d,errno=%s\n",len,strerror(errno));
+					continue;
+				}
 
 				mylog(log_trace,"Received packet from tun,len: %d\n",len);
 
@@ -686,7 +656,7 @@ int tun_dev_server_event_loop()
 			}
 			else
 			{
-				//assert(0==1);
+				assert(0==1);
 			}
 		}
 		delay_manager.check();

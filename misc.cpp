@@ -173,7 +173,11 @@ int from_fec_to_normal(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 		inner_stat.output_packet_num++;
 		inner_stat.output_packet_size+=len;
 
-		if(data==0) return 0;
+		if(data==0)
+		{
+			out_n=0;
+			return 0;
+		}
 		out_n=1;
 		static char *data_static;
 		data_static=data;
@@ -880,11 +884,11 @@ void process_arg(int argc, char *argv[])
 
 				mylog(log_info,"fifo_file =%s \n",fifo_file);
 			}
-			else if(strcmp(long_options[option_index].name,"tun-dev")==0)
+			else if(strcmp(long_options[option_index].name,"sub-net")==0)
 			{
-				//sscanf(optarg,"%s",fifo_file);
-				mylog(log_info,"enabled tun-dev mode\n");
-				working_mode=tun_dev_mode;
+				sscanf(optarg,"%s",sub_net);
+				mylog(log_info,"sub_net %s\n",sub_net);
+
 			}
 			else if(strcmp(long_options[option_index].name,"tun-dev")==0)
 			{
@@ -894,6 +898,7 @@ void process_arg(int argc, char *argv[])
 					mylog(log_info,"tun_dev =%s \n",tun_dev);
 				}
 				mylog(log_info,"running at tun-dev mode\n");
+				working_mode=tun_dev_mode;
 			}
 			else
 			{
