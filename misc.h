@@ -13,7 +13,7 @@
 #include "fd_manager.h"
 #include "delay_manager.h"
 #include "fec_manager.h"
-#include "git_version.h"
+
 
 
 extern char fifo_file[1000];
