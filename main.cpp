@@ -30,6 +30,12 @@ int main(int argc, char *argv[])
 	delay_manager.set_capacity(delay_capacity);
 	local_ip_uint32=inet_addr(local_ip);
 	remote_ip_uint32=inet_addr(remote_ip);
+	sub_net_uint32=inet_addr(sub_net);
+
+	if(strlen(tun_dev)==0)
+	{
+		sprintf(tun_dev,"tun%u",get_true_random_number()%1000);
+	}
 
 	if(working_mode==tunnel_mode)
 	{
@@ -44,6 +50,7 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
+		//disable_fec=1;
 		if(client_or_server==client_mode)
 		{
 			tun_dev_client_event_loop();

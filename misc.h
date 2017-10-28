@@ -47,8 +47,6 @@ extern int time_mono_test;
 extern int delay_capacity;
 
 
-
-
 int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,my_time_t *&out_delay);
 int from_fec_to_normal(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,my_time_t *&out_delay);
 
@@ -62,5 +60,8 @@ void print_help();
 
 void process_arg(int argc, char *argv[]);
 
+extern char sub_net[100];
+extern u32_t sub_net_uint32;
+extern char tun_dev[100];
 
 #endif /* MISC_H_ */
