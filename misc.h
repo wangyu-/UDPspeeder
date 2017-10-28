@@ -56,7 +56,7 @@ int handle_command(char *s);
 
 int unit_test();
 
-void print_help();
+//void print_help();
 
 void process_arg(int argc, char *argv[]);
 
