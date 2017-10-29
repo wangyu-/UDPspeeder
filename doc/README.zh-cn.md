@@ -11,7 +11,19 @@
 
 ![image0](/images/Capture2.PNG)
 
-另外，可以和udp2raw串联使用，在加速的同时把UDP伪装成TCP，防止UDP被运营商QOS或屏蔽。udp2raw: https://github.com/wangyu-/udp2raw-tunnel
+对于某些运营商，UDPspeeder跟udp2raw配合可以达到更好的速度，udp2raw负责把UDP伪装成TCP，来绕过运营商的UDP限速。
+
+udp2raw的repo:
+
+https://github.com/wangyu-/udp2raw-tunnel
+
+如果你嫌UDPspeeder+OpenVPN麻烦，你可以尝试tinyFecVPN，一个集成了UDPspeeder功能的VPN：
+
+tinyFecVPN的repo:
+
+https://github.com/wangyu-/tinyFecVPN
+
+
 #### 效果
 ![image0](/images/Capture8.PNG)
 
@@ -67,7 +79,7 @@ https://github.com/wangyu-/UDPspeeder/releases
 
 `-f20:10` 表示对每20个原始数据发送10个冗余包。`-f20:10` 和`-f 20:10`都是可以的，空格可以省略，对于所有的单字节option都是如此。对于双字节option，例如后面的`--mode 0`和`--mtu 1200`，空格不可以省略。
 
-`-k` 指定一个字符串，server/client间所有收发的包都会被异或，改变协议特征，防止UDPspeeder的协议被运营商针对。
+`-k` 指定一个字符串，开启简单的异或加密
 
 
 ###### 注意
@@ -260,6 +272,10 @@ UDPspeeder和Kcptun配合，UDPspeeder和Kcptun可以并联也可以串联。
 可以和BBR/锐速叠加，不过BBR/锐速部署在VPS上只对从本地到VPS的流量有效，对从本地到第三方服务器的流量无效。
 
 需要在服务端开启ipforward和NAT。在客户端改路由表（可以手动修改，也可以由OpenVPN的redirect-gateway选项自动加好）。
+
+如果UDPspeeder + OpenVPN对你来说显得太麻烦了，你可以尝试一下tinyFecVPN,一个集成了UDPspeeder功能的VPN:
+
+https://github.com/wangyu-/tinyFecVPN/
 
 #### UDPspeeder + kcptun/finalspeed + $*** 同时加速tcp和udp流量
 如果你需要用加速的tcp看视频和下载文件，这样效果可能比没有BBR的UDPspeeder+vpn方案更好。另外，如果你需要玩游戏，但是嫌配VPN麻烦，也可以用这种方案。
