@@ -261,6 +261,10 @@ UDPspeeder和Kcptun配合，UDPspeeder和Kcptun可以并联也可以串联。
 
 需要在服务端开启ipforward和NAT。在客户端改路由表（可以手动修改，也可以由OpenVPN的redirect-gateway选项自动加好）。
 
+如果UDPspeeder + OpenVPN对你来说显得太麻烦了，你可以尝试一下tinyFecVPN,一个集成了UDPspeeder功能的VPN:
+
+https://github.com/wangyu-/tinyFecVPN/
+
 #### UDPspeeder + kcptun/finalspeed + $*** 同时加速tcp和udp流量
 如果你需要用加速的tcp看视频和下载文件，这样效果可能比没有BBR的UDPspeeder+vpn方案更好。另外，如果你需要玩游戏，但是嫌配VPN麻烦，也可以用这种方案。
 ![image0](/images/cn/speeder_kcptun.PNG)
