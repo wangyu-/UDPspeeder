@@ -315,6 +315,7 @@ int tunnel_client_event_loop()
 					if(!conn_info.conv_manager.is_conv_used(conv))
 					{
 						mylog(log_trace,"!conn_info.conv_manager.is_conv_used(conv)");
+						continue;
 					}
 
 					conn_info.conv_manager.update_active_time(conv);
