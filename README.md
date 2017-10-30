@@ -13,7 +13,9 @@ or
 [简体中文](/doc/README.zh-cn.md)(内容更丰富)
 
 ###### Note
-You can use udp2raw with UDPspeeder together to get better speed on some ISP with UDP QoS(UDP throttling). udp2raw's repo：
+You can use udp2raw with UDPspeeder together to get better speed on some ISP with UDP QoS(UDP throttling).
+
+udp2raw's repo：
 
 https://github.com/wangyu-/udp2raw-tunnel
 
