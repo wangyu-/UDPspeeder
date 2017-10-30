@@ -11,7 +11,7 @@
 
 ![image0](/images/Capture2.PNG)
 
-UDPspeeder可以和udp2raw串联使用，在加速的同时把UDP伪装成TCP，防止UDP被运营商QOS或屏蔽。
+对于某些运营商，UDPspeeder跟udp2raw配合可以达到更好的速度，udp2raw负责把UDP伪装成TCP，来绕过运营商的UDP限速。
 
 udp2raw的repo:
 
