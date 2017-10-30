@@ -19,6 +19,10 @@ udp2raw's repo：
 
 https://github.com/wangyu-/udp2raw-tunnel
 
+You can also try tinyFecVPN, a lightweight high-performance VPN with build-in FEC support:
+
+https://github.com/wangyu-/tinyFecVPN
+
 
 # Efficacy
 tested on a link with 100ms latency and 10% packet loss at both direction
