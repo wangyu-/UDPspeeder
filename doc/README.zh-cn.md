@@ -11,7 +11,19 @@
 
 ![image0](/images/Capture2.PNG)
 
-另外，可以和udp2raw串联使用，在加速的同时把UDP伪装成TCP，防止UDP被运营商QOS或屏蔽。udp2raw: https://github.com/wangyu-/udp2raw-tunnel
+UDPspeeder可以和udp2raw串联使用，在加速的同时把UDP伪装成TCP，防止UDP被运营商QOS或屏蔽。
+
+udp2raw的repo:
+
+https://github.com/wangyu-/udp2raw-tunnel
+
+如果你嫌UDPspeeder+OpenVPN麻烦，你可以尝试tinyFecVPN，一个集成了UDPspeeder功能的VPN：
+
+tinyFecVPN的repo:
+
+https://github.com/wangyu-/tinyFecVPN
+
+
 #### 效果
 ![image0](/images/Capture8.PNG)
 
