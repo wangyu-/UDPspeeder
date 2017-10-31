@@ -40,7 +40,7 @@ int time_mono_test=0;
 int delay_capacity=0;
 
 
-char sub_net[100]="10.112.0.0";
+char sub_net[100]="10.22.22.0";
 u32_t sub_net_uint32=0;
 
 char tun_dev[100]="";
@@ -889,7 +889,7 @@ void process_arg(int argc, char *argv[])
 				if(optarg!=0)
 				{
 					sscanf(optarg,"%s",tun_dev);
-					mylog(log_info,"tun_dev =%s \n",tun_dev);
+					mylog(log_info,"tun_dev=%s\n",tun_dev);
 				}
 				mylog(log_info,"running at tun-dev mode\n");
 				working_mode=tun_dev_mode;
