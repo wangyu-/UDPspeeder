@@ -260,6 +260,39 @@ unsigned short csum(const unsigned short *ptr,int nbytes) {
 
     return(answer);
 }
+
+
+unsigned short tcp_csum(const pseudo_header & ph,const unsigned short *ptr,int nbytes) {//works both for big and little endian
+
+	register long sum;
+    unsigned short oddbyte;
+    register short answer;
+
+    sum=0;
+	unsigned short * tmp= (unsigned short *)&ph;
+	for(int i=0;i<6;i++)
+	{
+		sum+=*tmp++;
+	}
+
+
+    while(nbytes>1) {
+        sum+=*ptr++;
+        nbytes-=2;
+    }
+    if(nbytes==1) {
+        oddbyte=0;
+        *((u_char*)&oddbyte)=*(u_char*)ptr;
+        sum+=oddbyte;
+    }
+
+    sum = (sum>>16)+(sum & 0xffff);
+    sum = sum + (sum>>16);
+    answer=(short)~sum;
+
+    return(answer);
+}
+
 int set_buf_size(int fd,int socket_buf_size,int force_socket_buf)
 {
 	if(force_socket_buf)
