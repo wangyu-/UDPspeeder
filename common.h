@@ -176,6 +176,13 @@ struct fd_info_t
 	ip_port_t ip_port;
 };
 
+struct pseudo_header {
+    u_int32_t source_address;
+    u_int32_t dest_address;
+    u_int8_t placeholder;
+    u_int8_t protocol;
+    u_int16_t tcp_length;
+};
 
 u64_t get_current_time();
 u64_t get_current_time_us();
@@ -209,6 +216,7 @@ void setnonblocking(int sock);
 int set_buf_size(int fd,int socket_buf_size,int force_socket_buf=0);
 
 unsigned short csum(const unsigned short *ptr,int nbytes);
+unsigned short tcp_csum(const pseudo_header & ph,const unsigned short *ptr,int nbytes);
 
 void  signal_handler(int sig);
 int numbers_to_char(id_t id1,id_t id2,id_t id3,char * &data,int &len);

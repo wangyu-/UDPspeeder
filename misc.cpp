@@ -48,7 +48,9 @@ char tun_dev[100]="";
 
 int keep_reconnect=0;
 
+int tun_mtu=1500;
 
+int mssfix=1;
 
 
 int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,my_time_t *&out_delay)
@@ -571,6 +573,8 @@ void process_arg(int argc, char *argv[])
 		{"fifo", required_argument,    0, 1},
 		{"sub-net", required_argument,    0, 1},
 		{"tun-dev", required_argument,    0, 1},
+		{"tun-mtu", required_argument,    0, 1},
+		{"disable-mssfix", no_argument,    0, 1},
 		{"keep-reconnect", no_argument,    0, 1},
 		{NULL, 0, 0, 0}
       };
@@ -886,13 +890,21 @@ void process_arg(int argc, char *argv[])
 			}
 			else if(strcmp(long_options[option_index].name,"tun-dev")==0)
 			{
-				if(optarg!=0)
-				{
-					sscanf(optarg,"%s",tun_dev);
-					mylog(log_info,"tun_dev=%s\n",tun_dev);
-				}
+				sscanf(optarg,"%s",tun_dev);
+				mylog(log_info,"tun_dev=%s\n",tun_dev);
+
 				mylog(log_info,"running at tun-dev mode\n");
 				working_mode=tun_dev_mode;
+			}
+			else if(strcmp(long_options[option_index].name,"tun-mtu")==0)
+			{
+				sscanf(optarg,"%d",&tun_mtu);
+				mylog(log_warn,"changed tun_mtu,tun_mtu=%d\n",tun_mtu);
+			}
+			else if(strcmp(long_options[option_index].name,"disable-mssfix")==0)
+			{
+				mssfix=0;
+				mylog(log_warn,"mssfix disabled\n");
 			}
 			else
 			{
