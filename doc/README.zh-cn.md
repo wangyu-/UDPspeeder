@@ -237,9 +237,9 @@ FEC算法很吃CPU，初次使用建议关注UDPspeeder的CPU占用。如果CPU�
 
 ### 为什么使用之后效果反而变差了？
 
-有可能是你用了mode 0参数，而又没调好参数。
+有可能是你用了`--mode 0`参数，而又没调好参数。
 
-如果你没有使用mode 0，而确实效果变差了，那很可能是因为你的运营商对UDP有限制。一般看视频和下载都是TCP流量，而用UDPspeeder中转后流量变成了UDP流量，如果运营商对UDP做了限制，就可能导致效果比不用还差。用udp2raw可以解决，udp2raw: https://github.com/wangyu-/udp2raw-tunnel
+如果你没有使用`--mode 0`，而确实效果变差了，那很可能是因为你的运营商对UDP有限制。一般看视频和下载都是TCP流量，而用UDPspeeder中转后流量变成了UDP流量，如果运营商对UDP做了限制，就可能导致效果比不用还差。用udp2raw可以解决，udp2raw: https://github.com/wangyu-/udp2raw-tunnel
 
 
 ### UDPspeeder和BBR/锐速配合
@@ -308,6 +308,8 @@ run at client side:
 (也可以把图中的$*** server换成其他的socks5 server，这样就不需要$*** client了)
 
 可以和BBR/锐速叠加，BBR/锐速只要部署在VPS上就有效。
+
+也可以用tinyFecVPN + $\*\*\* ,配置起来更简单。
 
 # 编译教程
 暂时先参考udp2raw的这篇教程，几乎一样的过程。
