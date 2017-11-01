@@ -25,7 +25,7 @@ https://github.com/wangyu-/tinyFecVPN
 
 
 #### 效果
-![image0](/images/Capture8.PNG)
+![image0](/images/cn/ping_compare_cn.PNG)
 
 ![image0](/images/cn/scp_compare.PNG)
 #### 原理简介
