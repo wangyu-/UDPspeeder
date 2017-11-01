@@ -309,7 +309,7 @@ run at client side:
 
 可以和BBR/锐速叠加，BBR/锐速只要部署在VPS上就有效。
 
-也可以用tinyFecVPN + $\*\*\* ，配置起来更简单。
+也可以用[tinyFecVPN](https://github.com/wangyu-/tinyFecVPN/) + $\*\*\* ，配置起来更简单。
 
 # 编译教程
 暂时先参考udp2raw的这篇教程，几乎一样的过程。
