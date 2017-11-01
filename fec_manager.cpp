@@ -220,22 +220,11 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 
 	if(fec_mode==0&& s!=0 &&counter==0)
 	{
-		if(fec_data_num==1)
+		int out_len=blob_encode.get_shard_len(fec_data_num,len);
+		if(out_len>fec_mtu)
 		{
-			if(len>fec_mtu)
-			{
-				mylog(log_warn,"message too long for fec_data_num=1, len=%d fec_mtu=%d,ignored\n",len,fec_mtu);
-				return -1;
-			}
-		}
-		else
-		{
-			int out_len=blob_encode.get_shard_len(fec_data_num,len);
-			if(out_len>fec_mtu)
-			{
-				mylog(log_warn,"message too long ori_len=%d out_len=%d fec_mtu=%d,ignored\n",len,out_len,fec_mtu);
-				return -1;
-			}
+			mylog(log_warn,"message too long ori_len=%d out_len=%d fec_mtu=%d,ignored\n",len,out_len,fec_mtu);
+			return -1;
 		}
 	}
 	if(fec_mode==1&&s!=0&&len>fec_mtu)
