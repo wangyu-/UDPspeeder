@@ -265,13 +265,13 @@ UDPspeeder和Kcptun配合，UDPspeeder和Kcptun可以并联也可以串联。
 #### UDPspeeder + OpenVPN加速任何流量，也适用于其他VPN
 ![image0](/images/Capture2.PNG)
 
-Linux具体配置: [UDPspeeder + openvpn config guide](/doc/udpspeeder_openvpn.md).
-
-Windows具体配置: [win10系统UDPspeeder+OpenVPN的完整设置](https://github.com/wangyu-/UDPspeeder/wiki/win10系统UDPspeeder-OpenVPN的完整设置)
-
 可以和BBR/锐速叠加，不过BBR/锐速部署在VPS上只对从本地到VPS的流量有效，对从本地到第三方服务器的流量无效。
 
 需要在服务端开启ipforward和NAT。在客户端改路由表（可以手动修改，也可以由OpenVPN的redirect-gateway选项自动加好）。
+
+Linux具体配置: [UDPspeeder + openvpn config guide](/doc/udpspeeder_openvpn.md).
+
+Windows具体配置: [win10系统UDPspeeder+OpenVPN的完整设置](https://github.com/wangyu-/UDPspeeder/wiki/win10系统UDPspeeder-OpenVPN的完整设置)
 
 如果UDPspeeder + OpenVPN对你来说显得太麻烦了，你可以尝试一下tinyFecVPN,一个集成了UDPspeeder功能的VPN:
 
