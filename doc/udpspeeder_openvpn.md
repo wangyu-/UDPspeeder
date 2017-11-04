@@ -105,10 +105,3 @@ ip route add 44.55.66.77 dev XXX
 You can also use tinyFecVPN,a lightweight VPN with build-in FEC support:
 
 https://github.com/wangyu-/tinyFecVPN
-
-##### For Windwos User (In Chinese)
-
-win10系统UDPspeeder+OpenVPN的完整设置：
-
-https://github.com/wangyu-/UDPspeeder/wiki/win10系统UDPspeeder-OpenVPN的完整设置
-
