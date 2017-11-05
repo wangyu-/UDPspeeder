@@ -313,6 +313,18 @@ run at client side:
 
 也可以用[tinyFecVPN](https://github.com/wangyu-/tinyFecVPN/) + $\*\*\* ，配置起来更简单。
 
+# 应用实例
+
+#### win10系统UDPspeeder+OpenVPN的完整设置
+
+https://github.com/wangyu-/UDPspeeder/wiki/win10系统UDPspeeder-OpenVPN的完整设置
+
+
+#### 用树莓派做路由器，搭建透明代理，加速游戏主机的网络
+
+https://github.com/wangyu-/UDPspeeder/wiki/用树莓派做路由器，搭建透明代理，加速游戏主机的网络
+
+
 # 编译教程
 暂时先参考udp2raw的这篇教程，几乎一样的过程。
 
