@@ -67,7 +67,7 @@ typedef u64_t my_time_t;
 const int max_data_len=2200;
 const int buf_len=max_data_len+200;
 
-const u32_t conv_clear_interval=200;
+
 //const u32_t timer_interval=400;
 ////const u32_t conv_timeout=180000;
 const u32_t conv_timeout=40000;//for test
@@ -85,12 +85,12 @@ const u32_t client_retry_interval=1000;
 
 const u32_t server_handshake_timeout=10000;// this should be much longer than clients. client retry initially ,server retry passtively*/
 
-const int conv_clear_ratio=10;  //conv grabage collecter check 1/10 of all conv one time
-const int conn_clear_ratio=10;
-const int conv_clear_min=5;
+const int conv_clear_ratio=30;  //conv grabage collecter check 1/30 of all conv one time
+const int conn_clear_ratio=50;
+const int conv_clear_min=1;
 const int conn_clear_min=1;
 
-
+const u32_t conv_clear_interval=1000;
 const u32_t conn_clear_interval=1000;
 
 
