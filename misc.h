@@ -13,7 +13,7 @@
 #include "fd_manager.h"
 #include "delay_manager.h"
 #include "fec_manager.h"
-#include "git_version.h"
+
 
 
 extern char fifo_file[1000];
@@ -46,6 +46,12 @@ extern int time_mono_test;
 
 extern int delay_capacity;
 
+extern int keep_reconnect;
+
+extern int tun_mtu;
+
+extern int mssfix;
+
 
 int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,my_time_t *&out_delay);
 int from_fec_to_normal(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,my_time_t *&out_delay);
@@ -56,7 +62,7 @@ int handle_command(char *s);
 
 int unit_test();
 
-void print_help();
+//void print_help();
 
 void process_arg(int argc, char *argv[]);
 

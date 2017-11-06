@@ -11,9 +11,21 @@
 
 ![image0](/images/Capture2.PNG)
 
-另外，可以和udp2raw串联使用，在加速的同时把UDP伪装成TCP，防止UDP被运营商QOS或屏蔽。udp2raw: https://github.com/wangyu-/udp2raw-tunnel
+对于某些运营商，UDPspeeder跟udp2raw配合可以达到更好的速度，udp2raw负责把UDP伪装成TCP，来绕过运营商的UDP限速。
+
+udp2raw的repo:
+
+https://github.com/wangyu-/udp2raw-tunnel
+
+如果你嫌UDPspeeder+OpenVPN麻烦，你可以尝试tinyFecVPN，一个集成了UDPspeeder功能的VPN：
+
+tinyFecVPN的repo:
+
+https://github.com/wangyu-/tinyFecVPN
+
+
 #### 效果
-![image0](/images/Capture8.PNG)
+![image0](/images/cn/ping_compare_cn.PNG)
 
 ![image0](/images/cn/scp_compare.PNG)
 #### 原理简介
@@ -67,7 +79,7 @@ https://github.com/wangyu-/UDPspeeder/releases
 
 `-f20:10` 表示对每20个原始数据发送10个冗余包。`-f20:10` 和`-f 20:10`都是可以的，空格可以省略，对于所有的单字节option都是如此。对于双字节option，例如后面的`--mode 0`和`--mtu 1200`，空格不可以省略。
 
-`-k` 指定一个字符串，server/client间所有收发的包都会被异或，改变协议特征，防止UDPspeeder的协议被运营商针对。
+`-k` 指定一个字符串，开启简单的异或加密
 
 
 ###### 注意
@@ -165,8 +177,6 @@ mode 0模式允许你发送的数据包大小超过物理接口的MTU而几乎�
 ##### `--disable-obscure`
 UDPspeeder默认情况下会对每个发出的数据包随机填充和异或一些字节(4~32字节)，这样通过抓包难以发现你发了冗余数据，防止VPS被封。这个功能只是为了小心谨慎，即使你关掉这个功能，基本上也没问题，关掉可以省一些带宽和CPU。
 
-##### `-q,--queue-len`
-编码器在做FEC前最多积攒多少个数据包，只对mode 0有效。除非是使用下文`V2版如何多倍发包`里面提到的用法，不建议改动。
 #### `--fifo` option
 用fifo(命名管道)向运行中的程序发送command。例如`--fifo fifo.file`，可用的command有：
 ```
@@ -190,16 +200,16 @@ echo mode 0 > fifo.file
 
 ### V2版如何多倍发包
 
-只要在设置-f参数时把x设置为1，fec算法就退化为多倍发包了。例如-f1:1，表示2倍发包，-f1:2表示3倍发包，以此类推。另外可以加上`--mode 0 -q1`参数，防止fec编码器试图积攒和合并数据，获得最低的延迟。
+只要在设置-f参数时把x设置为1，fec算法就退化为多倍发包了。例如-f1:1，表示2倍发包，-f1:2表示3倍发包，以此类推。另外建议加上"--mode 1"参数，防止fec编码器试图积攒和合并数据，获得最低的延迟。
 
 2倍发包的完整参数：
 
 ```
-./speederv2 -s -l0.0.0.0:4096 -r127.0.0.1:7777  -f1:1 -k "passwd" --mode 0 -q1
-./speederv2 -c -l0.0.0.0:3333 -r44.55.66.77:4096 -f1:1 -k "passwd" --mode 0 -q1
+./speederv2 -s -l0.0.0.0:4096 -r127.0.0.1:7777  -f1:1 -k "passwd" --mode 1
+./speederv2 -c -l0.0.0.0:3333 -r44.55.66.77:4096 -f1:1 -k "passwd" --mode 1
 ```
 
-使用了`--mode 0 -q1`以后，`--timeout`选项不起作用，所以不用调。
+使用了`--mode 1`以后，`--timeout`选项不起作用，所以不用调。
 
 如果你只需要多倍发包，可以直接用回V1版，V1版配置更简单，占用内存更小，而且经过了几个月的考验，很稳定。
 
@@ -227,9 +237,9 @@ FEC算法很吃CPU，初次使用建议关注UDPspeeder的CPU占用。如果CPU�
 
 ### 为什么使用之后效果反而变差了？
 
-有可能是你用了mode 0参数，而又没调好参数。
+有可能是你用了`--mode 0`参数，而又没调好参数。
 
-如果你没有使用mode 0，而确实效果变差了，那很可能是因为你的运营商对UDP有限制。一般看视频和下载都是TCP流量，而用UDPspeeder中转后流量变成了UDP流量，如果运营商对UDP做了限制，就可能导致效果比不用还差。用udp2raw可以解决，udp2raw: https://github.com/wangyu-/udp2raw-tunnel
+如果你没有使用`--mode 0`，而确实效果变差了，那很可能是因为你的运营商对UDP有限制。一般看视频和下载都是TCP流量，而用UDPspeeder中转后流量变成了UDP流量，如果运营商对UDP做了限制，就可能导致效果比不用还差。用udp2raw可以解决，udp2raw: https://github.com/wangyu-/udp2raw-tunnel
 
 
 ### UDPspeeder和BBR/锐速配合
@@ -255,11 +265,17 @@ UDPspeeder和Kcptun配合，UDPspeeder和Kcptun可以并联也可以串联。
 #### UDPspeeder + OpenVPN加速任何流量，也适用于其他VPN
 ![image0](/images/Capture2.PNG)
 
-具体配置见，[UDPspeeder + openvpn config guide](/doc/udpspeeder_openvpn.md).
-
 可以和BBR/锐速叠加，不过BBR/锐速部署在VPS上只对从本地到VPS的流量有效，对从本地到第三方服务器的流量无效。
 
 需要在服务端开启ipforward和NAT。在客户端改路由表（可以手动修改，也可以由OpenVPN的redirect-gateway选项自动加好）。
+
+Linux具体配置: [UDPspeeder + openvpn config guide](/doc/udpspeeder_openvpn.md).
+
+Windows具体配置: [win10系统UDPspeeder+OpenVPN的完整设置](https://github.com/wangyu-/UDPspeeder/wiki/win10系统UDPspeeder-OpenVPN的完整设置)
+
+如果UDPspeeder + OpenVPN对你来说显得太麻烦了，你可以尝试一下tinyFecVPN,一个集成了UDPspeeder功能的VPN:
+
+https://github.com/wangyu-/tinyFecVPN/
 
 #### UDPspeeder + kcptun/finalspeed + $*** 同时加速tcp和udp流量
 如果你需要用加速的tcp看视频和下载文件，这样效果可能比没有BBR的UDPspeeder+vpn方案更好。另外，如果你需要玩游戏，但是嫌配VPN麻烦，也可以用这种方案。
@@ -281,9 +297,9 @@ run at client side:
 
 这就是全部的命令了。issue里有很多人困惑于怎么把tcp和udp流量"分开"，其实很简单就可以做到。
 
-如果只需要加速UDP，不需要加速TCP，可以把kcptun换成其他的任意端口转发方式，比如ncat/socat/ssh tunnel/iptables。
+如果只需要加速UDP，不需要加速TCP，可以把kcptun换成其他的任意端口转发方式，比如ncat/socat/ssh tunnel/iptables/[tinyPortMapper](https://github.com/wangyu-/tinyPortMapper/releases)。
 
-另外，如果没有kcptun只有BBR/锐速的话，也可以把kcptun换成ncat/socat/ssh tunnel/iptables。这样，TCP流量由锐速/BBR加速，UDP由UDPspeeder加速。
+另外，如果没有kcptun只有BBR/锐速的话，也可以把kcptun换成ncat/socat/ssh tunnel/iptables/[tinyPortMapper](https://github.com/wangyu-/tinyPortMapper/releases)。这样，TCP流量由锐速/BBR加速，UDP由UDPspeeder加速。
 
 #### UDPspeeder + openvpn + $*** 混合方案，也适用于其他VPN
 也是我正在用的方案。优点是可以随时在vpn和$\*\*\*方案间快速切换。
@@ -294,6 +310,20 @@ run at client side:
 (也可以把图中的$*** server换成其他的socks5 server，这样就不需要$*** client了)
 
 可以和BBR/锐速叠加，BBR/锐速只要部署在VPS上就有效。
+
+也可以用[tinyFecVPN](https://github.com/wangyu-/tinyFecVPN/) + $\*\*\* ，配置起来更简单。
+
+# 应用实例
+
+#### win10系统UDPspeeder+OpenVPN的完整设置
+
+https://github.com/wangyu-/UDPspeeder/wiki/win10系统UDPspeeder-OpenVPN的完整设置
+
+
+#### 用树莓派做路由器，搭建透明代理，加速游戏主机的网络
+
+https://github.com/wangyu-/UDPspeeder/wiki/用树莓派做路由器，搭建透明代理，加速游戏主机的网络
+
 
 # 编译教程
 暂时先参考udp2raw的这篇教程，几乎一样的过程。

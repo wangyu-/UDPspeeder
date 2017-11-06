@@ -218,10 +218,14 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 	//int counter_back=counter;
 	assert(fec_mode==0||fec_mode==1);
 
-	if(fec_mode==0&& s!=0 &&counter==0&&blob_encode.get_shard_len(fec_data_num,len)>fec_mtu)
+	if(fec_mode==0&& s!=0 &&counter==0)
 	{
-		mylog(log_warn,"message too long len=%d,ignored\n",len);
-		return -1;
+		int out_len=blob_encode.get_shard_len(fec_data_num,len);
+		if(out_len>fec_mtu)
+		{
+			mylog(log_warn,"message too long ori_len=%d out_len=%d fec_mtu=%d,ignored\n",len,out_len,fec_mtu);
+			return -1;
+		}
 	}
 	if(fec_mode==1&&s!=0&&len>fec_mtu)
 	{
