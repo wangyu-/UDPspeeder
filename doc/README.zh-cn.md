@@ -81,12 +81,11 @@ https://github.com/wangyu-/UDPspeeder/releases
 
 `-k` 指定一个字符串，开启简单的异或加密
 
+如果需要更省流量，请加上`--mode 0`，`--mode 0`模式会牺牲一点点的延迟(默认最多8ms，可调)换取更低的流量消耗。
 
 ###### 注意
 
-要为UDPspeeder加速的应用设置好MTU(不是在UDPspeeder中，是在被加速的应用中)，建议设置为1200。 
-
-另外，如果被加速的应用不能调整MTU，也可以在UDPspeeder中通过`--mode 0 --mtu 1200`设置MTU。关于`--mode 0`和`--mtu`的具体含义请看下文。
+要为UDPspeeder加速的应用设置好MTU(不是在UDPspeeder中，是在被加速的应用中)，建议设置为1200。 另外，如果被加速的应用不能调整MTU，也可以在UDPspeeder中通过`--mode 0 --mtu 1200`设置MTU。关于`--mode 0`和`--mtu`的具体解释请看下文。
 
 # 进阶操作说明
 

@@ -10,6 +10,8 @@ or
 
 ![image_vpn](/images/en/udpspeeder+openvpn3.PNG)
 
+Assume your local network to your server is lossy. Just establish a VPN connection to your server with UDPspeeder + any UDP-based VPN, access your server via this VPN connection, then your connection quality will be significantly improved. With well-tuned parameters , you can easily reduce IP or UDP/ICMP packet-loss-rate to less than 0.01% . Besides reducing packet-loss-rate, UDPspeeder can also significantly improve your TCP latency and TCP single-thread download speed.
+
 [简体中文](/doc/README.zh-cn.md)(内容更丰富)
 
 ###### Note
