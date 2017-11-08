@@ -185,7 +185,7 @@ int fec_encode_manager_t::append(char *s,int len/*,int &is_first_packet*/)
 	{
 		mylog(log_trace,"counter=%d\n",counter);
 		assert(len<=65535&&len>=0);
-		assert(len<=fec_mtu);
+		//assert(len<=fec_mtu);//relax this limitation
 		char * p=input_buf[counter]+sizeof(u32_t)+4*sizeof(char);//copy directly to final position,avoid unnecessary copy.
 		//remember to change this,if protocol is modified
 
