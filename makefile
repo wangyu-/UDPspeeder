@@ -13,7 +13,7 @@ SOURCES=main.cpp log.cpp common.cpp lib/fec.c lib/rs.c packet.cpp delay_manager.
 NAME=speederv2
 TARGETS=amd64 arm mips24kc_be x86  mips24kc_le
 
-TAR=${NAME}_binaries.tar.gz `echo ${TARGETS}|sed -r 's/([^ ]+)/speederv2_\1/g'`
+TAR=${NAME}_binaries.tar.gz `echo ${TARGETS}|sed -r 's/([^ ]+)/speederv2_\1/g'` version.txt
 
 all:git_version
 	rm -f ${NAME}
@@ -56,6 +56,7 @@ cross3:git_version
 	${cc_cross}   -o ${NAME}_cross    -I. ${SOURCES} ${FLAGS} -lrt -static -O3
 
 release: ${TARGETS} 
+	cp git_version.h version.txt
 	tar -zcvf ${TAR}
 
 clean:	
