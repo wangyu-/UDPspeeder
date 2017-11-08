@@ -229,7 +229,7 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 	}
 	if(fec_mode==1&&s!=0&&len>fec_mtu)
 	{
-		mylog(log_warn,"mode==1,message len=%d,fec_mtu=%d,len>fec_mtu,packet may not be able to deliver\n",len,fec_mtu);
+		mylog(log_warn,"mode==1,message len=%d,len>fec_mtu,fec_mtu=%d,packet may not be delivered\n",len,fec_mtu);
 		//return -1;
 	}
 	if(s==0&&counter==0)
