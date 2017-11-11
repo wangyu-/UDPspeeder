@@ -233,9 +233,9 @@ echo mode 0 > fifo.file
 
 如果你实在不会配，那么也可以用回V1版。
 
-### 怎么测网络本身的丢包
+### 如何测试网络本身的丢包率
 
-比如你配置好了OpenVPN+UDPspeeder，但是不知道网络本身的丢包情况。你可以在两边为UDPspeeder加上`--disable-fec`选项，这样FEC就被关闭了。透过这条VPN连接来ping，就可以测出网络本身的丢包。
+比如你配置好了OpenVPN+UDPspeeder，但是不知道网络本身的丢包情况。你可以在两边为UDPspeeder加上`--disable-fec`选项，这样FEC就被关闭了。透过这条VPN连接来ping，就可以测出网络本身的丢包率。
 
 ###### NOTE1
 直接ping的结果不准，因为直接ping走的是icmp流量。通过VPN连接来ping才能真实反映出UDP的丢包情况。
