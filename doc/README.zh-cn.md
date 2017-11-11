@@ -189,7 +189,6 @@ echo mode 0 > fifo.file
 ```
 可以动态改变fec编码器参数。可以从程序的log里看到command是否发送成功。
 # 使用经验
-见：
 
 https://github.com/wangyu-/UDPspeeder/wiki/使用经验
 
