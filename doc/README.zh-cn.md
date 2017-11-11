@@ -233,6 +233,16 @@ echo mode 0 > fifo.file
 
 如果你实在不会配，那么也可以用回V1版。
 
+### 怎么测网络本身的丢包
+
+比如你配置好了OpenVPN+UDPspeeder，但是不知道网络本身的丢包情况。你可以在两边为UDPspeeder加上`--disable-fec`选项，这样FEC就被关闭了。透过这条VPN连接来ping，就可以测出网络本身的丢包。
+
+###### NOTE1
+直接ping的结果不准，因为直接ping走的是icmp流量。通过VPN连接来ping才能真实反映出UDP的丢包情况。
+
+###### NOTE2
+不要用iperf3来测UDP, 有BUG，结果很离谱。
+
 ### 根据CPU处理能力来调整FEC参数
 
 FEC算法很吃CPU，初次使用建议关注UDPspeeder的CPU占用。如果CPU被打满，可以在冗余度不变的情况下把FEC分组大小调小，否则的话效果可能很差。
