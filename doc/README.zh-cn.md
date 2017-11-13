@@ -172,12 +172,6 @@ mode 0模式允许你发送的数据包大小超过物理接口的MTU而几乎�
 ##### `--random-drop` 选项
 随机丢包。模拟高丢包的网络环境时使用。 `--random-drop`和`-j`选项一起用，可以模拟高延迟（或者高延迟抖动）高丢包的网络，可用于测试FEC参数在各种网络环境下的表现。
 
-##### `-k`选项
-指定一个字符串，server/client间所有收发的包都会被异或，改变协议特征，防止UDPspeeder的协议被运营商针对。
-
-##### `--disable-obscure`
-UDPspeeder默认情况下会对每个发出的数据包随机填充和异或一些字节(4~32字节)，这样通过抓包难以发现你发了冗余数据，防止VPS被封。这个功能只是为了小心谨慎，即使你关掉这个功能，基本上也没问题，关掉可以省一些带宽和CPU。
-
 #### `--fifo` option
 用fifo(命名管道)向运行中的程序发送command。例如`--fifo fifo.file`，可用的command有：
 ```
@@ -188,6 +182,14 @@ echo queue-len 100 > fifo.file
 echo mode 0 > fifo.file
 ```
 可以动态改变fec编码器参数。可以从程序的log里看到command是否发送成功。
+
+### 以下设置两端设置必须相同。 
+
+##### `-k`选项
+指定一个字符串，server/client间所有收发的包都会被异或，改变协议特征，防止UDPspeeder的协议被运营商针对。
+
+##### `--disable-obscure`
+UDPspeeder默认情况下会对每个发出的数据包随机填充和异或一些字节(4~32字节)，这样通过抓包难以发现你发了冗余数据，防止VPS被封。这个功能只是为了小心谨慎，即使你关掉这个功能，基本上也没问题，关掉可以省一些带宽和CPU。`--disable-obscure`可以关掉这个功能。
 # 使用经验
 
 https://github.com/wangyu-/UDPspeeder/wiki/使用经验
