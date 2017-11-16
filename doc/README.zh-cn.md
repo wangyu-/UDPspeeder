@@ -87,7 +87,7 @@ https://github.com/wangyu-/UDPspeeder/releases
 
 ###### 注意
 
-要为UDPspeeder加速的应用设置好MTU(不是在UDPspeeder中，是在被加速的应用中)，建议设置为1200。 另外，如果被加速的应用不能调整MTU，你可以给UDPspeeder 加上`--mode 0` 参数，这样基本可以解决任何MTU问题。`--mode 0`参数的含义，请看后文。
+要为UDPspeeder加速的应用设置好MTU(不是在UDPspeeder中，是在被加速的应用中)，建议设置为1200。 另外，如果被加速的应用不能调整MTU，你可以给UDPspeeder 加上`--mode 0` 参数，这样基本可以解决任何MTU问题。`--mode 0`参数的含义，请看后文。 
 
 # 进阶操作说明
 
