@@ -79,7 +79,7 @@ https://github.com/wangyu-/UDPspeeder/releases
 
 ###### 备注:
 
-`-f20:10` 表示对每20个原始数据发送10个冗余包。`-f20:10` 和`-f 20:10`都是可以的，空格可以省略，对于所有的单字节option都是如此。对于双字节option，例如后面的`--mode 0`和`--mtu 1200`，空格不可以省略。
+`-f20:10` 表示对每20个原始数据发送10个冗余包。`-f20:10` 和`-f 20:10`都是可以的，空格可以省略，对于所有的单字节option都是如此。对于双字节option，例如`--mode 0`，空格不可以省略。
 
 `-k` 指定一个字符串，开启简单的异或加密
 
@@ -87,7 +87,7 @@ https://github.com/wangyu-/UDPspeeder/releases
 
 ###### 注意
 
-要为UDPspeeder加速的应用设置好MTU(不是在UDPspeeder中，是在被加速的应用中)，建议设置为1200。 另外，如果被加速的应用不能调整MTU，也可以在UDPspeeder中通过`--mode 0 --mtu 1200`设置MTU。关于`--mode 0`和`--mtu`的具体解释请看下文。
+要为UDPspeeder加速的应用设置好MTU(不是在UDPspeeder中，是在被加速的应用中)，建议设置为1200。 另外，如果被加速的应用不能调整MTU，你可以给UDPspeeder 加上`--mode 0` 参数，这样基本可以解决任何MTU问题。`--mode 0`参数的含义，请看后文。
 
 # 进阶操作说明
 
