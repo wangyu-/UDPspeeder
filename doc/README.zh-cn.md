@@ -148,7 +148,7 @@ log and help options:
 
 简单来说`--mode 0`更省流量，没有mtu问题；`--mode 1`可以稍微降低一点延迟，需要考虑mtu；另外还有个`--mode 0 -q1`模式，多倍发包专用，没有延迟，也没有mtu问题，适合游戏。
 
-见：https://github.com/wangyu-/UDPspeeder/wiki/mode和mtu选项
+具体见，https://github.com/wangyu-/UDPspeeder/wiki/mode和mtu选项
 
 对于新手，建议不要纠结这些参数的具体含义，就用我在`使用经验`里推荐的设置，不要乱改参数，尤其是不要改`--mtu`。
 
