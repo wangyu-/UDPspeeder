@@ -72,10 +72,10 @@ Assume your server ip is 44.55.66.77, you have a service listening on udp port 7
 
 ```bash
 # Run at server side:
-./speederv2 -s -l0.0.0.0:4096 -r 127.0.0.1:7777  -f20:10 -k "passwd"
+./speederv2 -s -l0.0.0.0:4096 -r 127.0.0.1:7777  -f20:10 -k "passwd" --mode 0
 
 # Run at client side
-./speederv2 -c -l0.0.0.0:3333  -r44.55.66.77:4096 -f20:10 -k "passwd"
+./speederv2 -c -l0.0.0.0:3333  -r44.55.66.77:4096 -f20:10 -k "passwd" --mode 0
 ```
 
 Now connecting to UDP port 3333 at the client side is equivalent to connecting to port 7777 at the server side, and the connection is boosted by UDPspeeder.
@@ -86,7 +86,7 @@ Now connecting to UDP port 3333 at the client side is equivalent to connecting t
 
 `-k` enables simple XOR encryption
 
-To run stably, pay attention to MTU.
+Its suggested to use `--mode 0` option, otherwise you have to pay attention to MTU problem.
 
 # Advanced Topic
 ### Full Options
