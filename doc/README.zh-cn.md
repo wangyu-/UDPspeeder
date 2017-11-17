@@ -51,13 +51,13 @@ client支持多个udp连接，server也支持多个client
 # 简明操作说明
 
 ### 环境要求
-Linux主机，可以是桌面版，可以是android手机/平板，可以是openwrt路由器，也可以是树莓派。
+Linux主机，可以是桌面版，可以是android手机/平板，可以是openwrt路由器，也可以是树莓派。Release中提供了`amd64`、`x86`、`arm`、`mips_be`、`mips_le`的预编译binary.
 
 对于windows和mac用户，在虚拟机中可以稳定使用（speeder跑在Linux里，其他应用照常跑在window里，桥接模式测试可用）。可以使用[这个](https://github.com/wangyu-/udp2raw-tunnel/releases/download/20171108.0/lede-17.01.2-x86_virtual_machine_image.zip)虚拟机镜像，大小只有7.5mb，免去在虚拟机里装系统的麻烦；虚拟机自带ssh server，可以scp拷贝文件，可以ssh进去，可以复制粘贴，root密码123456。
 
 android版需要通过terminal运行。
 
-###### 注意
+##### 注意
 在使用虚拟机时，建议手动指定桥接到哪个网卡，不要设置成自动。否则可能会桥接到错误的网卡。
 
 ### 安装
@@ -69,26 +69,25 @@ https://github.com/wangyu-/UDPspeeder/releases
 假设你有一个server，ip为44.55.66.77，有一个服务监听在udp 7777端口。 假设你需要加速本地到44.55.66.77:7777的流量。
 ```
 在server端运行:
-./speederv2 -s -l0.0.0.0:4096 -r127.0.0.1:7777  -f20:10 -k "passwd"
+./speederv2 -s -l0.0.0.0:4096 -r127.0.0.1:7777  -f20:10 -k "passwd" --mode 0
 
 在client端运行:
-./speederv2 -c -l0.0.0.0:3333 -r44.55.66.77:4096 -f20:10 -k "passwd"
+./speederv2 -c -l0.0.0.0:3333 -r44.55.66.77:4096 -f20:10 -k "passwd" --mode 0
 ```
 
 现在client和server之间建立起了tunnel。想要连接44.55.66.77:7777，只需要连接 127.0.0.1:3333。来回的所有的udp流量会被加速。
 
-###### 备注:
+##### 备注:
 
 `-f20:10`表示对每20个原始数据发送10个冗余包。`-f20:10` 和`-f 20:10`都是可以的，空格可以省略，对于所有的单字节option都是如此。对于双字节option，例如后面会提到的`--mode 0`，空格不可以省略。
 
 `-k` 指定一个字符串，开启简单的异或加密
 
-如果需要更省流量或更高的下载速度，请加上`--mode 0`，`--mode 0`模式会牺牲一点点的延迟(默认最多8ms，可调)换取更低的流量消耗和更高的吞吐率。另外`--mode 0`模式可以解决MTU问题。
+推荐使用`--mode 0`选项，否则你可能需要考虑MTU问题。
 
-###### 注意
-如果你没有使用`--mode 0`模式，那么你需要为UDPspeeder加速的应用设置好MTU(不是在UDPspeeder中，是在被加速的应用中)，建议设置为1200。 
+##### 注意
 
-如果被加速的应用不能调整MTU，而你又确实遇到了MTU问题，那就只能使用`--mode 0`模式了。
+这里推荐的参数是给日常/非游戏情况下使用的；玩游戏请用 [使用经验](https://github.com/wangyu-/UDPspeeder/wiki/使用经验) 里推荐的参数。
 
 # 进阶操作说明
 
