@@ -86,7 +86,7 @@ Now connecting to UDP port 3333 at the client side is equivalent to connecting t
 
 `-k` enables simple XOR encryption
 
-To run stably, pay attention to MTU.
+To run stably, pay attention to MTU. You can also try `--mode 0`,there will be no MTU problem in this mode.
 
 # Advanced Topic
 ### Full Options
