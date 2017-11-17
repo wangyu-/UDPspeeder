@@ -283,8 +283,8 @@ struct conn_manager_t  //TODO change map to unordered map
 			}
 			cnt++;
 		}
-		return 0;
 		clear_it=it;
+		return 0;
 	}
 }conn_manager;
 
