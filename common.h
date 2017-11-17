@@ -70,7 +70,7 @@ const int buf_len=max_data_len+200;
 
 //const u32_t timer_interval=400;
 ////const u32_t conv_timeout=180000;
-const u32_t conv_timeout=40000;//for test
+const u32_t conv_timeout=180000;//for test
 const int max_conv_num=10000;
 const int max_conn_num=200;
 
