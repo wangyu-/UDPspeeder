@@ -83,7 +83,7 @@ https://github.com/wangyu-/UDPspeeder/releases
 
 `-k` 指定一个字符串，开启简单的异或加密
 
-推荐使用`--mode 0`选项，在`--mode 0`模式下不会有MTU问题。
+推荐使用`--mode 0`选项，否则你可能需要考虑MTU问题。
 
 ###### 注意
 如果你没有使用`--mode 0`模式，那么你需要为UDPspeeder加速的应用设置好MTU(不是在UDPspeeder中，是在被加速的应用中)，建议设置为1200。 
