@@ -87,7 +87,7 @@ https://github.com/wangyu-/UDPspeeder/releases
 
 ##### 注意
 
-这里推荐的参数是给日常/非游戏情况下使用的；玩游戏请用`使用经验`里推荐的参数。
+这里推荐的参数是给日常/非游戏情况下使用的；玩游戏请用[使用经验](https://github.com/wangyu-/UDPspeeder/wiki/使用经验)里推荐的参数。
 
 # 进阶操作说明
 
