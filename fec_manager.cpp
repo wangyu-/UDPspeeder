@@ -282,7 +282,10 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     			int best_data_num=fec_data_num;
     			for(int i=1;i<actual_data_num;i++)
     			{
-    				u32_t new_len=(blob_encode.get_shard_len(i,0)+header_overhead)*(i+fec_redundant_num);
+    				u32_t shard_len=blob_encode.get_shard_len(i,0);
+    				if(shard_len>(u32_t)fec_mtu) continue;
+
+    				u32_t new_len=(shard_len+header_overhead)*(i+fec_redundant_num);
     				if(new_len<best_len)
     				{
     					best_len=new_len;
