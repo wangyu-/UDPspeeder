@@ -69,10 +69,10 @@ https://github.com/wangyu-/UDPspeeder/releases
 假设你有一个server，ip为44.55.66.77，有一个服务监听在udp 7777端口。 假设你需要加速本地到44.55.66.77:7777的流量。
 ```
 在server端运行:
-./speederv2 -s -l0.0.0.0:4096 -r127.0.0.1:7777  -f20:10 -k "passwd"
+./speederv2 -s -l0.0.0.0:4096 -r127.0.0.1:7777  -f20:10 -k "passwd" --mode 0
 
 在client端运行:
-./speederv2 -c -l0.0.0.0:3333 -r44.55.66.77:4096 -f20:10 -k "passwd"
+./speederv2 -c -l0.0.0.0:3333 -r44.55.66.77:4096 -f20:10 -k "passwd" --mode 0
 ```
 
 现在client和server之间建立起了tunnel。想要连接44.55.66.77:7777，只需要连接 127.0.0.1:3333。来回的所有的udp流量会被加速。
@@ -83,7 +83,7 @@ https://github.com/wangyu-/UDPspeeder/releases
 
 `-k` 指定一个字符串，开启简单的异或加密
 
-如果需要更省流量或更高的下载速度，请加上`--mode 0`，`--mode 0`模式会牺牲一点点的延迟(默认最多8ms，可调)换取更低的流量消耗和更高的吞吐率。另外`--mode 0`模式可以解决MTU问题。
+推荐使用`--mode 0`选项，否则你可能需要考虑MTU问题。
 
 ###### 注意
 如果你没有使用`--mode 0`模式，那么你需要为UDPspeeder加速的应用设置好MTU(不是在UDPspeeder中，是在被加速的应用中)，建议设置为1200。 
