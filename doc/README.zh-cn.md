@@ -94,48 +94,52 @@ https://github.com/wangyu-/UDPspeeder/releases
 ### 命令选项
 ```
 UDPspeeder V2
-git version:8e7a8aed92    build date:Oct 25 2017 02:00:54
+git version: 6f55b8a2fc    build date: Nov 19 2017 06:11:23
 repository: https://github.com/wangyu-/UDPspeeder
 
 usage:
-    run as client : ./this_program -c -l local_listen_ip:local_port -r server_ip:server_port  [options]
-    run as server : ./this_program -s -l server_listen_ip:server_port -r remote_ip:remote_port  [options]
+    run as client: ./this_program -c -l local_listen_ip:local_port -r server_ip:server_port  [options]
+    run as server: ./this_program -s -l server_listen_ip:server_port -r remote_ip:remote_port  [options]
 
-common option,must be same on both sides:
-    -k,--key              <string>        key for simple xor encryption. if not set,xor is disabled
+common options, must be same on both sides:
+    -k,--key              <string>        key for simple xor encryption. if not set, xor is disabled
 main options:
-    -f,--fec              x:y             forward error correction,send y redundant packets for every x packets
-    --timeout             <number>        how long could a packet be held in queue before doing fec,unit: ms,default :8ms
-    --mode                <number>        fec-mode,available values: 0,1 ; 0 cost less bandwidth,1 cost less latency(default)
-    --report              <number>        turn on send/recv report,and set a period for reporting,unit:s
+    -f,--fec              x:y             forward error correction, send y redundant packets for every x packets
+    --timeout             <number>        how long could a packet be held in queue before doing fec, unit: ms, default: 8ms
+    --report              <number>        turn on send/recv report, and set a period for reporting, unit: s
 advanced options:
-    --mtu                 <number>        mtu. for mode 0,the program will split packet to segment smaller than mtu_value.
-                                          for mode 1,no packet will be split,the program just check if the mtu is exceed.
-                                          default value:1250
-    -j,--jitter           <number>        simulated jitter.randomly delay first packet for 0~<number> ms,default value:0.
+    --mode                <number>        fec-mode,available values: 0,1; mode 0(default) costs less bandwidth,no mtu problem.
+                                          mode 1 usually introduces less latency, but you have to care about mtu.
+    --mtu                 <number>        mtu. for mode 0, the program will split packet to segment smaller than mtu value.
+                                          for mode 1, no packet will be split, the program just check if the mtu is exceed.
+                                          default value: 1250. you typically shouldnt change this value.
+    -q,--queue-len        <number>        fec queue len, only for mode 0, fec will be performed immediately after queue is full.
+                                          default value: 200. 
+    -j,--jitter           <number>        simulated jitter. randomly delay first packet for 0~<number> ms, default value: 0.
                                           do not use if you dont know what it means.
-    -i,--interval         <number>        scatter each fec group to a interval of <number> ms,to protect burst packet loss.
-                                          default value:0.do not use if you dont know what it means.
-    --random-drop         <number>        simulate packet loss ,unit:0.01%. default value: 0
-    --disable-obscure     <number>        disable obscure,to save a bit bandwidth and cpu
+    -i,--interval         <number>        scatter each fec group to a interval of <number> ms, to protect burst packet loss.
+                                          default value: 0. do not use if you dont know what it means.
+    --random-drop         <number>        simulate packet loss, unit: 0.01%. default value: 0.
+    --disable-obscure     <number>        disable obscure, to save a bit bandwidth and cpu.
 developer options:
-    --fifo                <string>        use a fifo(named pipe) for sending commands to the running program,so that you
-                                          can change fec encode parameters dynamically,check readme.md in repository for
+    --fifo                <string>        use a fifo(named pipe) for sending commands to the running program, so that you
+                                          can change fec encode parameters dynamically, check readme.md in repository for
                                           supported commands.
-    -j ,--jitter          jmin:jmax       similiar to -j above,but create jitter randomly between jmin and jmax
-    -i,--interval         imin:imax       similiar to -i above,but scatter randomly between imin and imax
-    -q,--queue-len        <number>        max fec queue len,only for mode 0
-    --decode-buf          <number>        size of buffer of fec decoder,unit:packet,default:2000
-    --fix-latency         <number>        try to stabilize latency,only for mode 0
+    -j ,--jitter          jmin:jmax       similiar to -j above, but create jitter randomly between jmin and jmax
+    -i,--interval         imin:imax       similiar to -i above, but scatter randomly between imin and imax
+    --decode-buf          <number>        size of buffer of fec decoder,u nit: packet, default: 2000
+    --fix-latency         <number>        try to stabilize latency, only for mode 0
     --delay-capacity      <number>        max number of delayed packets
-    --disable-fec         <number>        completely disable fec,turn the program into a normal udp tunnel
-    --sock-buf            <number>        buf size for socket,>=10 and <=10240,unit:kbyte,default:1024
+    --disable-fec         <number>        completely disable fec, turn the program into a normal udp tunnel
+    --sock-buf            <number>        buf size for socket, >=10 and <=10240, unit: kbyte, default: 1024
 log and help options:
-    --log-level           <number>        0:never    1:fatal   2:error   3:warn
-                                          4:info (default)     5:debug   6:trace
-    --log-position                        enable file name,function name,line number in log
+    --log-level           <number>        0: never    1: fatal   2: error   3: warn 
+                                          4: info (default)      5: debug   6: trace
+    --log-position                        enable file name, function name, line number in log
     --disable-color                       disable log color
     -h,--help                             print this help message
+
+
 
 ```
 ### 包发送选项，两端设置可以不同。 只影响本地包发送。
@@ -236,7 +240,9 @@ run at client side:
 
 如果只需要加速UDP，不需要加速TCP，可以把kcptun换成其他的任意端口转发方式，比如ncat/socat/ssh tunnel/iptables/[tinyPortMapper](https://github.com/wangyu-/tinyPortMapper/releases)。
 
-另外，如果没有kcptun只有BBR/锐速的话，也可以把kcptun换成ncat/socat/ssh tunnel/iptables/[tinyPortMapper](https://github.com/wangyu-/tinyPortMapper/releases)。这样，TCP流量由锐速/BBR加速，UDP由UDPspeeder加速。
+如果你没有kcptun只有BBR/锐速的话，也可以把kcptun换成ncat/socat/ssh tunnel/iptables/[tinyPortMapper](https://github.com/wangyu-/tinyPortMapper/releases)。这样，TCP流量由锐速/BBR加速，UDP由UDPspeeder加速。
+
+另外，即使你不想使用$\*\*\*的TCP功能，你也必须把$\*\*\*的TCP端口转发过来，否则无法使用UDP功能，这是socks5协议的工作方式决定的。($\*\*\*-redir方式不受此限制)
 
 #### UDPspeeder + openvpn + $*** 混合方案，也适用于其他VPN
 也是我正在用的方案。优点是可以随时在vpn和$\*\*\*方案间快速切换。
@@ -257,12 +263,23 @@ run at client side:
 https://github.com/wangyu-/UDPspeeder/wiki/win10系统UDPspeeder-OpenVPN的完整设置
 
 
+#### UDPspeeder+OpenVPN运行在linux上，透明加速linux本机的网络
+
+https://github.com/wangyu-/tinyFecVPN/wiki/tinyFecVPN运行在linux上，透明加速linux本机的网络
+
+
+#### UDPspeeder+OpenVPN运行在虚拟机中，加速windows和局域网内其他主机的网络
+
+https://github.com/wangyu-/tinyFecVPN/wiki/tinyFecVPN运行在虚拟机中，加速windows和局域网内其他主机的网络
+
+
+
 #### 用树莓派做路由器，搭建透明代理，加速游戏主机的网络
 
 https://github.com/wangyu-/UDPspeeder/wiki/用树莓派做路由器，搭建透明代理，加速游戏主机的网络
-
 
 # 编译教程
 暂时先参考udp2raw的这篇教程，几乎一样的过程。
 
 https://github.com/wangyu-/udp2raw-tunnel/blob/master/doc/build_guide.zh-cn.md
+
