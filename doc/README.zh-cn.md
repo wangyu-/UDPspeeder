@@ -51,7 +51,7 @@ client支持多个udp连接，server也支持多个client
 # 简明操作说明
 
 ### 环境要求
-Linux主机，可以是桌面版，可以是android手机/平板，可以是openwrt路由器，也可以是树莓派。
+Linux主机，可以是桌面版，可以是android手机/平板，可以是openwrt路由器，也可以是树莓派。Release中提供了`amd64`、`x86`、`arm`、`mips_be`、`mips_le`的预编译binary.
 
 对于windows和mac用户，在虚拟机中可以稳定使用（speeder跑在Linux里，其他应用照常跑在window里，桥接模式测试可用）。可以使用[这个](https://github.com/wangyu-/udp2raw-tunnel/releases/download/20171108.0/lede-17.01.2-x86_virtual_machine_image.zip)虚拟机镜像，大小只有7.5mb，免去在虚拟机里装系统的麻烦；虚拟机自带ssh server，可以scp拷贝文件，可以ssh进去，可以复制粘贴，root密码123456。
 
