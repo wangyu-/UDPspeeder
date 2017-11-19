@@ -16,7 +16,7 @@ int g_fec_redundant_num=10;
 int g_fec_mtu=1250;
 int g_fec_queue_len=200;
 int g_fec_timeout=8*1000; //8ms
-int g_fec_mode=1;
+int g_fec_mode=0;
 
 int dynamic_update_fec=1;
 
