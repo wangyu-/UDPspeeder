@@ -37,18 +37,18 @@ static void print_help()
 	printf("    --report              <number>        turn on send/recv report, and set a period for reporting, unit: s\n");
 
 	printf("advanced options:\n");
-	printf("    --mode                <number>        fec-mode,available values: 0,1; mode 0(default) costs less bandwidth,no mtu problem\n");
-	printf("                                          mode 1 usually introduces less latency, you have to care about mtu \n");
-	printf("    --mtu                 <number>        mtu. for mode 0, the program will split packet to segment smaller than mtu_value.\n");
+	printf("    --mode                <number>        fec-mode,available values: 0,1; mode 0(default) costs less bandwidth,no mtu problem.\n");
+	printf("                                          mode 1 usually introduces less latency, but you have to care about mtu.\n");
+	printf("    --mtu                 <number>        mtu. for mode 0, the program will split packet to segment smaller than mtu value.\n");
 	printf("                                          for mode 1, no packet will be split, the program just check if the mtu is exceed.\n");
-    printf("    -q,--queue-len        <number>        fec queue len, only for mode 0, fec will be performed immediately after queue is full\n");
+    printf("    -q,--queue-len        <number>        fec queue len, only for mode 0, fec will be performed immediately after queue is full.\n");
 	printf("                                          default value: 1250\n");
 	printf("    -j,--jitter           <number>        simulated jitter. randomly delay first packet for 0~<number> ms, default value: 0.\n");
 	printf("                                          do not use if you dont know what it means.\n");
 	printf("    -i,--interval         <number>        scatter each fec group to a interval of <number> ms, to protect burst packet loss.\n");
 	printf("                                          default value: 0. do not use if you dont know what it means.\n");
-	printf("    --random-drop         <number>        simulate packet loss, unit: 0.01%%. default value: 0\n");
-	printf("    --disable-obscure     <number>        disable obscure, to save a bit bandwidth and cpu\n");
+	printf("    --random-drop         <number>        simulate packet loss, unit: 0.01%%. default value: 0.\n");
+	printf("    --disable-obscure     <number>        disable obscure, to save a bit bandwidth and cpu.\n");
 //	printf("    --disable-xor         <number>        disable xor\n");
 
 	printf("developer options:\n");
