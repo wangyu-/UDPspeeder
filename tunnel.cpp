@@ -118,7 +118,7 @@ int tunnel_client_event_loop()
 			}
 			else
 			{
-				mylog(log_fatal,"epoll_wait return %d\n", nfds);
+				mylog(log_fatal,"epoll_wait return %d,%s\n", nfds,strerror(errno));
 				myexit(-1);
 			}
 		}
@@ -422,7 +422,7 @@ int tunnel_server_event_loop()
 			}
 			else
 			{
-				mylog(log_fatal,"epoll_wait return %d\n", nfds);
+				mylog(log_fatal,"epoll_wait return %d,%s\n", nfds,strerror(errno));
 				myexit(-1);
 			}
 		}
