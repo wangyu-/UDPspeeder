@@ -705,8 +705,17 @@ int event_loop()
 		int nfds = epoll_wait(epollfd, events, max_events, 180 * 1000); //3mins
 		if (nfds < 0)
 		{
-			mylog(log_fatal,"epoll_wait return %d\n", nfds);
-			myexit(-1);
+			if(errno==EINTR  )
+			{
+				mylog(log_info,"epoll interrupted by signal,continue\n");
+				//myexit(0);
+			}
+			else
+			{
+				mylog(log_fatal,"epoll_wait return %d,%s\n", nfds,strerror(errno));
+				myexit(-1);
+			}
+
 		}
 		int n;
 		int clear_triggered=0;
