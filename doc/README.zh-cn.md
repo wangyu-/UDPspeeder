@@ -28,6 +28,8 @@ https://github.com/wangyu-/tinyFecVPN
 ![image0](/images/cn/ping_compare_cn.PNG)
 
 ![image0](/images/cn/scp_compare.PNG)
+
+
 #### 原理简介
 主要原理是通过冗余数据来对抗网络的丢包，发送冗余数据的方式支持FEC(Forward Error Correction)和多倍发包，其中FEC算法是Reed-Solomon。
 
@@ -47,6 +49,10 @@ FEC方式的原理图:
 模拟丢包，模拟延迟，模拟jitter。便于通过实验找出应用卡顿的原因。
 
 client支持多个udp连接，server也支持多个client
+
+#### 关键词
+
+UDP加速器、双边UDP加速、全流量加速、开源加速器、游戏加速、网游加速器
 
 # 简明操作说明
 
@@ -206,7 +212,7 @@ https://github.com/wangyu-/UDPspeeder/wiki/使用经验
 #### UDPspeeder + OpenVPN加速任何流量，也适用于其他VPN
 ![image0](/images/Capture2.PNG)
 
-可以和BBR/锐速叠加，不过BBR/锐速部署在VPS上只对本地和VPS间的流量有效，对从本地和第三方服务器间的流量无效。
+可以和BBR/锐速叠加，不过BBR/锐速部署在VPS上只对本地和VPS间的流量有效，对本地和第三方服务器间的流量无效。
 
 需要在服务端开启ipforward和NAT。在客户端改路由表（可以手动修改，也可以由OpenVPN的redirect-gateway选项自动加好）。
 
