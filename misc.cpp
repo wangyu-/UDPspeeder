@@ -140,24 +140,26 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 			}
 		}
 
+		mylog(log_trace,"from_normal_to_fec input_len=%d,output_n=%d\n",len,out_n);
+
+		if(out_n>0)
+		{
+			log_bare(log_trace,"seq= %u ",read_u32(out_arr[0]));
+		}
+		for(int i=0;i<out_n;i++)
+		{
+			inner_stat.output_packet_num++;
+			inner_stat.output_packet_size+=out_len[i];
+
+			log_bare(log_trace,"%d ",out_len[i]);
+
+		}
+
+		log_bare(log_trace,"\n");
+
 	}
 
-	mylog(log_trace,"from_normal_to_fec input_len=%d,output_n=%d\n",len,out_n);
 
-	if(out_n>0)
-	{
-		log_bare(log_trace,"seq= %u ",read_u32(out_arr[0]));
-	}
-	for(int i=0;i<out_n;i++)
-	{
-		inner_stat.output_packet_num++;
-		inner_stat.output_packet_size+=out_len[i];
-
-		log_bare(log_trace,"%d ",out_len[i]);
-
-	}
-
-	log_bare(log_trace,"\n");
 	//for(int i=0;i<n;i++)
 	//{
 		//delay_send(0,dest,s_arr[i],s_len);
