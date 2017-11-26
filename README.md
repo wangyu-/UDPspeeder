@@ -14,12 +14,7 @@ Assume your local network to your server is lossy. Just establish a VPN connecti
 
 [简体中文](/doc/README.zh-cn.md)(内容更丰富)
 
-###### Note
-You can use udp2raw with UDPspeeder together to get better speed on some ISP with UDP QoS(UDP throttling).
-
-udp2raw's repo：
-
-https://github.com/wangyu-/udp2raw-tunnel
+##### Note
 
 You can also try tinyFecVPN, a lightweight high-performance VPN with build-in FEC support:
 
@@ -85,6 +80,13 @@ Now connecting to UDP port 3333 at the client side is equivalent to connecting t
 `-f20:10` means sending 10 redundant packets for every 20 original packets.
 
 `-k` enables simple XOR encryption
+
+##### Note2
+You can use udp2raw with UDPspeeder together to get better speed on some ISP with UDP QoS(UDP throttling).
+
+udp2raw's repo：
+
+https://github.com/wangyu-/udp2raw-tunnel
 
 # Advanced Topic
 ### Full Options

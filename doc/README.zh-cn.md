@@ -11,11 +11,7 @@
 
 ![image0](/images/Capture2.PNG)
 
-对于某些运营商，UDPspeeder跟udp2raw配合可以达到更好的速度，udp2raw负责把UDP伪装成TCP，来绕过运营商的UDP限速。
-
-udp2raw的repo:
-
-https://github.com/wangyu-/udp2raw-tunnel
+##### 提示
 
 如果你嫌UDPspeeder+OpenVPN麻烦，你可以尝试tinyFecVPN，一个集成了UDPspeeder功能的VPN：
 
@@ -83,7 +79,7 @@ https://github.com/wangyu-/UDPspeeder/releases
 
 现在client和server之间建立起了tunnel。想要连接44.55.66.77:7777，只需要连接 127.0.0.1:3333。来回的所有的udp流量会被加速。
 
-##### 备注:
+##### 备注
 
 `-f20:10`表示对每20个原始数据发送10个冗余包。`-f20:10` 和`-f 20:10`都是可以的，空格可以省略，对于所有的单字节option都是如此。对于双字节option，例如后面会提到的`--mode 0`，空格不可以省略。
 
@@ -91,9 +87,15 @@ https://github.com/wangyu-/UDPspeeder/releases
 
 推荐使用`--mode 0`选项，否则你可能需要考虑MTU问题。
 
-##### 注意
-
 这里推荐的参数是给日常/非游戏情况下使用的；玩游戏请用 [使用经验](https://github.com/wangyu-/UDPspeeder/wiki/使用经验) 里推荐的参数。
+
+##### 提示
+
+对于某些运营商，UDPspeeder跟udp2raw配合可以达到更好的速度，udp2raw负责把UDP伪装成TCP，来绕过运营商的UDP限速。
+
+udp2raw的repo:
+
+https://github.com/wangyu-/udp2raw-tunnel
 
 # 进阶操作说明
 
@@ -269,20 +271,23 @@ run at client side:
 https://github.com/wangyu-/UDPspeeder/wiki/win10系统UDPspeeder-OpenVPN的完整设置
 
 
-#### UDPspeeder+OpenVPN运行在linux上，透明加速linux本机的网络
+#### UDPspeeder+VPN运行在linux上，透明加速linux本机的网络
 
 https://github.com/wangyu-/tinyFecVPN/wiki/tinyFecVPN运行在linux上，透明加速linux本机的网络
 
 
-#### UDPspeeder+OpenVPN运行在虚拟机中，加速windows和局域网内其他主机的网络
+#### UDPspeeder+VPN运行在虚拟机中，加速windows和局域网内其他主机的网络
 
 https://github.com/wangyu-/tinyFecVPN/wiki/tinyFecVPN运行在虚拟机中，加速windows和局域网内其他主机的网络
-
 
 
 #### 用树莓派做路由器，搭建透明代理，加速游戏主机的网络
 
 https://github.com/wangyu-/UDPspeeder/wiki/用树莓派做路由器，搭建透明代理，加速游戏主机的网络
+
+#### UDPspeeder和udp2raw串联加速OpenVPN
+
+https://github.com/wangyu-/UDPspeeder/wiki/UDPspeeder和udp2raw串联加速OpenVPN
 
 # 编译教程
 暂时先参考udp2raw的这篇教程，几乎一样的过程。
