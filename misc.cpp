@@ -140,7 +140,6 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 			}
 		}
 
-		mylog(log_trace,"from_normal_to_fec input_len=%d,output_n=%d\n",len,out_n);
 
 		if(out_n>0)
 		{
@@ -158,6 +157,8 @@ int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,ch
 		log_bare(log_trace,"\n");
 
 	}
+
+	mylog(log_trace,"from_normal_to_fec input_len=%d,output_n=%d\n",len,out_n);
 
 
 	//for(int i=0;i<n;i++)
