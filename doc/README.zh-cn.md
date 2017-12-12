@@ -244,7 +244,7 @@ run at client side:
 ./speederv2 -c -l0.0.0.0:1234 -r44.55.66.77:4001 -f20:10 -k "passwd"
 ```
 
-这就是全部的命令了。issue里有很多人困惑于怎么把tcp和udp流量"分开"，其实很简单就可以做到。
+这就是全部的命令了。Issue里有很多人困惑于怎么把tcp和udp流量"分开"；实际上tcp 443和udp 443是独立的2个端口，根本就不存在“分开”的问题。
 
 如果只需要加速UDP，不需要加速TCP，可以把kcptun换成其他的任意端口转发方式，比如ncat/socat/ssh tunnel/iptables/[tinyPortMapper](https://github.com/wangyu-/tinyPortMapper/releases)。
 
@@ -266,28 +266,15 @@ run at client side:
 
 # 应用实例
 
-#### win10系统UDPspeeder+OpenVPN的完整设置
+[win10系统UDPspeeder+OpenVPN的完整设置](https://github.com/wangyu-/UDPspeeder/wiki/win10系统UDPspeeder-OpenVPN的完整设置)
 
-https://github.com/wangyu-/UDPspeeder/wiki/win10系统UDPspeeder-OpenVPN的完整设置
+[UDPspeeder+VPN运行在linux上，透明加速linux本机的网络](https://github.com/wangyu-/tinyFecVPN/wiki/tinyFecVPN运行在linux上，透明加速linux本机的网络)
 
+[UDPspeeder+VPN运行在虚拟机中，加速windows和局域网内其他主机的网络](https://github.com/wangyu-/tinyFecVPN/wiki/tinyFecVPN运行在虚拟机中，加速windows和局域网内其他主机的网络)
 
-#### UDPspeeder+VPN运行在linux上，透明加速linux本机的网络
+[用树莓派做路由器，搭建透明代理，加速游戏主机的网络](https://github.com/wangyu-/UDPspeeder/wiki/用树莓派做路由器，搭建透明代理，加速游戏主机的网络)
 
-https://github.com/wangyu-/tinyFecVPN/wiki/tinyFecVPN运行在linux上，透明加速linux本机的网络
-
-
-#### UDPspeeder+VPN运行在虚拟机中，加速windows和局域网内其他主机的网络
-
-https://github.com/wangyu-/tinyFecVPN/wiki/tinyFecVPN运行在虚拟机中，加速windows和局域网内其他主机的网络
-
-
-#### 用树莓派做路由器，搭建透明代理，加速游戏主机的网络
-
-https://github.com/wangyu-/UDPspeeder/wiki/用树莓派做路由器，搭建透明代理，加速游戏主机的网络
-
-#### UDPspeeder和udp2raw串联加速OpenVPN
-
-https://github.com/wangyu-/UDPspeeder/wiki/UDPspeeder和udp2raw串联加速OpenVPN
+[UDPspeeder和udp2raw串联加速OpenVPN](https://github.com/wangyu-/UDPspeeder/wiki/UDPspeeder和udp2raw串联加速OpenVPN)
 
 # 编译教程
 暂时先参考udp2raw的这篇教程，几乎一样的过程。
