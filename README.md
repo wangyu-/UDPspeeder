@@ -15,6 +15,8 @@ Assume your local network to your server is lossy. Just establish a VPN connecti
 
 [简体中文](/doc/README.zh-cn.md)(内容更丰富)
 
+[UDPspeeder wiki](https://github.com/wangyu-/UDPspeeder/wiki)
+
 ##### Note
 
 You can also try tinyFecVPN, a lightweight high-performance VPN with build-in FEC support:
