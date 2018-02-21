@@ -17,11 +17,11 @@
 
 ##### 提示
 
-如果你嫌UDPspeeder+OpenVPN麻烦，你可以尝试tinyFecVPN，一个集成了UDPspeeder功能的VPN：
+如果你嫌UDPspeeder+OpenVPN麻烦，你可以尝试tinyfecVPN，一个集成了UDPspeeder功能的VPN：
 
-tinyFecVPN的repo:
+tinyfecVPN的repo:
 
-https://github.com/wangyu-/tinyFecVPN
+https://github.com/wangyu-/tinyfecVPN
 
 
 #### 效果
