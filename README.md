@@ -150,4 +150,9 @@ echo mode 0 > fifo.file
 ```
 ### Speed-Up any traffic with OpenVPN + UDPspeeder
 
-Check [UDPspeeder + openvpn config guide](/doc/udpspeeder_openvpn.md).
+Check [UDPspeeder + openvpn config guide](https://github.com/wangyu-/UDPspeeder/wiki/UDPspeeder-openvpn-config-guide).
+
+# wiki
+Check wiki for more info:
+
+https://github.com/wangyu-/UDPspeeder/wiki
