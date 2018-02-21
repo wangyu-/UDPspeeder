@@ -19,11 +19,11 @@ Assume your local network to your server is lossy. Just establish a VPN connecti
 
 ##### Note
 
-You can also try tinyFecVPN, a lightweight high-performance VPN with build-in FEC support:
+You can also try tinyfecVPN, a lightweight high-performance VPN with build-in FEC support:
 
-tinyFecVPN's repo:
+tinyfecVPN's repo:
 
-https://github.com/wangyu-/tinyFecVPN
+https://github.com/wangyu-/tinyfecVPN
 
 
 # Efficacy
