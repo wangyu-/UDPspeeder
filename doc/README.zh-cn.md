@@ -209,75 +209,14 @@ UDPspeeder默认情况下会对每个发出的数据包随机填充和异或一�
 
 https://github.com/wangyu-/UDPspeeder/wiki/使用经验
 
-# 应用
-
-#### UDPspeeder + OpenVPN加速任何流量，也适用于其他VPN
-![image0](/images/Capture2.PNG)
-
-可以和BBR/锐速叠加，不过BBR/锐速部署在VPS上只对本地和VPS间的流量有效，对本地和第三方服务器间的流量无效。
-
-需要在服务端开启ipforward和NAT。在客户端改路由表（可以手动修改，也可以由OpenVPN的redirect-gateway选项自动加好）。
-
-Linux具体配置: [UDPspeeder + openvpn config guide](/doc/udpspeeder_openvpn.md).
-
-Windows具体配置: [win10系统UDPspeeder+OpenVPN的完整设置](https://github.com/wangyu-/UDPspeeder/wiki/win10系统UDPspeeder-OpenVPN的完整设置)
-
-如果UDPspeeder + OpenVPN对你来说显得太麻烦了，你可以尝试一下tinyFecVPN,一个集成了UDPspeeder功能的VPN:
-
-https://github.com/wangyu-/tinyFecVPN/
-
-#### UDPspeeder + kcptun/finalspeed + $*** 同时加速tcp和udp流量
-如果你需要用加速的tcp看视频和下载文件，这样效果可能比没有BBR的UDPspeeder+vpn方案更好。另外，如果你需要玩游戏，但是嫌配VPN麻烦，也可以用这种方案。
-![image0](/images/cn/speeder_kcptun.PNG)
-
-具体配置方法简介:
-
-假设$\*\*\*  server监听在在44.55.66.77的443端口(tcp和udp同时)。用kcptun把tcp 443映射到本地的tcp 1234；用UDPspeeder把udp 443的映射到本地的udp 1234。
-然后让$\*\*\* client 去连127.0.0.1:1234就可以了，tcp和udp都被加速了。完整命令：
-```
-run at server side:
-./kcp_server  -l ":4000" -t "127.0.0.1:443" -mode fast2
-./speederv2 -s -l0.0.0.0:4001 -r127.0.0.1:443  -f20:10 -k "passwd"
-
-run at client side:
-./kcp_client  -l ":1234" -r "44.55.66.77:4000" -mode fast2
-./speederv2 -c -l0.0.0.0:1234 -r44.55.66.77:4001 -f20:10 -k "passwd"
-```
-
-这就是全部的命令了。Issue里有很多人困惑于怎么把tcp和udp流量"分开"；实际上tcp 443和udp 443是独立的2个端口，根本就不存在“分开”的问题。
-
-如果只需要加速UDP，不需要加速TCP，可以把kcptun换成其他的任意端口转发方式，比如ncat/socat/ssh tunnel/iptables/[tinyPortMapper](https://github.com/wangyu-/tinyPortMapper/releases)。
-
-如果你没有kcptun只有BBR/锐速的话，也可以把kcptun换成ncat/socat/ssh tunnel/iptables/[tinyPortMapper](https://github.com/wangyu-/tinyPortMapper/releases)。这样，TCP流量由锐速/BBR加速，UDP由UDPspeeder加速。
-
-另外，即使你不想使用$\*\*\*的TCP功能，你也必须把$\*\*\*的TCP端口转发过来，否则无法使用UDP功能，这是socks5协议的工作方式决定的。($\*\*\*-redir方式不受此限制)
-
-#### UDPspeeder + openvpn + $*** 混合方案，也适用于其他VPN
-也是我正在用的方案。优点是可以随时在vpn和$\*\*\*方案间快速切换。
-实际部署起来比图中看起来的还要简单。不需要改路由表，不需要写iptables规则和开启NAT，需要做的只是用openvpn分配的ip访问$*** server。
-
-![image0](/images/cn/speeder_vpn_s.PNG)
-
-(也可以把图中的$*** server换成其他的socks5 server，这样就不需要$*** client了)
-
-可以和BBR/锐速叠加，BBR/锐速只要部署在VPS上就有效。
-
-也可以用[tinyFecVPN](https://github.com/wangyu-/tinyFecVPN/) + $\*\*\* ，配置起来更简单。
-
-# 应用实例
-
-[win10系统UDPspeeder+OpenVPN的完整设置](https://github.com/wangyu-/UDPspeeder/wiki/win10系统UDPspeeder-OpenVPN的完整设置)
-
-[UDPspeeder+VPN运行在linux上，透明加速linux本机的网络](https://github.com/wangyu-/tinyFecVPN/wiki/tinyFecVPN运行在linux上，透明加速linux本机的网络)
-
-[UDPspeeder+VPN运行在虚拟机中，加速windows和局域网内其他主机的网络](https://github.com/wangyu-/tinyFecVPN/wiki/tinyFecVPN运行在虚拟机中，加速windows和局域网内其他主机的网络)
-
-[用树莓派做路由器，搭建透明代理，加速游戏主机的网络](https://github.com/wangyu-/UDPspeeder/wiki/用树莓派做路由器，搭建透明代理，加速游戏主机的网络)
-
-[UDPspeeder和udp2raw串联加速OpenVPN](https://github.com/wangyu-/UDPspeeder/wiki/UDPspeeder和udp2raw串联加速OpenVPN)
-
 # 编译教程
 暂时先参考udp2raw的这篇教程，几乎一样的过程。
 
 https://github.com/wangyu-/udp2raw-tunnel/blob/master/doc/build_guide.zh-cn.md
+
+# wiki
+
+更多内容请看 wiki:
+
+https://github.com/wangyu-/UDPspeeder/wiki
 
