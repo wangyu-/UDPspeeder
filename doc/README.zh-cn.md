@@ -11,6 +11,10 @@
 
 ![image0](/images/Capture2.PNG)
 
+[English](/README.md)
+
+[UDPspeeder Wiki](https://github.com/wangyu-/UDPspeeder/wiki)
+
 ##### 提示
 
 如果你嫌UDPspeeder+OpenVPN麻烦，你可以尝试tinyFecVPN，一个集成了UDPspeeder功能的VPN：
