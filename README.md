@@ -86,7 +86,7 @@ https://github.com/wangyu-/UDPspeeder/wiki
 
 # Related repo
 
-You can also try tinyfecVPN, a lightweight high-performance VPN with UDPspeeder's function built-in:
+You can also try tinyfecVPN, a lightweight high-performance VPN with UDPspeeder's function built-in.
 
 tinyfecVPN's repo:
 
