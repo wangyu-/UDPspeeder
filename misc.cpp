@@ -579,6 +579,7 @@ void process_arg(int argc, char *argv[])
 		{"tun-mtu", required_argument,    0, 1},
 		{"disable-mssfix", no_argument,    0, 1},
 		{"keep-reconnect", no_argument,    0, 1},
+		{"interval", required_argument,   0,'i'},
 		{NULL, 0, 0, 0}
       };
     int option_index = 0;

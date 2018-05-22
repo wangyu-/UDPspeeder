@@ -64,7 +64,7 @@ typedef short i16_t;
 
 typedef u64_t my_time_t;
 
-const int max_data_len=2200;
+const int max_data_len=3600;
 const int buf_len=max_data_len+200;
 
 
