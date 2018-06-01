@@ -130,21 +130,27 @@ int blob_decode_t::output(int &n,char ** &s_arr,int *&len_arr)
 
 fec_encode_manager_t::~fec_encode_manager_t()
 {
-	fd_manager.fd64_close(timer_fd64);
+	clear();
+	//fd_manager.fd64_close(timer_fd64);
 }
+/*
 u64_t fec_encode_manager_t::get_timer_fd64()
 {
 	return timer_fd64;
-}
+}*/
+
 fec_encode_manager_t::fec_encode_manager_t()
 {
 	//int timer_fd;
+
+	/*
 	if ((timer_fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)) < 0)
 	{
 		mylog(log_fatal,"timer_fd create error");
 		myexit(1);
 	}
-	timer_fd64=fd_manager.create(timer_fd);
+	timer_fd64=fd_manager.create(timer_fd);*/
+
 
 	reset_fec_parameter(g_fec_data_num,g_fec_redundant_num,g_fec_mtu,g_fec_queue_len,g_fec_timeout,g_fec_mode);
 
@@ -175,7 +181,13 @@ int fec_encode_manager_t::append(char *s,int len/*,int &is_first_packet*/)
 		my_time_t tmp_time=fec_timeout+first_packet_time;
 		its.it_value.tv_sec=tmp_time/1000000llu;
 		its.it_value.tv_nsec=(tmp_time%1000000llu)*1000llu;
-		timerfd_settime(timer_fd,TFD_TIMER_ABSTIME,&its,0);
+		//timerfd_settime(timer_fd,TFD_TIMER_ABSTIME,&its,0);
+
+		ev_timer_stop(loop, &timer);
+		ev_timer_set(&timer, tmp_time/1000000.0 - ev_now(loop) ,0 );   //we should use ev_now here.
+		ev_timer_start(loop, &timer);
+
+		//ev_timer_set(loop,)
 	}
 	if(fec_mode==0)//for type 0 use blob
 	{
@@ -402,7 +414,8 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 
 		itimerspec its;
 		memset(&its,0,sizeof(its));
-		timerfd_settime(timer_fd,TFD_TIMER_ABSTIME,&its,0);
+		ev_timer_stop(loop, &timer);
+		//timerfd_settime(timer_fd,TFD_TIMER_ABSTIME,&its,0);
 
     	if(encode_fast_send&&fec_mode==1)
     	{

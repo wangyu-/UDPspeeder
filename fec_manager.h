@@ -112,6 +112,7 @@ struct blob_decode_t
 
 class fec_encode_manager_t
 {
+
 private:
 	u32_t seq;
 
@@ -133,18 +134,34 @@ private:
 	int output_len[max_fec_packet_num+100];
 
 	int counter;
-	int timer_fd;
-	u64_t timer_fd64;
+	//int timer_fd;
+	//u64_t timer_fd64;
 
 	int ready_for_output;
 	u32_t output_n;
 
-
 	int append(char *s,int len);
+
+	ev_timer timer;
+	struct ev_loop *loop=0;
+	void (*cb) (struct ev_loop *loop, struct ev_timer *watcher, int revents)=0;
 
 public:
 	fec_encode_manager_t();
 	~fec_encode_manager_t();
+
+	void set_data(void * data)
+	{
+		timer.data=data;
+	}
+
+
+	void set_loop_and_cb(struct ev_loop *loop,void (*cb) (struct ev_loop *loop, struct ev_timer *watcher, int revents))
+	{
+		this->loop=loop;
+		this->cb=cb;
+		ev_init(&timer,cb);
+	}
 
 	int clear()
 	{
@@ -152,11 +169,16 @@ public:
 		blob_encode.clear();
 		ready_for_output=0;
 
-		itimerspec zero_its;
-		memset(&zero_its, 0, sizeof(zero_its));
+		//itimerspec zero_its;
+		//memset(&zero_its, 0, sizeof(zero_its));
+		//timerfd_settime(timer_fd, TFD_TIMER_ABSTIME, &zero_its, 0);
 
-		timerfd_settime(timer_fd, TFD_TIMER_ABSTIME, &zero_its, 0);
-
+		if(loop)
+		{
+			ev_timer_stop(loop,&timer);
+			loop=0;
+			cb=0;
+		}
 		seq=(u32_t)get_true_random_number(); //TODO temp solution for a bug.
 
 		return 0;
@@ -176,7 +198,7 @@ public:
 	{
 		return fec_mode;
 	}
-	u64_t get_timer_fd64();
+	//u64_t get_timer_fd64();
 	int reset_fec_parameter(int data_num,int redundant_num,int mtu,int pending_num,int pending_time,int type);
 	int input(char *s,int len/*,int &is_first_packet*/);
 	int output(int &n,char ** &s_arr,int *&len);

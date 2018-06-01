@@ -28,7 +28,7 @@ union dest_t
 	u64_t u64;
 };
 */
-
+/*
 struct my_timer_t
 {
 	int timer_fd;
@@ -101,7 +101,9 @@ struct my_timer_t
 		timerfd_settime(timer_fd,TFD_TIMER_ABSTIME,&its,0);
 		return 0;
 	}
-};
+};*/
+
+
 struct delay_data_t
 {
 	dest_t dest;
@@ -113,7 +115,11 @@ struct delay_data_t
 
 struct delay_manager_t
 {
-	int timer_fd;
+	ev_timer timer;
+	struct ev_loop *loop=0;
+	void (*cb) (struct ev_loop *loop, struct ev_timer *watcher, int revents)=0;
+
+	//int timer_fd;
 	int capacity;
 	multimap<my_time_t,delay_data_t> delay_mp;  //unit us,1 us=0.001ms
 	delay_manager_t();
@@ -121,9 +127,15 @@ struct delay_manager_t
 	{
 		assert(0==1);
 	}
+	void set_loop_and_cb(struct ev_loop *loop,void (*cb) (struct ev_loop *loop, struct ev_timer *watcher, int revents))
+	{
+		this->loop=loop;
+		this->cb=cb;
+		ev_init(&timer,cb);
+	}
 	int set_capacity(int a){capacity=a;return 0;}
 	~delay_manager_t();
-	int get_timer_fd();
+	ev_timer& get_timer();
 	int check();
 	int add(my_time_t delay,const dest_t &dest,char *data,int len);
 };

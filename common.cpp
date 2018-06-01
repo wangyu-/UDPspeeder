@@ -587,7 +587,7 @@ int new_listen_socket(int &fd,u32_t ip,int port)
 	setnonblocking(fd);
     set_buf_size(fd,socket_buf_size);
 
-    mylog(log_debug,"local_listen_fd=%d\n,",fd);
+    mylog(log_debug,"local_listen_fd=%d\n",fd);
 
 	return 0;
 }

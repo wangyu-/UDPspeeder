@@ -106,10 +106,16 @@ struct conn_info_t     //stores info for a raw connection.for client ,there is o
 	conv_manager_t conv_manager;
 	fec_encode_manager_t fec_encode_manager;
 	fec_decode_manager_t fec_decode_manager;
-	my_timer_t timer;
+	ev_timer timer;
+	//my_timer_t timer;
 	//ip_port_t ip_port;
 	u64_t last_active_time;
 	stat_t stat;
+
+	int local_listen_fd;
+	int remote_fd;
+	fd64_t remote_fd64;
+
 	conn_info_t()
 	{
 	}

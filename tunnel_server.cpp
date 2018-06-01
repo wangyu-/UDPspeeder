@@ -6,22 +6,56 @@
  */
 
 #include "tunnel.h"
+void data_from_local_or_fec_timeout(conn_info_t & conn_info,int from_local)
+{
 
+}
+
+static void local_listen_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
+{
+
+}
+
+static void remote_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
+{
+
+}
+
+static void fifo_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
+{
+
+}
+
+static void delay_manager_cb(struct ev_loop *loop, struct ev_timer *watcher, int revents)
+{
+
+}
+
+static void fec_encode_cb(struct ev_loop *loop, struct ev_timer *watcher, int revents)
+{
+
+}
+
+static void conn_timer_cb(struct ev_loop *loop, struct ev_timer *watcher, int revents)
+{
+
+}
+
+static void prepare_cb(struct ev_loop *loop, struct ev_prepare *watcher, int revents)
+{
+
+}
 
 int tunnel_server_event_loop()
 {
-#if 0
-	//char buf[buf_len];
+
 	int i, j, k;int ret;
 	int yes = 1;
 	int epoll_fd;
 	int remote_fd;
 
-//    conn_info_t conn_info;
 	int local_listen_fd;
-//	fd64_t local_listen_fd64;
     new_listen_socket(local_listen_fd,local_ip_uint32,local_port);
-   // local_listen_fd64=fd_manager.create(local_listen_fd);
 
 	epoll_fd = epoll_create1(0);
 	assert(epoll_fd>0);
@@ -85,7 +119,6 @@ int tunnel_server_event_loop()
 			if(errno==EINTR  )
 			{
 				mylog(log_info,"epoll interrupted by signal,continue\n");
-				//myexit(0);
 			}
 			else
 			{
@@ -96,22 +129,12 @@ int tunnel_server_event_loop()
 		int idx;
 		for (idx = 0; idx < nfds; ++idx)
 		{
-			/*
-			if ((events[idx].data.u64 ) == (u64_t)timer_fd)
-			{
-				conn_manager.clear_inactive();
-				u64_t dummy;
-				read(timer_fd, &dummy, 8);
-				//current_time_rough=get_current_time();
-			}
-			else */
 			if(events[idx].data.u64==(u64_t)timer.get_timer_fd())
 			{
 				uint64_t value;
 				read(timer.get_timer_fd(), &value, 8);
 				conn_manager.clear_inactive();
 				mylog(log_trace,"events[idx].data.u64==(u64_t)timer.get_timer_fd()\n");
-				//conn_info.conv_manager.clear_inactive();
 			}
 
 			else if (events[idx].data.u64 == (u64_t)fifo_fd)
@@ -131,7 +154,6 @@ int tunnel_server_event_loop()
 			{
 
 				mylog(log_trace,"events[idx].data.u64 == (u64_t)local_listen_fd\n");
-				//int recv_len;
 				char data[buf_len];
 				int data_len;
 				struct sockaddr_in udp_new_addr_in={0};
@@ -140,7 +162,6 @@ int tunnel_server_event_loop()
 						(struct sockaddr *) &udp_new_addr_in, &udp_new_addr_len)) == -1) {
 					mylog(log_error,"recv_from error,this shouldnt happen,err=%s,but we can try to continue\n",strerror(errno));
 					continue;
-					//myexit(1);
 				};
 				mylog(log_trace,"Received packet from %s:%d,len: %d\n", inet_ntoa(udp_new_addr_in.sin_addr),
 						ntohs(udp_new_addr_in.sin_port),data_len);
@@ -172,8 +193,6 @@ int tunnel_server_event_loop()
 
 					conn_manager.insert(ip_port);
 					conn_info_t &conn_info=conn_manager.find(ip_port);
-					//conn_info.fec_encode_manager.re_init(fec_data_num,fec_redundant_num,fec_mtu,fec_pending_num,fec_pending_time,fec_type);
-					//conn_info.conv_manager.reserve();  //already reserved in constructor
 
 					u64_t fec_fd64=conn_info.fec_encode_manager.get_timer_fd64();
 					mylog(log_debug,"fec_fd64=%llu\n",fec_fd64);
@@ -212,10 +231,6 @@ int tunnel_server_event_loop()
 						continue;
 					}
 
-					/*
-					id_t tmp_conv_id;
-					memcpy(&tmp_conv_id,&data_[0],sizeof(tmp_conv_id));
-					tmp_conv_id=ntohl(tmp_conv_id);*/
 
 					if (!conn_info.conv_manager.is_conv_used(conv))
 					{
@@ -243,17 +258,12 @@ int tunnel_server_event_loop()
 
 
 						mylog(log_info,"[%s]new conv %x,fd %d created,fd64=%llu\n",ip_port.to_s(),conv,new_udp_fd,fd64);
-						//assert(!conn_manager.exist_fd64(fd64));
-
-						//conn_manager.insert_fd64(fd64,ip_port);
 					}
 					conn_info.conv_manager.update_active_time(conv);
 					fd64_t fd64= conn_info.conv_manager.find_u64_by_conv(conv);
-					//int fd=fd_manager.fd64_to_fd(fd64);
 					dest_t dest;
 					dest.type=type_fd64;
 					dest.inner.fd64=fd64;
-					//dest.conv=conv;
 					delay_send(out_delay[i],dest,new_data,new_len);
 				}
 			}
@@ -280,7 +290,6 @@ int tunnel_server_event_loop()
 				assert(conn_manager.exist(ip_port));
 
 				conn_info_t &conn_info=conn_manager.find(ip_port);
-				//conn_info.update_active_time(); //cant put it here
 
 				int  out_n=-2;char **out_arr;int *out_len;my_time_t *out_delay;
 
@@ -292,7 +301,6 @@ int tunnel_server_event_loop()
 
 				if(fd64==conn_info.fec_encode_manager.get_timer_fd64())
 				{
-					//mylog(log_infol,"timer!!!\n");
 					uint64_t value;
 					if((ret=read(fd_manager.to_fd(fd64), &value, 8))!=8)
 					{
@@ -357,7 +365,6 @@ int tunnel_server_event_loop()
 				{
 					delay_send(out_delay[i],dest,out_arr[i],out_len[i]);
 				}
-				//mylog(log_trace,"[%s] send packet\n",ip_port.to_s());
 
 			}
 			else
@@ -368,7 +375,6 @@ int tunnel_server_event_loop()
 		}
 		delay_manager.check();
 	}
-#endif
 	return 0;
 
 }
