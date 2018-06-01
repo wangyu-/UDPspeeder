@@ -2,7 +2,6 @@
 
 int tunnel_client_event_loop()
 {
-	//char buf[buf_len];
 	int i, j, k;int ret;
 	int yes = 1;
 	int epoll_fd;
@@ -11,14 +10,9 @@ int tunnel_client_event_loop()
 
     conn_info_t *conn_info_p=new conn_info_t;
     conn_info_t &conn_info=*conn_info_p;  //huge size of conn_info,do not allocate on stack
-    //conn_info.conv_manager.reserve();
-	//conn_info.fec_encode_manager.re_init(fec_data_num,fec_redundant_num,fec_mtu,fec_pending_num,fec_pending_time,fec_type);
-
 
 	int local_listen_fd;
-	//fd64_t local_listen_fd64;
     new_listen_socket(local_listen_fd,local_ip_uint32,local_port);
-    //local_listen_fd64=fd_manager.create(local_listen_fd);
 
 	epoll_fd = epoll_create1(0);
 	assert(epoll_fd>0);
@@ -73,7 +67,6 @@ int tunnel_client_event_loop()
 		myexit(-1);
 	}
 
-	//my_timer_t timer;
 	conn_info.timer.add_fd_to_epoll(epoll_fd);
 	conn_info.timer.set_timer_repeat_us(timer_interval*1000);
 
@@ -106,7 +99,6 @@ int tunnel_client_event_loop()
 			if(errno==EINTR  )
 			{
 				mylog(log_info,"epoll interrupted by signal continue\n");
-				//myexit(0);
 			}
 			else
 			{
@@ -168,7 +160,6 @@ int tunnel_client_event_loop()
 					fd64_t fd64=events[idx].data.u64;
 					mylog(log_trace,"events[idx].data.u64 == conn_info.fec_encode_manager.get_timer_fd64()\n");
 
-					//mylog(log_info,"timer!!!\n");
 					uint64_t value;
 					if(!fd_manager.exist(fd64))   //fd64 has been closed
 					{
@@ -187,7 +178,6 @@ int tunnel_client_event_loop()
 					}
 					assert(value==1);
 					from_normal_to_fec(conn_info,0,0,out_n,out_arr,out_len,out_delay);
-					//from_normal_to_fec(conn_info,0,0,out_n,out_arr,out_len,out_delay);
 				}
 				else//events[idx].data.u64 == (u64_t)local_listen_fd
 				{
@@ -198,8 +188,6 @@ int tunnel_client_event_loop()
 							(struct sockaddr *) &udp_new_addr_in, &udp_new_addr_len)) == -1) {
 						mylog(log_error,"recv_from error,this shouldnt happen,err=%s,but we can try to continue\n",strerror(errno));
 						continue;
-						//mylog(log_error,"recv_from error,this shouldnt happen at client\n");
-						//myexit(1);
 					};
 
 					if(!disable_mtu_warn&&data_len>=mtu_warn)
@@ -237,7 +225,6 @@ int tunnel_client_event_loop()
 
 
 					mylog(log_trace,"data_len=%d new_len=%d\n",data_len,new_len);
-					//dest.conv=conv;
 					from_normal_to_fec(conn_info,new_data,new_len,out_n,out_arr,out_len,out_delay);
 
 				}
@@ -246,14 +233,11 @@ int tunnel_client_event_loop()
 				{
 					delay_send(out_delay[i],dest,out_arr[i],out_len[i]);
 				}
-				//my_send(dest,data,data_len);
 			}
 		    else if (events[idx].data.u64 == (u64_t)delay_manager.get_timer_fd()) {
 				uint64_t value;
 				read(delay_manager.get_timer_fd(), &value, 8);
 				mylog(log_trace,"events[idx].data.u64 == (u64_t)delay_manager.get_timer_fd()\n");
-				//printf("<timerfd_triggered, %d>",delay_mp.size());
-				//fflush(stdout);
 			}
 			else if(events[idx].data.u64>u32_t(-1) )
 			{
@@ -271,7 +255,6 @@ int tunnel_client_event_loop()
 				{
 					if(errno==ECONNREFUSED)
 					{
-						//conn_manager.clear_list.push_back(udp_fd);
 						mylog(log_debug, "recv failed %d ,udp_fd%d,errno:%s\n", data_len,remote_fd,strerror(errno));
 					}
 
@@ -317,11 +300,9 @@ int tunnel_client_event_loop()
 					dest.inner.fd_ip_port.fd=local_listen_fd;
 					dest.inner.fd_ip_port.ip_port.from_u64(u64);
 					dest.type=type_fd_ip_port;
-					//dest.conv=conv;
 
 					delay_send(out_delay[i],dest,new_data,new_len);
 				}
-				//mylog(log_trace,"[%s] send packet\n",dest.inner.ip_port.to_s());
 			}
 			else
 			{
