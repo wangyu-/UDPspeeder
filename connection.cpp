@@ -18,7 +18,17 @@ void server_clear_function(u64_t u64)//used in conv_manager in server mode.for s
 {
 	fd64_t fd64=u64;
 	assert(fd_manager.exist(fd64));
+	ev_io &watcher= fd_manager.get_info(fd64).io_watcher;
+
+	ip_port_t &ip_port=fd_manager.get_info(fd64).ip_port;//
+	assert(conn_manager.exist(ip_port));//
+	ev_loop *loop =conn_manager.find(ip_port).loop;  // overkill ? should we just use ev_default_loop(0)?
+
+	ev_io_stop(loop,&watcher);
+
 	fd_manager.fd64_close(fd64);
+
+
 }
 
 ////////////////////////////////////////////////////////////////////

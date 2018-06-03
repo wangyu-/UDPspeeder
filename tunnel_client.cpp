@@ -198,6 +198,10 @@ static void delay_manager_cb(struct ev_loop *loop, struct ev_timer *watcher, int
 {
 	assert(!(revents&EV_ERROR));
 
+	//uint64_t value;
+	//read(delay_manager.get_timer_fd(), &value, 8);
+	//mylog(log_trace,"events[idx].data.u64 == (u64_t)delay_manager.get_timer_fd()\n");
+
 	//do nothing
 }
 
@@ -364,7 +368,7 @@ int tunnel_client_event_loop()
 		//	mylog(log_fatal,"add fifo_fd to epoll error %s\n",strerror(errno));
 		//	myexit(-1);
 		//}
-		//mylog(log_info,"fifo_file=%s\n",fifo_file);
+		mylog(log_info,"fifo_file=%s\n",fifo_file);
 
 	    ev_io_init(&fifo_watcher, fifo_cb, fifo_fd, EV_READ);
 	    ev_io_start(loop, &fifo_watcher);
@@ -414,9 +418,7 @@ int tunnel_client_event_loop()
 
 			}
 		    else if (events[idx].data.u64 == (u64_t)delay_manager.get_timer_fd()) {
-				//uint64_t value;
-				//read(delay_manager.get_timer_fd(), &value, 8);
-				//mylog(log_trace,"events[idx].data.u64 == (u64_t)delay_manager.get_timer_fd()\n");
+
 			}
 			else if(events[idx].data.u64>u32_t(-1) )
 			{

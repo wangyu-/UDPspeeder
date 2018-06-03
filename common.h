@@ -178,6 +178,7 @@ struct dest_t
 struct fd_info_t
 {
 	ip_port_t ip_port;
+	ev_io io_watcher;
 };
 
 struct pseudo_header {
