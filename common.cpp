@@ -82,7 +82,10 @@ void get_fake_random_chars(char * s,int len)
 
 	while(left>=(int)sizeof(u64_t))
 	{
-		*((u64_t*)p)=my_random.gen64();  //no endianess problem here  , but may break strict-alias?
+		//*((u64_t*)p)=my_random.gen64();  //this may break strict-alias  ,  also p may not point to a multiple of sizeof(u64_t)
+
+		u64_t tmp=my_random.gen64();
+		memcpy(p,&tmp,sizeof(u64_t));  // so,use memcpy instead.
 
 		p+=sizeof(u64_t);
 		left-=sizeof(u64_t);
