@@ -47,7 +47,7 @@ struct random_fd_t
 		return random_number_fd;
 	}
 }random_fd;
-
+/*
 u64_t get_current_time()//ms
 {
 	timespec tmp_time;
@@ -60,6 +60,22 @@ u64_t get_current_time_us()
 	timespec tmp_time;
 	clock_gettime(CLOCK_MONOTONIC, &tmp_time);
 	return (uint64_t(tmp_time.tv_sec))*1000llu*1000llu+ (uint64_t(tmp_time.tv_nsec))/1000llu;
+}*/
+
+u64_t get_current_time()//ms
+{
+	//timespec tmp_time;
+	//clock_gettime(CLOCK_MONOTONIC, &tmp_time);
+	//return ((u64_t)tmp_time.tv_sec)*1000llu+((u64_t)tmp_time.tv_nsec)/(1000*1000llu);
+	return (u64_t)(ev_time()*1000);
+}
+
+u64_t get_current_time_us()
+{
+	//timespec tmp_time;
+	//clock_gettime(CLOCK_MONOTONIC, &tmp_time);
+	//return (uint64_t(tmp_time.tv_sec))*1000llu*1000llu+ (uint64_t(tmp_time.tv_nsec))/1000llu;
+	return (u64_t)(ev_time()*1000*1000);
 }
 
 u64_t pack_u64(u32_t a,u32_t b)
