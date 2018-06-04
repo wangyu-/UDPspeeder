@@ -25,7 +25,7 @@ cygwin:git_version
 
 mac:git_version
 	rm -f ${NAME}
-	${cc_local}   -o ${NAME}          -I. ${SOURCES} ${FLAGS} -ggdb -O3 -Wno-c++17-compat-mangling
+	${cc_local}   -o ${NAME}          -I. ${SOURCES} ${FLAGS} -ggdb -O3
 
 debug: git_version
 	rm -f ${NAME}
