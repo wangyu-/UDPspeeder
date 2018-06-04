@@ -95,7 +95,7 @@ void sigint_cb(struct ev_loop *l, ev_signal *w, int revents)
 
 int main(int argc, char *argv[])
 {
-	unit_test();
+	//unit_test();
 
 	struct ev_loop* loop=ev_default_loop(0);
     ev_signal signal_watcher_sigpipe;
