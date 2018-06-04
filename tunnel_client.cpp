@@ -277,6 +277,8 @@ int tunnel_client_event_loop()
 	struct ev_loop * loop= ev_default_loop(0);
 	assert(loop != NULL);
 
+	conn_info.loop=loop;
+
 	//ev.events = EPOLLIN;
 	//ev.data.u64 = local_listen_fd;
 	//ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, local_listen_fd, &ev);

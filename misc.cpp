@@ -328,6 +328,10 @@ int handle_command(char *s)
 	return 0;
 }
 
+static void empty_cb(struct ev_loop *loop, struct ev_timer *watcher, int revents)
+{
+
+}
 int unit_test()
 {
 
@@ -435,6 +439,10 @@ int unit_test()
 	static fec_encode_manager_t fec_encode_manager;
 	static fec_decode_manager_t fec_decode_manager;
 
+	dynamic_update_fec=0;
+
+	fec_encode_manager.set_loop_and_cb(ev_default_loop(0),empty_cb);
+
 	{
 
 		string a = "11111";
@@ -510,6 +518,7 @@ int unit_test()
 		}
 	}
 
+	printf("ok here.\n");
 	for(int i=0;i<10;i++)
 	{
 		string a = "aaaaaaaaaaaaaaaaaaaaaaa";
@@ -528,6 +537,8 @@ int unit_test()
 
 		fec_encode_manager.input((char *) a.c_str(), a.length());
 		fec_encode_manager.output(n,s_arr,len);
+
+		printf("n=<%d>\n",n);
 		assert(n==1);
 
 		fec_decode_manager.input(s_arr[0],len[0]);
@@ -575,7 +586,7 @@ int unit_test()
 
 	}
 
-
+	myexit(0);
 	return 0;
 }
 

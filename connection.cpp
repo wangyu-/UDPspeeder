@@ -237,8 +237,11 @@ int conn_manager_t::exist(ip_port_t ip_port)
  int conn_manager_t::erase(unordered_map<u64_t,conn_info_t*>::iterator erase_it)
  {
 	 ////////todo  close and erase timer_fd ,check fd64 empty   ///dont need
+
 		delete(erase_it->second);
 		mp.erase(erase_it->first);
+
+
 		return 0;
  }
 int conn_manager_t::clear_inactive()

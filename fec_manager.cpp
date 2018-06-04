@@ -131,7 +131,7 @@ int blob_decode_t::output(int &n,char ** &s_arr,int *&len_arr)
 
 fec_encode_manager_t::~fec_encode_manager_t()
 {
-	clear();
+	clear_all();
 	//fd_manager.fd64_close(timer_fd64);
 }
 /*
@@ -168,8 +168,9 @@ int fec_encode_manager_t::reset_fec_parameter(int data_num,int redundant_num,int
 
 	assert(data_num+redundant_num<max_fec_packet_num);
 
-	clear();
+	//clear();
 
+	clear_data();
 	return 0;
 }
 int fec_encode_manager_t::append(char *s,int len/*,int &is_first_packet*/)

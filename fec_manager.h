@@ -163,11 +163,22 @@ public:
 		ev_init(&timer,cb);
 	}
 
-	int clear()
+	int clear_data()
 	{
 		counter=0;
 		blob_encode.clear();
 		ready_for_output=0;
+
+		seq=(u32_t)get_fake_random_number(); //TODO temp solution for a bug.
+
+		if(loop)
+		{
+			ev_timer_stop(loop,&timer);
+		}
+		return 0;
+	}
+	int clear_all()
+	{
 
 		//itimerspec zero_its;
 		//memset(&zero_its, 0, sizeof(zero_its));
@@ -179,7 +190,8 @@ public:
 			loop=0;
 			cb=0;
 		}
-		seq=(u32_t)get_fake_random_number(); //TODO temp solution for a bug.
+
+		clear_data();
 
 		return 0;
 	}

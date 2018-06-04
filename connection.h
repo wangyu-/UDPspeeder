@@ -112,7 +112,7 @@ struct conn_info_t     //stores info for a raw connection.for client ,there is o
 	u64_t last_active_time;
 	stat_t stat;
 
-	ev_loop* loop;
+	ev_loop* loop=0;
 	int local_listen_fd;
 
 	int remote_fd;  //only used for client
@@ -122,6 +122,12 @@ struct conn_info_t     //stores info for a raw connection.for client ,there is o
 
 	conn_info_t()
 	{
+	}
+
+	~conn_info_t()
+	{
+		if(loop)
+			ev_timer_stop(loop,&timer);
 	}
 	void update_active_time()
 	{
