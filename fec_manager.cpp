@@ -177,7 +177,7 @@ int fec_encode_manager_t::append(char *s,int len/*,int &is_first_packet*/)
 {
 	if(counter==0)
 	{
-		itimerspec its;
+		my_itimerspec its;
 		memset(&its.it_interval,0,sizeof(its.it_interval));
 		first_packet_time=get_current_time_us();
 		my_time_t tmp_time=fec_timeout+first_packet_time;
@@ -414,7 +414,7 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     	output_n=actual_data_num+actual_redundant_num;
     	blob_encode.clear();
 
-		itimerspec its;
+		my_itimerspec its;
 		memset(&its,0,sizeof(its));
 		ev_timer_stop(loop, &timer);
 		//timerfd_settime(timer_fd,TFD_TIMER_ABSTIME,&its,0);

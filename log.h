@@ -28,7 +28,7 @@
 #include <netinet/tcp.h>   //Provides declarations for tcp header
 #include <netinet/udp.h>
 #include <netinet/ip.h>    //Provides declarations for ip header
-#include <netinet/if_ether.h>
+//#include <netinet/if_ether.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <sys/socket.h>
