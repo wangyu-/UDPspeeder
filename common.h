@@ -58,7 +58,7 @@ typedef int i32_t;
 typedef unsigned short u16_t;
 typedef short i16_t;
 
-struct itimerspec {
+struct my_itimerspec {
 	struct timespec it_interval;  /* Timer interval */
 	struct timespec it_value;     /* Initial expiration */
 };
