@@ -17,7 +17,6 @@
 
 #include<unistd.h>
 #include<errno.h>
-#include <sys/epoll.h>
 #include <sys/wait.h>
 #include <sys/socket.h>    //for socket ofcourse
 #include <sys/types.h>
@@ -30,21 +29,15 @@
 #include <netinet/if_ether.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
-#include <byteswap.h>
 #include <arpa/inet.h>
-#include <linux/if_ether.h>
-#include <linux/filter.h>
 #include <sys/time.h>
 #include <time.h>
-#include <sys/timerfd.h>
 #include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <net/if.h>
 #include <arpa/inet.h>
 #include <stdarg.h>
 #include <assert.h>
-#include <linux/if_packet.h>
-#include <linux/if_tun.h>
 #include <my_ev.h>
 
 
@@ -64,6 +57,11 @@ typedef int i32_t;
 
 typedef unsigned short u16_t;
 typedef short i16_t;
+
+struct itimerspec {
+	struct timespec it_interval;  /* Timer interval */
+	struct timespec it_value;     /* Initial expiration */
+};
 
 typedef u64_t my_time_t;
 

@@ -198,6 +198,8 @@ u32_t get_true_random_number_nz() //nz for non-zero
 	}
 	return ret;
 }
+
+/*
 u64_t ntoh64(u64_t a)
 {
 	if(__BYTE_ORDER == __LITTLE_ENDIAN)
@@ -215,7 +217,7 @@ u64_t hton64(u64_t a)
 	}
 	else return a;
 
-}
+}*/
 
 void setnonblocking(int sock) {
 	int opts;
@@ -295,8 +297,9 @@ unsigned short tcp_csum(const pseudo_header & ph,const unsigned short *ptr,int n
 
 int set_buf_size(int fd,int socket_buf_size,int force_socket_buf)
 {
-	if(force_socket_buf)
+	if(0)
 	{
+/*
 		if(setsockopt(fd, SOL_SOCKET, SO_SNDBUFFORCE, &socket_buf_size, sizeof(socket_buf_size))<0)
 		{
 			mylog(log_fatal,"SO_SNDBUFFORCE fail  socket_buf_size=%d  errno=%s\n",socket_buf_size,strerror(errno));
@@ -307,6 +310,7 @@ int set_buf_size(int fd,int socket_buf_size,int force_socket_buf)
 			mylog(log_fatal,"SO_RCVBUFFORCE fail  socket_buf_size=%d  errno=%s\n",socket_buf_size,strerror(errno));
 			myexit(1);
 		}
+*/
 	}
 	else
 	{
@@ -447,7 +451,7 @@ int random_between(u32_t a,u32_t b)
 	else return a+get_true_random_number()%(b+1-a);
 }
 
-
+/*
 int set_timer_ms(int epollfd,int &timer_fd,u32_t timer_interval)
 {
 	int ret;
@@ -476,7 +480,7 @@ int set_timer_ms(int epollfd,int &timer_fd,u32_t timer_interval)
 		myexit(-1);
 	}
 	return 0;
-}
+}*/
 /*
 int create_new_udp(int &new_udp_fd,int remote_address_uint32,int remote_port)
 {
@@ -579,7 +583,7 @@ int new_listen_socket(int &fd,u32_t ip,int port)
 	local_me.sin_port = htons(port);
 	local_me.sin_addr.s_addr = ip;
 
-	if (bind(fd, (struct sockaddr*) &local_me, slen) == -1) {
+	if (::bind(fd, (struct sockaddr*) &local_me, slen) == -1) {
 		mylog(log_fatal,"socket bind error\n");
 		//perror("socket bind error");
 		myexit(1);

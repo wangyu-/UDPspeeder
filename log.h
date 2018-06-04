@@ -14,7 +14,6 @@
 #include <fcntl.h>
 //#include"aes.h"
 
-#include <sys/epoll.h>
 #include <sys/wait.h>
 
 #include<map>
@@ -32,17 +31,13 @@
 #include <netinet/if_ether.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
-#include <byteswap.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
-#include <linux/if_ether.h>
-#include <linux/filter.h>
 
 #include <sys/time.h>
 #include <time.h>
 
-#include <sys/timerfd.h>
 #include <set>
 //#include <encrypt.h>
 #include <inttypes.h>

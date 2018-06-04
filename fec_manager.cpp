@@ -28,6 +28,7 @@ int header_overhead=40;
 
 u32_t fec_buff_num=2000;// how many packet can fec_decode_manager hold. shouldnt be very large,or it will cost huge memory
 
+
 blob_encode_t::blob_encode_t()
 {
 	clear();

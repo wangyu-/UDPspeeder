@@ -74,9 +74,39 @@ static void print_help()
 }
 
 
+void sigpipe_cb(struct ev_loop *l, ev_signal *w, int revents)
+{
+	mylog(log_info, "got sigpipe, ignored");
+}
+
+void sigterm_cb(struct ev_loop *l, ev_signal *w, int revents)
+{
+	mylog(log_info, "got sigterm, exit");
+	myexit(0);
+}
+
+void sigint_cb(struct ev_loop *l, ev_signal *w, int revents)
+{
+	mylog(log_info, "got sigint, exit");
+	myexit(0);
+}
+
 
 int main(int argc, char *argv[])
 {
+	struct ev_loop* loop=ev_default_loop(0);
+    ev_signal signal_watcher_sigpipe;
+    ev_signal_init(&signal_watcher_sigpipe, sigpipe_cb, SIGPIPE);
+    ev_signal_start(loop, &signal_watcher_sigpipe);
+
+    ev_signal signal_watcher_sigterm;
+    ev_signal_init(&signal_watcher_sigterm, sigterm_cb, SIGTERM);
+    ev_signal_start(loop, &signal_watcher_sigterm);
+
+    ev_signal signal_watcher_sigint;
+    ev_signal_init(&signal_watcher_sigint, sigint_cb, SIGINT);
+    ev_signal_start(loop, &signal_watcher_sigint);
+
 	//working_mode=tunnel_mode;
 
 	assert(sizeof(u64_t)==8);
