@@ -8,7 +8,8 @@
 #include "common.h"
 #include "log.h"
 
-
+#include <random>
+#include <cmath>
 
 int about_to_exit=0;
 
@@ -28,9 +29,35 @@ int socket_buf_size=1024*1024;
 
 
 
-struct random_fd_t
+struct my_random_t
 {
-	int random_number_fd;
+    std::random_device rd;
+    std::mt19937 gen;
+    std::uniform_int_distribution<u64_t> dis64;
+    std::uniform_int_distribution<u32_t> dis32;
+
+    std::uniform_int_distribution<unsigned char> dis8;
+
+    my_random_t()
+	{
+    	std::mt19937 gen_tmp(rd());
+    	gen=gen_tmp;
+    	gen.discard(700000);  //magic
+	}
+    u64_t gen64()
+    {
+    	return dis64(gen);
+    }
+    u32_t gen32()
+    {
+    	return dis32(gen);
+    }
+
+    unsigned char gen8()
+    {
+    	return dis8(gen);
+    }
+	/*int random_number_fd;
 	random_fd_t()
 	{
 			random_number_fd=open("/dev/urandom",O_RDONLY);
@@ -45,8 +72,39 @@ struct random_fd_t
 	int get_fd()
 	{
 		return random_number_fd;
+	}*/
+}my_random;
+
+void get_fake_random_chars(char * s,int len)
+{
+	char *p=s;
+	int left=len;
+
+	while(left>=(int)sizeof(u64_t))
+	{
+		*((u64_t*)p)=my_random.gen64();  //no endianess problem here  , but may break strict-alias?
+
+		p+=sizeof(u64_t);
+		left-=sizeof(u64_t);
 	}
-}random_fd;
+	if(left)
+	{
+		u64_t tmp=my_random.gen64();
+		memcpy(p,&tmp,left);
+	}
+}
+
+int random_between(u32_t a,u32_t b)
+{
+	if(a>b)
+	{
+		mylog(log_fatal,"min >max?? %d %d\n",a ,b);
+		myexit(1);
+	}
+	if(a==b)return a;
+	else return a+get_fake_random_number()%(b+1-a);
+}
+
 /*
 u64_t get_current_time()//ms
 {
@@ -181,36 +239,36 @@ int clear_iptables_rule()
 
 
 
-u64_t get_true_random_number_64()
+u64_t get_fake_random_number_64()
 {
-	u64_t ret;
-	int size=read(random_fd.get_fd(),&ret,sizeof(ret));
-	if(size!=sizeof(ret))
-	{
-		mylog(log_fatal,"get random number failed %d\n",size);
+	//u64_t ret;
+	//int size=read(random_fd.get_fd(),&ret,sizeof(ret));
+	//if(size!=sizeof(ret))
+	//{
+	//	mylog(log_fatal,"get random number failed %d\n",size);
 
-		myexit(-1);
-	}
+	//	myexit(-1);
+	//}
 
-	return ret;
+	return my_random.gen64();
 }
-u32_t get_true_random_number()
+u32_t get_fake_random_number()
 {
-	u32_t ret;
-	int size=read(random_fd.get_fd(),&ret,sizeof(ret));
-	if(size!=sizeof(ret))
-	{
-		mylog(log_fatal,"get random number failed %d\n",size);
-		myexit(-1);
-	}
-	return ret;
+	//u32_t ret;
+	//int size=read(random_fd.get_fd(),&ret,sizeof(ret));
+	//if(size!=sizeof(ret))
+	//{
+	//	mylog(log_fatal,"get random number failed %d\n",size);
+	//	myexit(-1);
+	//}
+	return my_random.gen32();
 }
-u32_t get_true_random_number_nz() //nz for non-zero
+u32_t get_fake_random_number_nz() //nz for non-zero
 {
 	u32_t ret=0;
 	while(ret==0)
 	{
-		ret=get_true_random_number();
+		ret=get_fake_random_number();
 	}
 	return ret;
 }
@@ -446,26 +504,8 @@ bool larger_than_u16(uint16_t a,uint16_t b)
 	}
 }
 
-void get_true_random_chars(char * s,int len)
-{
-	int size=read(random_fd.get_fd(),s,len);
-	if(size!=len)
-	{
-		printf("get random number failed\n");
-		exit(-1);
-	}
-}
 
-int random_between(u32_t a,u32_t b)
-{
-	if(a>b)
-	{
-		mylog(log_fatal,"min >max?? %d %d\n",a ,b);
-		myexit(1);
-	}
-	if(a==b)return a;
-	else return a+get_true_random_number()%(b+1-a);
-}
+
 
 /*
 int set_timer_ms(int epollfd,int &timer_fd,u32_t timer_interval)

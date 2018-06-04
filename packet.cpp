@@ -61,7 +61,7 @@ int do_obscure_old(const char * input, int in_len,char *output,int &out_len)
 	if (in_len > 65535||in_len<0)
 		return -1;
 	int iv_len=iv_min+rand()%(iv_max-iv_min);
-	get_true_random_chars(output,iv_len);
+	get_fake_random_chars(output,iv_len);
 	memcpy(output+iv_len,input,in_len);
 
 	output[iv_len+in_len]=(uint8_t)iv_len;
@@ -88,7 +88,7 @@ int do_obscure(char * data,int &len)
 	assert(len<buf_len);
 
 	int iv_len=random_between(iv_min,iv_max);
-	get_true_random_chars(data+len,iv_len);
+	get_fake_random_chars(data+len,iv_len);
 	data[iv_len+len]=(uint8_t)iv_len;
 	for(int i=0,j=0;i<len;i++,j++)
 	{

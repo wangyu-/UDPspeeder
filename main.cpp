@@ -92,8 +92,11 @@ void sigint_cb(struct ev_loop *l, ev_signal *w, int revents)
 }
 
 
+
 int main(int argc, char *argv[])
 {
+	unit_test();
+
 	struct ev_loop* loop=ev_default_loop(0);
     ev_signal signal_watcher_sigpipe;
     ev_signal_init(&signal_watcher_sigpipe, sigpipe_cb, SIGPIPE);
@@ -142,7 +145,7 @@ int main(int argc, char *argv[])
 
 	if(strlen(tun_dev)==0)
 	{
-		sprintf(tun_dev,"tun%u",get_true_random_number()%1000);
+		sprintf(tun_dev,"tun%u",get_fake_random_number()%1000);
 	}
 
 	if(client_or_server==client_mode)

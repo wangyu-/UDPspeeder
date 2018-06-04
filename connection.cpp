@@ -74,10 +74,10 @@ void conv_manager_t::clear()
 }
 u32_t conv_manager_t::get_new_conv()
 {
-	u32_t conv=get_true_random_number_nz();
+	u32_t conv=get_fake_random_number_nz();
 	while(conv_to_u64.find(conv)!=conv_to_u64.end())
 	{
-		conv=get_true_random_number_nz();
+		conv=get_fake_random_number_nz();
 	}
 	return conv;
 }

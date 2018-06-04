@@ -179,7 +179,7 @@ public:
 			loop=0;
 			cb=0;
 		}
-		seq=(u32_t)get_true_random_number(); //TODO temp solution for a bug.
+		seq=(u32_t)get_fake_random_number(); //TODO temp solution for a bug.
 
 		return 0;
 	}

@@ -242,7 +242,7 @@ int delay_send(my_time_t delay,const dest_t &dest,char *data,int len)
 	//mylog(log_info,"rand = %d\n",rand);
 
 	if (dest.cook&&random_drop != 0) {
-		if (get_true_random_number() % 10000 < (u32_t) random_drop) {
+		if (get_fake_random_number() % 10000 < (u32_t) random_drop) {
 			return 0;
 		}
 	}
@@ -330,6 +330,38 @@ int handle_command(char *s)
 
 int unit_test()
 {
+
+	{
+		union test_t
+		{
+			u64_t u64;
+			char arry[8];
+		}test111;
+
+		assert((void*)&test111.u64==(void*)&test111.arry[0]);
+		//printf("%llx,%llx\n",&ttt.u64,&ttt.arry[0]);
+
+		printf("%llx\n",get_fake_random_number_64());
+		printf("%llx\n",get_fake_random_number_64());
+		printf("%llx\n",get_fake_random_number_64());
+
+		printf("%x\n",get_fake_random_number());
+		printf("%x\n",get_fake_random_number());
+		printf("%x\n",get_fake_random_number());
+
+		char buf[10];
+		get_fake_random_chars(buf,10);
+		for(int i=0;i<10;i++)
+			printf("<%d>",(int)buf[i]);
+		printf("\n");
+
+		get_fake_random_chars(buf,10);
+		for(int i=0;i<10;i++)
+			printf("<%d>",(int)buf[i]);
+		printf("\n");
+	}
+
+
 	int i,j,k;
 	void *code=fec_new(3,6);
 	char arr[6][100]=
@@ -542,6 +574,7 @@ int unit_test()
 		}
 
 	}
+
 
 	return 0;
 }

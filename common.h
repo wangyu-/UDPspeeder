@@ -58,7 +58,7 @@ typedef int i32_t;
 typedef unsigned short u16_t;
 typedef short i16_t;
 
-struct itimerspec {
+struct my_itimerspec {
 	struct timespec it_interval;  /* Timer interval */
 	struct timespec it_value;     /* Initial expiration */
 };
@@ -209,9 +209,9 @@ char * my_ntoa(u32_t ip);
 
 void myexit(int a);
 void init_random_number_fd();
-u64_t get_true_random_number_64();
-u32_t get_true_random_number();
-u32_t get_true_random_number_nz();
+u64_t get_fake_random_number_64();
+u32_t get_fake_random_number();
+u32_t get_fake_random_number_nz();
 u64_t ntoh64(u64_t a);
 u64_t hton64(u64_t a);
 bool larger_than_u16(uint16_t a,uint16_t b);
@@ -231,7 +231,7 @@ void myexit(int a);
 int add_iptables_rule(char *);
 
 int clear_iptables_rule();
-void get_true_random_chars(char * s,int len);
+void get_fake_random_chars(char * s,int len);
 int random_between(u32_t a,u32_t b);
 
 int set_timer_ms(int epollfd,int &timer_fd,u32_t timer_interval);
