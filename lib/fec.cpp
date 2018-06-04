@@ -195,7 +195,7 @@ static gf gf_mul_table[GF_SIZE + 1][GF_SIZE + 1];
 
 #define gf_mul(x,y) gf_mul_table[x][y]
 
-#define USE_GF_MULC register gf * __gf_mulc_
+#define USE_GF_MULC gf * __gf_mulc_
 #define GF_MULC0(c) __gf_mulc_ = gf_mul_table[c]
 #define GF_ADDMULC(dst, x) dst ^= __gf_mulc_[x]
 
@@ -220,7 +220,7 @@ gf_mul(x,y)
 }
 #define init_mul_table()
 
-#define USE_GF_MULC register gf * __gf_mulc_
+#define USE_GF_MULC gf * __gf_mulc_
 #define GF_MULC0(c) __gf_mulc_ = &gf_exp[ gf_log[c] ]
 #define GF_ADDMULC(dst, x) { if (x) dst ^= __gf_mulc_[ gf_log[x] ] ; }
 #endif
@@ -341,7 +341,7 @@ static void
 addmul1(gf *dst1, gf *src1, gf c, int sz)
 {
     USE_GF_MULC ;
-    register gf *dst = dst1, *src = src1 ;
+    gf *dst = dst1, *src = src1 ;
     gf *lim = &dst[sz - UNROLL + 1] ;
 
     GF_MULC0(c) ;

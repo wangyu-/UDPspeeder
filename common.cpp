@@ -318,9 +318,9 @@ void setnonblocking(int sock) {
     Generic checksum calculation function
 */
 unsigned short csum(const unsigned short *ptr,int nbytes) {
-    register long sum;
+    long sum;
     unsigned short oddbyte;
-    register short answer;
+    short answer;
 
     sum=0;
     while(nbytes>1) {
@@ -343,9 +343,9 @@ unsigned short csum(const unsigned short *ptr,int nbytes) {
 
 unsigned short tcp_csum(const pseudo_header & ph,const unsigned short *ptr,int nbytes) {//works both for big and little endian
 
-	register long sum;
+    long sum;
     unsigned short oddbyte;
-    register short answer;
+    short answer;
 
     sum=0;
 	unsigned short * tmp= (unsigned short *)&ph;
