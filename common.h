@@ -23,9 +23,9 @@
 #include <sys/stat.h>
 #include <stdlib.h> //for exit(0);
 #include <errno.h> //For errno - the error number
-#include <netinet/tcp.h>   //Provides declarations for tcp header
-#include <netinet/udp.h>
-#include <netinet/ip.h>    //Provides declarations for ip header
+//#include <netinet/tcp.h>   //Provides declarations for tcp header
+//#include <netinet/udp.h>
+//#include <netinet/ip.h>    //Provides declarations for ip header
 //#include <netinet/if_ether.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -33,7 +33,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <sys/ioctl.h>
-#include <netinet/in.h>
+//#include <netinet/in.h>
 #include <net/if.h>
 #include <arpa/inet.h>
 #include <stdarg.h>
@@ -127,7 +127,7 @@ extern working_mode_t working_mode;
 extern int socket_buf_size;
 
 
-typedef u32_t id_t;
+//typedef u32_t id_t;
 
 typedef u64_t iv_t;
 
@@ -223,8 +223,8 @@ unsigned short csum(const unsigned short *ptr,int nbytes);
 unsigned short tcp_csum(const pseudo_header & ph,const unsigned short *ptr,int nbytes);
 
 void  signal_handler(int sig);
-int numbers_to_char(id_t id1,id_t id2,id_t id3,char * &data,int &len);
-int char_to_numbers(const char * data,int len,id_t &id1,id_t &id2,id_t &id3);
+//int numbers_to_char(id_t id1,id_t id2,id_t id3,char * &data,int &len);
+//int char_to_numbers(const char * data,int len,id_t &id1,id_t &id2,id_t &id3);
 
 void myexit(int a);
 

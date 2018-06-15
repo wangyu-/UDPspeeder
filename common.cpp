@@ -417,7 +417,7 @@ void  signal_handler(int sig)
 	about_to_exit=1;
     // myexit(0);
 }
-
+/*
 int numbers_to_char(id_t id1,id_t id2,id_t id3,char * &data,int &len)
 {
 	static char buf[buf_len];
@@ -444,7 +444,7 @@ int char_to_numbers(const char * data,int len,id_t &id1,id_t &id2,id_t &id3)
 	id3=ntohl(  *((id_t*)(data+sizeof(id_t)*2)) );
 	return 0;
 }
-
+*/
 bool larger_than_u32(u32_t a,u32_t b)
 {
 
