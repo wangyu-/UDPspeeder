@@ -17,8 +17,6 @@
 
 #include<unistd.h>
 #include<errno.h>
-#include <sys/wait.h>
-#include <sys/socket.h>    //for socket ofcourse
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h> //for exit(0);
@@ -27,18 +25,25 @@
 //#include <netinet/udp.h>
 //#include <netinet/ip.h>    //Provides declarations for ip header
 //#include <netinet/if_ether.h>
-#include <arpa/inet.h>
 #include <fcntl.h>
-#include <arpa/inet.h>
 #include <sys/time.h>
 #include <time.h>
-#include <sys/ioctl.h>
 //#include <netinet/in.h>
-#include <net/if.h>
-#include <arpa/inet.h>
+//#include <net/if.h>
 #include <stdarg.h>
 #include <assert.h>
 #include <my_ev.h>
+
+#if defined(__MINGW32__)
+#include <winsock2.h>
+#include <Ws2tcpip.h >
+typedef int socklen_t;
+#else
+#include <sys/socket.h> 
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <arpa/inet.h>
+#endif
 
 
 #include<unordered_map>
@@ -57,6 +62,30 @@ typedef int i32_t;
 
 typedef unsigned short u16_t;
 typedef short i16_t;
+
+#if defined(__MINGW32__)
+#define setsockopt(a,b,c,d,e) setsockopt(a,b,c,(const char *)(d),e)
+#endif
+
+char *get_sock_error();
+int get_sock_errno();
+int init_ws();
+
+#if defined(__MINGW32__)
+typedef SOCKET my_fd_t;
+inline int sock_close(my_fd_t fd)
+{
+	return closesocket(fd);
+}
+#else
+typedef int my_fd_t;
+inline int sock_close(my_fd_t fd)
+{
+	return close(fd);
+}
+
+#endif
+
 
 struct my_itimerspec {
 	struct timespec it_interval;  /* Timer interval */
@@ -181,11 +210,11 @@ struct fd_info_t
 };
 
 struct pseudo_header {
-    u_int32_t source_address;
-    u_int32_t dest_address;
-    u_int8_t placeholder;
-    u_int8_t protocol;
-    u_int16_t tcp_length;
+    u32_t source_address;
+    u32_t dest_address;
+    unsigned char placeholder;
+    unsigned char protocol;
+    unsigned short tcp_length;
 };
 
 u64_t get_current_time();

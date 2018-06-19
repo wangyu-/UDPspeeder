@@ -345,13 +345,13 @@ int unit_test()
 		assert((void*)&test111.u64==(void*)&test111.arry[0]);
 		//printf("%llx,%llx\n",&ttt.u64,&ttt.arry[0]);
 
-		printf("%llx\n",get_fake_random_number_64());
-		printf("%llx\n",get_fake_random_number_64());
-		printf("%llx\n",get_fake_random_number_64());
+//		printf("%lld\n",get_fake_random_number_64());
+//		printf("%lld\n",get_fake_random_number_64());
+//		printf("%lld\n",get_fake_random_number_64());
 
-		printf("%x\n",get_fake_random_number());
-		printf("%x\n",get_fake_random_number());
-		printf("%x\n",get_fake_random_number());
+//		printf("%x\n",get_fake_random_number());
+//		printf("%x\n",get_fake_random_number());
+//		printf("%x\n",get_fake_random_number());
 
 		char buf[10];
 		get_fake_random_chars(buf,10);

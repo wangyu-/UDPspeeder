@@ -27,6 +27,86 @@ working_mode_t working_mode=tunnel_mode;
 
 int socket_buf_size=1024*1024;
 
+int init_ws()
+{
+#if defined(__MINGW32__)
+	WORD wVersionRequested;
+	WSADATA wsaData;
+	int err;
+
+	/* Use the MAKEWORD(lowbyte, highbyte) macro declared in Windef.h */
+	wVersionRequested = MAKEWORD(2, 2);
+
+	err = WSAStartup(wVersionRequested, &wsaData);
+	if (err != 0) {
+		/* Tell the user that we could not find a usable */
+		/* Winsock DLL.                                  */
+		printf("WSAStartup failed with error: %d\n", err);
+		exit(-1);
+	}
+
+	/* Confirm that the WinSock DLL supports 2.2.*/
+	/* Note that if the DLL supports versions greater    */
+	/* than 2.2 in addition to 2.2, it will still return */
+	/* 2.2 in wVersion since that is the version we      */
+	/* requested.                                        */
+
+	if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 2) {
+		/* Tell the user that we could not find a usable */
+		/* WinSock DLL.                                  */
+		printf("Could not find a usable version of Winsock.dll\n");
+		WSACleanup();
+		exit(-1);
+	}
+	else
+	{
+		printf("The Winsock 2.2 dll was found okay");
+	}
+	
+	int tmp[]={0,100,200,300,500,800,1000,2000,3000,4000,-1};
+	int succ=0;
+	for(int i=1;tmp[i]!=-1;i++)
+	{
+		if(_setmaxstdio(100)==-1) break;
+		else succ=i;
+	}	
+	printf(", _setmaxstdio() was set to %d\n",tmp[succ]);
+#endif
+return 0;
+}
+
+#if defined(__MINGW32__)
+char *get_sock_error()
+{
+	static char buf[1000];
+	int e=WSAGetLastError();
+	wchar_t *s = NULL;
+	FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, 
+			NULL, e,
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(LPWSTR)&s, 0, NULL);
+	sprintf(buf, "%d:%S", e,s);
+	int len=strlen(buf);
+	if(len>0&&buf[len-1]=='\n') buf[len-1]=0; 
+	LocalFree(s);
+	return buf;
+}
+int get_sock_errno()
+{
+	return WSAGetLastError();
+}
+#else
+char *get_sock_error()
+{
+	static char buf[1000];
+	sprintf(buf, "%d:%s", errno,strerror(errno));
+	return buf;
+}
+int get_sock_errno()
+{
+	return errno;
+}
+#endif
 
 
 struct my_random_t
@@ -297,6 +377,7 @@ u64_t hton64(u64_t a)
 }*/
 
 void setnonblocking(int sock) {
+#if !defined(__MINGW32__)
 	int opts;
 	opts = fcntl(sock, F_GETFL);
 
@@ -311,7 +392,14 @@ void setnonblocking(int sock) {
 		//perror("fcntl(sock,SETFL,opts)");
 		myexit(1);
 	}
+#else
+	int iResult;
+	u_long iMode = 1;
+	iResult = ioctlsocket(sock, FIONBIO, &iMode);
+	if (iResult != NO_ERROR)
+		printf("ioctlsocket failed with error: %d\n", iResult);
 
+#endif
 }
 
 /*
@@ -591,6 +679,7 @@ int round_up_div(int a,int b)
 
 int create_fifo(char * file)
 {
+#if !defined(__MINGW32__)
 	if(mkfifo (file, 0666)!=0)
 	{
 		if(errno==EEXIST)
@@ -624,6 +713,10 @@ int create_fifo(char * file)
 
 	setnonblocking(fifo_fd);
 	return fifo_fd;
+#else
+	assert(0==1&&"not supported\n");
+	return 0;
+#endif
 }
 
 
