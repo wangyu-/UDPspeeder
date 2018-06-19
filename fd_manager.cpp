@@ -30,7 +30,7 @@ void fd_manager_t::fd64_close(fd64_t fd64)
 	{
 		fd_info_mp.erase(fd64);
 	}
-	close(fd);
+	sock_close(fd);
 }
 void fd_manager_t::reserve(int n)
 {

@@ -481,12 +481,12 @@ int set_buf_size(int fd,int socket_buf_size,int force_socket_buf)
 	{
 		if(setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &socket_buf_size, sizeof(socket_buf_size))<0)
 		{
-			mylog(log_fatal,"SO_SNDBUF fail  socket_buf_size=%d  errno=%s\n",socket_buf_size,strerror(errno));
+			mylog(log_fatal,"SO_SNDBUF fail  socket_buf_size=%d  errno=%s\n",socket_buf_size,get_sock_error());
 			myexit(1);
 		}
 		if(setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &socket_buf_size, sizeof(socket_buf_size))<0)
 		{
-			mylog(log_fatal,"SO_RCVBUF fail  socket_buf_size=%d  errno=%s\n",socket_buf_size,strerror(errno));
+			mylog(log_fatal,"SO_RCVBUF fail  socket_buf_size=%d  errno=%s\n",socket_buf_size,get_sock_error());
 			myexit(1);
 		}
 	}
@@ -772,7 +772,7 @@ int new_connected_socket(int &fd,u32_t ip,int port)
 	int ret = connect(fd, (struct sockaddr *) &remote_addr_in, slen);
 	if (ret != 0) {
 		mylog(log_warn, "[%s]fd connect fail\n",ip_port);
-		close(fd);
+		sock_close(fd);
 		return -1;
 	}
 	return 0;

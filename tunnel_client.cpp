@@ -46,7 +46,7 @@ void data_from_local_or_fec_timeout(conn_info_t & conn_info,int is_time_out)
 		socklen_t udp_new_addr_len = sizeof(sockaddr_in);
 		if ((data_len = recvfrom(local_listen_fd, data, max_data_len, 0,
 				(struct sockaddr *) &udp_new_addr_in, &udp_new_addr_len)) == -1) {
-			mylog(log_error,"recv_from error,this shouldnt happen,err=%s,but we can try to continue\n",strerror(errno));
+			mylog(log_error,"recv_from error,this shouldnt happen,err=%s,but we can try to continue\n",get_sock_error());
 			return;
 		};
 
@@ -126,12 +126,12 @@ static void remote_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
 	mylog(log_trace, "received data from udp fd %d, len=%d\n", remote_fd,data_len);
 	if(data_len<0)
 	{
-		if(errno==ECONNREFUSED)
+		if(get_sock_errno()==ECONNREFUSED)
 		{
-			mylog(log_debug, "recv failed %d ,udp_fd%d,errno:%s\n", data_len,remote_fd,strerror(errno));
+			mylog(log_debug, "recv failed %d ,udp_fd%d,errno:%s\n", data_len,remote_fd,get_sock_error());
 		}
 
-		mylog(log_warn, "recv failed %d ,udp_fd%d,errno:%s\n", data_len,remote_fd,strerror(errno));
+		mylog(log_warn, "recv failed %d ,udp_fd%d,errno:%s\n", data_len,remote_fd,get_sock_error());
 		return;
 	}
 	if(!disable_mtu_warn&&data_len>mtu_warn)
@@ -187,7 +187,7 @@ static void fifo_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
 	int len=read (fifo_fd, buf, sizeof (buf));
 	if(len<0)
 	{
-		mylog(log_warn,"fifo read failed len=%d,errno=%s\n",len,strerror(errno));
+		mylog(log_warn,"fifo read failed len=%d,errno=%s\n",len,get_sock_error());
 		return;
 	}
 	buf[len]=0;

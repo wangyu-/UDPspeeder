@@ -103,6 +103,8 @@ int main(int argc, char *argv[])
     ev_signal signal_watcher_sigpipe;
     ev_signal_init(&signal_watcher_sigpipe, sigpipe_cb, SIGPIPE);
     ev_signal_start(loop, &signal_watcher_sigpipe);
+#else
+    enable_log_color=0;
 #endif
 
     ev_signal signal_watcher_sigterm;

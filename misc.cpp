@@ -601,6 +601,7 @@ void process_arg(int argc, char *argv[])
 		{"log-level", required_argument,    0, 1},
 		{"log-position", no_argument,    0, 1},
 		{"disable-color", no_argument,    0, 1},
+		{"enable-color", no_argument,    0, 1},
 		{"disable-filter", no_argument,    0, 1},
 		{"disable-fec", no_argument,    0, 1},
 		{"disable-obscure", no_argument,    0, 1},
@@ -653,6 +654,10 @@ void process_arg(int argc, char *argv[])
 					myexit(-1);
 				}
 			}
+		}
+		if(strcmp(argv[i],"--enable-color")==0)
+		{
+			enable_log_color=1;
 		}
 		if(strcmp(argv[i],"--disable-color")==0)
 		{
@@ -809,6 +814,10 @@ void process_arg(int argc, char *argv[])
 				//enable_log_color=0;
 			}
 			else if(strcmp(long_options[option_index].name,"disable-color")==0)
+			{
+				//enable_log_color=0;
+			}
+			else if(strcmp(long_options[option_index].name,"enable-color")==0)
 			{
 				//enable_log_color=0;
 			}
