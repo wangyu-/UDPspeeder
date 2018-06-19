@@ -46,7 +46,7 @@ void data_from_local_or_fec_timeout(conn_info_t & conn_info,int is_time_out)
 		socklen_t udp_new_addr_len = sizeof(sockaddr_in);
 		if ((data_len = recvfrom(local_listen_fd, data, max_data_len, 0,
 				(struct sockaddr *) &udp_new_addr_in, &udp_new_addr_len)) == -1) {
-			mylog(log_error,"recv_from error,this shouldnt happen,err=%s,but we can try to continue\n",get_sock_error());
+			mylog(log_debug,"recv_from error,this shouldnt happen,err=%s,but we can try to continue\n",get_sock_error());
 			return;
 		};
 
