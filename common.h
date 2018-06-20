@@ -50,6 +50,7 @@ typedef int socklen_t;
 #include<unordered_set>
 #include<map>
 #include<list>
+#include<string>
 
 using  namespace std;
 
