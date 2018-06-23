@@ -43,6 +43,7 @@ typedef int socklen_t;
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
 #endif
 
 
