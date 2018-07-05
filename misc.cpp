@@ -779,7 +779,7 @@ void process_arg(int argc, char *argv[])
 			}
 			else
 			{
-				mylog(log_fatal," -r ip:port\n");
+				mylog(log_fatal,"-l ip:port\n");
 				myexit(1);
 				strcpy(local_ip, "127.0.0.1");
 				sscanf(optarg, "%d", &local_port);
