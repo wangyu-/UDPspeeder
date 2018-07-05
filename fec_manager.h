@@ -61,10 +61,9 @@ struct anti_replay_t
 		if(is_vaild(seq)==0)
 		{
 			mylog(log_trace,"seq %u exist\n",seq);
-			assert(mp.find(seq)!=mp.end());
-			mp[seq].my_time=get_current_time_rough();
+			//assert(mp.find(seq)!=mp.end());
+			//mp[seq].my_time=get_current_time_rough();
 			return;
-			//return 0;
 		}
 		if(replay_buffer[index]!=u64_t(i64_t(-1)))
 		{
@@ -77,7 +76,6 @@ struct anti_replay_t
 		mp[seq].index=index;
 		index++;
 		if(index==int(anti_replay_buff_size)) index=0;
-		//return 1; //for complier check
 	}
 	int is_vaild(u32_t seq)
 	{
