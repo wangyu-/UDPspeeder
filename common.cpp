@@ -211,6 +211,11 @@ u64_t get_current_time()//ms
 	return (u64_t)(ev_time()*1000);
 }
 
+u64_t get_current_time_rough()//ms
+{
+	return (u64_t)(ev_now(ev_default_loop(0))*1000);
+}
+
 u64_t get_current_time_us()
 {
 	//timespec tmp_time;

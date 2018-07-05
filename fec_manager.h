@@ -29,12 +29,19 @@ extern int g_fec_mode;
 extern int dynamic_update_fec;
 /*end for first time init or dynamic update*/
 
+const int anti_replay_timeout=60*1000;// 60s
 
 struct anti_replay_t
 {
 
+	struct info_t
+	{
+		my_time_t my_time;
+		int index;
+	};
+
 	u64_t replay_buffer[anti_replay_buff_size];
-	unordered_set<u32_t> st;
+	unordered_map<u32_t,info_t> mp;
 	int index;
 	anti_replay_t()
 	{
@@ -43,34 +50,47 @@ struct anti_replay_t
 	int clear()
 	{
 		memset(replay_buffer,-1,sizeof(replay_buffer));
-		st.clear();
-		st.rehash(anti_replay_buff_size*3);
+		mp.clear();
+		mp.rehash(anti_replay_buff_size*3);
 		index=0;
 		return 0;
 	}
 	void set_invaild(u32_t seq)
 	{
 
-		if(st.find(seq)!=st.end() )
+		if(is_vaild(seq)==0)
 		{
 			mylog(log_trace,"seq %u exist\n",seq);
+			assert(mp.find(seq)!=mp.end());
+			mp[seq].my_time=get_current_time_rough();
 			return;
 			//return 0;
 		}
 		if(replay_buffer[index]!=u64_t(i64_t(-1)))
 		{
-			assert(st.find(replay_buffer[index])!=st.end());
-			st.erase(replay_buffer[index]);
+			assert(mp.find(replay_buffer[index])!=mp.end());
+			mp.erase(replay_buffer[index]);
 		}
 		replay_buffer[index]=seq;
-		st.insert(seq);
+		assert(mp.find(seq)==mp.end());
+		mp[seq].my_time=get_current_time_rough();
+		mp[seq].index=index;
 		index++;
 		if(index==int(anti_replay_buff_size)) index=0;
 		//return 1; //for complier check
 	}
 	int is_vaild(u32_t seq)
 	{
-		return st.find(seq)==st.end();
+		if(mp.find(seq)==mp.end()) return 1;
+		
+		if(get_current_time_rough()-mp[seq].my_time>anti_replay_timeout)
+		{
+			replay_buffer[mp[seq].index]=u64_t(i64_t(-1));
+			mp.erase(seq);
+			return 1;
+		}
+
+		return 0;
 	}
 };
 

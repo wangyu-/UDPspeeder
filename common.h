@@ -220,6 +220,7 @@ struct pseudo_header {
 };
 
 u64_t get_current_time();
+u64_t get_current_time_rough();
 u64_t get_current_time_us();
 u64_t pack_u64(u32_t a,u32_t b);
 
