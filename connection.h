@@ -118,7 +118,8 @@ struct conn_info_t     //stores info for a raw connection.for client ,there is o
 	int remote_fd;  //only used for client
 	fd64_t remote_fd64;//only used for client
 
-	ip_port_t ip_port;//only used for server
+	//ip_port_t ip_port;
+	address_t  addr;//only used for server
 
 	conn_info_t()
 	{

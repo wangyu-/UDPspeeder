@@ -27,9 +27,10 @@ int output_interval_max=0*1000;
 
 int fix_latency=0;
 
-u32_t local_ip_uint32,remote_ip_uint32=0;
-char local_ip[100], remote_ip[100];
-int local_port = -1, remote_port = -1;
+address_t local_addr,remote_addr;
+//u32_t local_ip_uint32,remote_ip_uint32=0;
+//char local_ip[100], remote_ip[100];
+//int local_port = -1, remote_port = -1;
 
 conn_manager_t conn_manager;
 delay_manager_t delay_manager;
@@ -773,34 +774,11 @@ void process_arg(int argc, char *argv[])
 			break;
 		case 'l':
 			no_l = 0;
-			if (strchr(optarg, ':') != 0)
-			{
-				sscanf(optarg, "%[^:]:%d", local_ip, &local_port);
-			}
-			else
-			{
-				mylog(log_fatal,"-l ip:port\n");
-				myexit(1);
-				strcpy(local_ip, "127.0.0.1");
-				sscanf(optarg, "%d", &local_port);
-			}
+			local_addr.from_str(optarg);
 			break;
 		case 'r':
 			no_r = 0;
-			if (strchr(optarg, ':') != 0)
-			{
-				//printf("in :\n");
-				//printf("%s\n",optarg);
-				sscanf(optarg, "%[^:]:%d", remote_ip, &remote_port);
-				//printf("%d\n",remote_port);
-			}
-			else
-			{
-				mylog(log_fatal," -r ip:port\n");
-				myexit(1);
-				strcpy(remote_ip, "127.0.0.1");
-				sscanf(optarg, "%d", &remote_port);
-			}
+			remote_addr.from_str(optarg);
 			break;
 		case 'h':
 			break;

@@ -144,9 +144,9 @@ int main(int argc, char *argv[])
 	process_arg(argc,argv);
 
 	delay_manager.set_capacity(delay_capacity);
-	local_ip_uint32=inet_addr(local_ip);
-	remote_ip_uint32=inet_addr(remote_ip);
-	sub_net_uint32=inet_addr(sub_net);
+	//local_ip_uint32=inet_addr(local_ip);
+	//remote_ip_uint32=inet_addr(remote_ip);
+	sub_net_uint32=inet_addr(sub_net);// used only in tinyfecVPN
 
 	if(strlen(tun_dev)==0)
 	{
