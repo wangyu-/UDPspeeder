@@ -21,6 +21,8 @@ extern int report_interval;
 
 const int disable_conv_clear=0;
 
+void server_clear_function(u64_t u64);
+
 template  <class T>
 struct conv_manager_t  // manage the udp connections
 {
@@ -280,6 +282,7 @@ struct conn_info_t     //stores info for a raw connection.for client ,there is o
 
 	conn_info_t()
 	{
+		conv_manager.s.additional_clear_function=server_clear_function;
 	}
 
 	~conn_info_t()
@@ -340,7 +343,7 @@ int clear_inactive0();
 
 };
 
-void server_clear_function(u64_t u64);
+
 
 extern conn_manager_t conn_manager;
 
