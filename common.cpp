@@ -833,21 +833,6 @@ int create_new_udp(int &new_udp_fd,int remote_address_uint32,int remote_port)
 	}
 	return 0;
 }*/
-void ip_port_t::from_u64(u64_t u64)
-{
-	ip=get_u64_h(u64);
-	port=get_u64_l(u64);
-}
-u64_t ip_port_t::to_u64()
-{
-	return pack_u64(ip,port);
-}
-char * ip_port_t::to_s()
-{
-	static char res[40];
-	sprintf(res,"%s:%d",my_ntoa(ip),port);
-	return res;
-}
 
 int round_up_div(int a,int b)
 {

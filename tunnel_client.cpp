@@ -60,25 +60,25 @@ void data_from_local_or_fec_timeout(conn_info_t & conn_info,int is_time_out)
 
 		mylog(log_trace,"Received packet from %s, len: %d\n", addr.get_str(),data_len);
 
-		u64_t u64=ip_port.to_u64();
+		//u64_t u64=ip_port.to_u64();
 
-		if(!conn_info.conv_manager.is_u64_used(u64))
+		if(!conn_info.conv_manager.c.is_data_used(addr))
 		{
-			if(conn_info.conv_manager.get_size() >=max_conv_num)
+			if(conn_info.conv_manager.c.get_size() >=max_conv_num)
 			{
 				mylog(log_warn,"ignored new udp connect bc max_conv_num exceed\n");
 				return;
 			}
-			conv=conn_info.conv_manager.get_new_conv();
-			conn_info.conv_manager.insert_conv(conv,u64);
+			conv=conn_info.conv_manager.c.get_new_conv();
+			conn_info.conv_manager.c.insert_conv(conv,addr);
 			mylog(log_info,"new packet from %s,conv_id=%x\n",addr.get_str(),conv);
 		}
 		else
 		{
-			conv=conn_info.conv_manager.find_conv_by_u64(u64);
+			conv=conn_info.conv_manager.c.find_conv_by_data(addr);
 			mylog(log_trace,"conv=%d\n",conv);
 		}
-		conn_info.conv_manager.update_active_time(conv);
+		conn_info.conv_manager.c.update_active_time(conv);
 		char * new_data;
 		int new_len;
 		put_conv(conv,data,data_len,new_data,new_len);
@@ -160,18 +160,18 @@ static void remote_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
 			mylog(log_debug,"get_conv(conv,out_arr[i],out_len[i],new_data,new_len)!=0");
 			continue;
 		}
-		if(!conn_info.conv_manager.is_conv_used(conv))
+		if(!conn_info.conv_manager.c.is_conv_used(conv))
 		{
 			mylog(log_trace,"!conn_info.conv_manager.is_conv_used(conv)");
 			continue;
 		}
 
-		conn_info.conv_manager.update_active_time(conv);
+		conn_info.conv_manager.c.update_active_time(conv);
 
-		u64_t u64=conn_info.conv_manager.find_u64_by_conv(conv);
+		address_t addr=conn_info.conv_manager.c.find_data_by_conv(conv);
 		dest_t dest;
 		dest.inner.fd_addr.fd=conn_info.local_listen_fd;
-		dest.inner.fd_ip_port.ip_port.from_u64(u64);
+		dest.inner.fd_addr.addr=addr;
 		dest.type=type_fd_addr;
 
 		delay_send(out_delay[i],dest,new_data,new_len);
@@ -224,7 +224,7 @@ static void conn_timer_cb(struct ev_loop *loop, struct ev_timer *watcher, int re
 	conn_info_t & conn_info= *((conn_info_t*)watcher->data);
 
 	//read(conn_info.timer.get_timer_fd(), &value, 8);
-	conn_info.conv_manager.clear_inactive();
+	conn_info.conv_manager.c.clear_inactive();
 	mylog(log_trace,"events[idx].data.u64==(u64_t)conn_info.timer.get_timer_fd()\n");
 
 	conn_info.stat.report_as_client();

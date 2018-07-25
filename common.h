@@ -224,10 +224,11 @@ struct address_t  //TODO scope id
 	};
 	storage_t inner;
 
-	address_t()
+	/*address_t()
 	{
 		clear();
-	}
+	}*/
+
 	void clear()
 	{
 		memset(&inner,0,sizeof(inner));
@@ -439,5 +440,111 @@ int new_connected_socket(int &fd,u32_t ip,int port);
 
 int new_listen_socket2(int &fd,address_t &addr);
 int new_connected_socket2(int &fd,address_t &addr);
+
+struct not_copy_able_t
+{
+	not_copy_able_t()
+	{
+
+	}
+	not_copy_able_t(const not_copy_able_t &other)
+	{
+		assert(0==1);
+	}
+	const not_copy_able_t & operator=(const not_copy_able_t &other)
+	{
+		assert(0==1);
+		return other;
+	}
+};
+
+
+template <class key_t>
+struct lru_collector_t:not_copy_able_t
+{
+	//typedef void* key_t;
+//#define key_t void*
+	struct lru_pair_t
+	{
+		key_t key;
+		my_time_t ts;
+	};
+
+	unordered_map<key_t,typename list<lru_pair_t>::iterator> mp;
+
+	list<lru_pair_t> q;
+	int update(key_t key)
+	{
+		assert(mp.find(key)!=mp.end());
+		auto it=mp[key];
+		q.erase(it);
+
+		my_time_t value=get_current_time();
+		if(!q.empty())
+		{
+			assert(value >=q.front().ts);
+		}
+		lru_pair_t tmp; tmp.key=key; tmp.ts=value;
+		q.push_front( tmp);
+		mp[key]=q.begin();
+
+		return 0;
+	}
+	int new_key(key_t key)
+	{
+		assert(mp.find(key)==mp.end());
+
+		my_time_t value=get_current_time();
+		if(!q.empty())
+		{
+			assert(value >=q.front().ts);
+		}
+		lru_pair_t tmp; tmp.key=key; tmp.ts=value;
+		q.push_front( tmp);
+		mp[key]=q.begin();
+
+		return 0;
+	}
+	int size()
+	{
+		return q.size();
+	}
+	int empty()
+	{
+		return q.empty();
+	}
+	void clear()
+	{
+		mp.clear(); q.clear();
+	}
+	my_time_t ts_of(key_t key)
+	{
+		assert(mp.find(key)!=mp.end());
+		return mp[key]->ts;
+	}
+
+	my_time_t peek_back(key_t &key)
+	{
+		assert(!q.empty());
+		auto it=q.end(); it--;
+		key=it->key;
+		return it->ts;
+	}
+	void erase(key_t key)
+	{
+		assert(mp.find(key)!=mp.end());
+		q.erase(mp[key]);
+		mp.erase(key);
+	}
+	/*
+	void erase_back()
+	{
+		assert(!q.empty());
+		auto it=q.end(); it--;
+		key_t key=it->key;
+		erase(key);
+	}*/
+};
+
 
 #endif /* COMMON_H_ */

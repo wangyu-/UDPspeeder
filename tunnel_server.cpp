@@ -64,7 +64,7 @@ void data_from_remote_or_fec_timeout_or_conn_timer(conn_info_t & conn_info,fd64_
 		assert(fd64==0);
 		//uint64_t value;
 		//read(conn_info.timer.get_timer_fd(), &value, 8);
-		conn_info.conv_manager.clear_inactive();
+		conn_info.conv_manager.s.clear_inactive();
 		if(debug_force_flush_fec)
 		{
 		from_normal_to_fec(conn_info,0,0,out_n,out_arr,out_len,out_delay);
@@ -82,10 +82,10 @@ void data_from_remote_or_fec_timeout_or_conn_timer(conn_info_t & conn_info,fd64_
 		}
 
 		//fd64_t &fd64 =conn_info.remote_fd64;
-		assert(conn_info.conv_manager.is_u64_used(fd64));
+		assert(conn_info.conv_manager.s.is_data_used(fd64));
 
-		conv=conn_info.conv_manager.find_conv_by_u64(fd64);
-		conn_info.conv_manager.update_active_time(conv);
+		conv=conn_info.conv_manager.s.find_conv_by_data(fd64);
+		conn_info.conv_manager.s.update_active_time(conv);
 		conn_info.update_active_time();
 
 		int fd=fd_manager.to_fd(fd64);
@@ -168,8 +168,8 @@ static void local_listen_cb(struct ev_loop *loop, struct ev_io *watcher, int rev
 			return;
 		}
 
-		conn_manager.insert(addr);
-		conn_info_t &conn_info=conn_manager.find(addr);
+		//conn_manager.insert(addr);
+		conn_info_t &conn_info=conn_manager.find_insert(addr);
 		conn_info.addr=addr;
 		conn_info.loop=ev_default_loop(0);
 		conn_info.local_listen_fd=local_listen_fd;
@@ -204,7 +204,7 @@ static void local_listen_cb(struct ev_loop *loop, struct ev_io *watcher, int rev
 		mylog(log_info,"new connection from %s\n",addr.get_str());
 
 	}
-	conn_info_t &conn_info=conn_manager.find(addr);
+	conn_info_t &conn_info=conn_manager.find_insert(addr);
 
 	conn_info.update_active_time();
 	int  out_n;char **out_arr;int *out_len;my_time_t *out_delay;
@@ -223,9 +223,9 @@ static void local_listen_cb(struct ev_loop *loop, struct ev_io *watcher, int rev
 		}
 
 
-		if (!conn_info.conv_manager.is_conv_used(conv))
+		if (!conn_info.conv_manager.s.is_conv_used(conv))
 		{
-			if(conn_info.conv_manager.get_size() >=max_conv_num)
+			if(conn_info.conv_manager.s.get_size() >=max_conv_num)
 			{
 				mylog(log_warn,"ignored new udp connect bc max_conv_num exceed\n");
 				continue;
@@ -244,7 +244,7 @@ static void local_listen_cb(struct ev_loop *loop, struct ev_io *watcher, int rev
 			//ev.data.u64 = fd64;
 			//ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, new_udp_fd, &ev);
 
-			conn_info.conv_manager.insert_conv(conv, fd64);
+			conn_info.conv_manager.s.insert_conv(conv, fd64);
 			fd_manager.get_info(fd64).addr=addr;
 
 			ev_io &io_watcher=fd_manager.get_info(fd64).io_watcher;
@@ -258,8 +258,8 @@ static void local_listen_cb(struct ev_loop *loop, struct ev_io *watcher, int rev
 
 			mylog(log_info,"[%s]new conv %x,fd %d created,fd64=%llu\n",addr.get_str(),conv,new_udp_fd,fd64);
 		}
-		conn_info.conv_manager.update_active_time(conv);
-		fd64_t fd64= conn_info.conv_manager.find_u64_by_conv(conv);
+		conn_info.conv_manager.s.update_active_time(conv);
+		fd64_t fd64= conn_info.conv_manager.s.find_data_by_conv(conv);
 		dest_t dest;
 		dest.type=type_fd64;
 		dest.inner.fd64=fd64;
