@@ -233,6 +233,7 @@ struct address_t  //TODO scope id
 	{
 		memset(&inner,0,sizeof(inner));
 	}
+	/*
 	int from_ip_port(u32_t  ip, int port)
 	{
 		clear();
@@ -240,7 +241,7 @@ struct address_t  //TODO scope id
 		inner.ipv4.sin_port=htons(port);
 		inner.ipv4.sin_addr.s_addr=ip;
 		return 0;
-	}
+	}*/
 
 	int from_ip_port_new(int type, void *  ip, int port)
 	{
@@ -253,7 +254,7 @@ struct address_t  //TODO scope id
 		}
 		else if(type==AF_INET6)
 		{
-			inner.ipv6.sin6_family=AF_INET;
+			inner.ipv6.sin6_family=AF_INET6;
 			inner.ipv6.sin6_port=htons(port);
 			inner.ipv6.sin6_addr=*((in6_addr*)ip);
 		}

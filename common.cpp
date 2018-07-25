@@ -881,7 +881,7 @@ int create_fifo(char * file)
 #endif
 }
 
-
+/*
 int new_listen_socket(int &fd,u32_t ip,int port)
 {
 	fd =socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -939,7 +939,7 @@ int new_connected_socket(int &fd,u32_t ip,int port)
 	}
 	return 0;
 }
-
+*/
 int new_listen_socket2(int &fd,address_t &addr)
 {
 	fd =socket(addr.get_type(), SOCK_DGRAM, IPPROTO_UDP);
@@ -960,7 +960,7 @@ int new_listen_socket2(int &fd,address_t &addr)
 }
 int new_connected_socket2(int &fd,address_t &addr)
 {
-	fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	fd = socket(addr.get_type(), SOCK_DGRAM, IPPROTO_UDP);
 	if (fd < 0) {
 		mylog(log_warn, "[%s]create udp_fd error\n", addr.get_str());
 		return -1;
