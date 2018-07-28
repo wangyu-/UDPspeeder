@@ -388,7 +388,7 @@ int tunnel_server_event_loop()
 
 	//mylog(log_debug," delay_manager.get_timer_fd() =%d\n", delay_manager.get_timer_fd());
 
-	mylog(log_info,"now listening at %s:%d\n",local_addr.get_str());
+	mylog(log_info,"now listening at %s\n",local_addr.get_str());
 
 	//my_timer_t timer;
 	//timer.add_fd_to_epoll(epoll_fd);
