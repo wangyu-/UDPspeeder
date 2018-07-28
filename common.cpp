@@ -21,7 +21,7 @@ unordered_map<int, const char*> raw_mode_tostring = {{mode_faketcp, "faketcp"}, 
 char iptables_rule[200]="";
 //int is_client = 0, is_server = 0;
 
-program_mode_t client_or_server=unset_mode;//0 unset; 1client 2server
+program_mode_t program_mode=unset_mode;//0 unset; 1client 2server
 
 working_mode_t working_mode=tunnel_mode;
 

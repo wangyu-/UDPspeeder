@@ -965,11 +965,11 @@ void process_arg(int argc, char *argv[])
 	}
 	if(is_client==1)
 	{
-		client_or_server=client_mode;
+		program_mode=client_mode;
 	}
 	else
 	{
-		client_or_server=server_mode;
+		program_mode=server_mode;
 	}
 
 
@@ -984,12 +984,12 @@ void process_arg(int argc, char *argv[])
 	}
 	else if(working_mode==tun_dev_mode)
 	{
-		if(client_or_server==client_mode&&no_r)
+		if(program_mode==client_mode&&no_r)
 		{
 			mylog(log_fatal,"error: -r not found\n");
 			myexit(-1);
 		}
-		else if(client_or_server==server_mode&&no_l)
+		else if(program_mode==server_mode&&no_l)
 		{
 			mylog(log_fatal,"error: -l not found\n");
 			myexit(-1);

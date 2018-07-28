@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
 		sprintf(tun_dev,"tun%u",get_fake_random_number()%1000);
 	}
 
-	if(client_or_server==client_mode)
+	if(program_mode==client_mode)
 	{
 		tunnel_client_event_loop();
 	}
