@@ -15,6 +15,7 @@ int mtu_warn=1350;
 
 int disable_mtu_warn=1;
 int disable_fec=0;
+int disable_checksum=0;
 
 int debug_force_flush_fec=0;
 
@@ -638,6 +639,7 @@ void process_arg(int argc, char *argv[])
 		{"disable-fec", no_argument,    0, 1},
 		{"disable-obscure", no_argument,    0, 1},
 		{"disable-xor", no_argument,    0, 1},
+		{"disable-checksum", no_argument,    0, 1},
 		{"fix-latency", no_argument,    0, 1},
 		{"sock-buf", required_argument,    0, 1},
 		{"random-drop", required_argument,    0, 1},
@@ -848,6 +850,11 @@ void process_arg(int argc, char *argv[])
 			{
 				mylog(log_info,"xor disabled\n");
 				disable_xor=1;
+			}
+			else if(strcmp(long_options[option_index].name,"disable-checksum")==0)
+			{
+				disable_checksum=1;
+				mylog(log_warn,"checksum disabled\n");
 			}
 			else if(strcmp(long_options[option_index].name,"fix-latency")==0)
 			{
