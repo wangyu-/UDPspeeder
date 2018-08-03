@@ -9,6 +9,7 @@
 #include "common.h"
 #include "log.h"
 #include "packet.h"
+#include "misc.h"
 
 int iv_min=4;
 int iv_max=32;//< 256;
@@ -315,6 +316,7 @@ int get_conv0(u32_t &conv,const char *input,int len_in,char *&output,int &len_ou
 }
 int put_crc32(char * s,int &len)
 {
+	if(disable_checksum)return 0;
 	assert(len>=0);
 	//if(len<0) return -1;
 	u32_t crc32=crc32h((unsigned char *)s,len);
@@ -327,6 +329,7 @@ int put_crc32(char * s,int &len)
 
 int do_cook(char * data,int &len)
 {
+	if(disable_checksum)return 0;
 	put_crc32(data,len);
 	if(!disable_obscure)do_obscure(data,len);
 	if(!disable_xor)encrypt_0(data,len,key_string);
