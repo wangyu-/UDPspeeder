@@ -329,7 +329,6 @@ int put_crc32(char * s,int &len)
 
 int do_cook(char * data,int &len)
 {
-	if(disable_checksum)return 0;
 	put_crc32(data,len);
 	if(!disable_obscure)do_obscure(data,len);
 	if(!disable_xor)encrypt_0(data,len,key_string);
@@ -358,8 +357,8 @@ int de_cook(char * s,int &len)
 }
 int rm_crc32(char * s,int &len)
 {
+	if(disable_checksum)return 0;
 	assert(len>=0);
-
 	len-=sizeof(u32_t);
 	if(len<0) return -1;
 	u32_t crc32_in=read_u32(s+len);
