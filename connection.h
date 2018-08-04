@@ -306,7 +306,14 @@ struct conn_info_t     //stores info for a raw connection.for client ,there is o
 
 	conn_info_t()
 	{
-		conv_manager.s.additional_clear_function=server_clear_function;
+		if(program_mode==server_mode)
+		{
+			conv_manager.s.additional_clear_function=server_clear_function;
+		}
+		else
+		{
+			assert(program_mode==client_mode);
+		}
 	}
 
 	~conn_info_t()
