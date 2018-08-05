@@ -1006,3 +1006,21 @@ u32_t sdbm(unsigned char *str,int len)
      return hash;
  }
 
+vector<string> string_to_vec(const char * s,const char * sp) {
+	  vector<string> res;
+	  string str=s;
+	  char *p = strtok ((char *)str.c_str(),sp);
+	  while (p != NULL)
+	  {
+		 res.push_back(p);
+	    //printf ("%s\n",p);
+	    p = strtok(NULL, sp);
+	  }
+
+	 /* for(int i=0;i<(int)res.size();i++)
+	  {
+		  printf("<<%s>>\n",res[i].c_str());
+	  }*/
+	  return res;
+}
+

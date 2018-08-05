@@ -381,6 +381,7 @@ int tunnel_client_event_loop()
 	ev_init(&prepare_watcher,prepare_cb);
 	ev_prepare_start(loop,&prepare_watcher);
 
+	mylog(log_info,"now listening at %s\n",local_addr.get_str());
 
 	ev_run(loop, 0);
 

@@ -20,6 +20,7 @@
 
 fec_parameter_t g_fec_par;
 
+int debug_fec=1;
 //int dynamic_update_fec=1;
 
 const int encode_fast_send=1;
@@ -314,7 +315,11 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     			actual_data_num=best_data_num;
     			assert(best_data_num>=1&&best_data_num<=fec_par.rs_cnt);
     			actual_redundant_num=fec_par.rs_par[best_data_num-1].y;
-    			mylog(log_trace,"actual_data_num=%d actual_redundant_num=%d\n",actual_data_num,actual_redundant_num);
+
+    			if(debug_fec)
+    				mylog(log_debug,"actual_data_num=%d actual_redundant_num=%d len=%d\n",actual_data_num,actual_redundant_num,blob_encode.get_shard_len(actual_data_num,0));
+    			else
+    				mylog(log_trace,"actual_data_num=%d actual_redundant_num=%d\n",actual_data_num,actual_redundant_num);
     		}
 
         	assert(blob_encode.output(actual_data_num,blob_output,fec_len)==0);

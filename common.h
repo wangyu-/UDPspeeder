@@ -52,7 +52,7 @@ typedef int socklen_t;
 #include<map>
 #include<list>
 #include<string>
-
+#include<vector>
 using  namespace std;
 
 
@@ -547,5 +547,7 @@ struct lru_collector_t:not_copy_able_t
 	}*/
 };
 
+
+vector<string> string_to_vec(const char * s,const char * sp) ;
 
 #endif /* COMMON_H_ */

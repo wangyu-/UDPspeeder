@@ -53,7 +53,8 @@ int tun_mtu=1500;
 
 int mssfix=1;
 
-char rs_par_str[max_fec_packet_num*10+100];
+
+char rs_par_str[rs_str_len];
 
 
 int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,my_time_t *&out_delay)
@@ -289,6 +290,7 @@ int handle_command(char *s)
 		g_fec_par.clone(tmp_par);
 		g_fec_par.version=version;
 		g_fec_par.version++;
+		strcpy(rs_par_str,tmp_str);
 		//g_fec_data_num=a;
 		//g_fec_redundant_num=b;
 	}
@@ -323,7 +325,13 @@ int handle_command(char *s)
 			mylog(log_warn,"invaild value\n");
 			return -1;
 		}
-		g_fec_par.mode=a;
+		if(g_fec_par.mode!=a)
+		{
+			g_fec_par.mode=a;
+
+			assert(g_fec_par.rs_from_str(rs_par_str)==0); //re parse rs_par_str,not necessary at the moment, for futher use
+			g_fec_par.version++;
+		}
 	}
 	else if(strncmp(s,"timeout",strlen("timeout"))==0)
 	{
