@@ -19,15 +19,58 @@ const int max_fec_packet_num=255;// this is the limitation of the rs lib
 extern u32_t fec_buff_num;
 
 
-/*begin for first time init or dynamic update*/
-extern int g_fec_data_num;
-extern int g_fec_redundant_num;
-extern int g_fec_mtu;
-extern int g_fec_queue_len;
-extern int g_fec_timeout; //8ms
-extern int g_fec_mode;
-extern int dynamic_update_fec;
-/*end for first time init or dynamic update*/
+struct fec_parameter_t
+{
+	int version=0;
+	int mtu=1250;
+	int queue_len=200;
+	int timeout=8*1000;
+	int mode=0;
+
+	int rs_cnt;
+	struct rs_parameter_t //parameters for reed solomon
+	{
+		unsigned char x;//AKA fec_data_num  (x should be same as <index of rs_par>+1 at the moment)
+		unsigned char y;//fec_redundant_num
+	}rs_par[255+10];
+
+	int rs_from_str(char * s)
+	{
+		return 0;
+	}
+
+	char *rs_to_str()
+	{
+		return 0;
+	}
+
+	rs_parameter_t get_tail()
+	{
+		assert(rs_cnt>=1);
+		return rs_par[rs_cnt-1];
+	}
+
+
+	int clone(fec_parameter_t & other)
+	{
+		version=other.version;
+		mtu=other.mtu;
+		queue_len=other.queue_len;
+		timeout=other.timeout;
+		mode=other.mode;
+
+		assert(other.rs_cnt>=1);
+		rs_cnt=other.rs_cnt;
+		memcpy(rs_par,other.rs_par,sizeof(rs_parameter_t)*rs_cnt);
+
+		return 0;
+	}
+
+
+};
+
+extern fec_parameter_t g_fec_par;
+//extern int dynamic_update_fec;
 
 const int anti_replay_timeout=60*1000;// 60s
 
@@ -134,11 +177,13 @@ class fec_encode_manager_t
 private:
 	u32_t seq;
 
-	int fec_mode;
-	int fec_data_num,fec_redundant_num;
-	int fec_mtu;
-	int fec_queue_len;
-	int fec_timeout;
+	//int fec_mode;
+	//int fec_data_num,fec_redundant_num;
+	//int fec_mtu;
+	//int fec_queue_len;
+	//int fec_timeout;
+	fec_parameter_t fec_par;
+
 
 	my_time_t first_packet_time;
 	my_time_t first_packet_time_for_output;
@@ -168,6 +213,10 @@ public:
 	fec_encode_manager_t();
 	~fec_encode_manager_t();
 
+	fec_parameter_t & get_fec_par()
+	{
+		return fec_par;
+	}
 	void set_data(void * data)
 	{
 		timer.data=data;
@@ -221,12 +270,12 @@ public:
 
 	int get_pending_time()
 	{
-		return fec_timeout;
+		return fec_par.timeout;
 	}
 
 	int get_type()
 	{
-		return fec_mode;
+		return fec_par.mode;
 	}
 	//u64_t get_timer_fd64();
 	int reset_fec_parameter(int data_num,int redundant_num,int mtu,int pending_num,int pending_time,int type);

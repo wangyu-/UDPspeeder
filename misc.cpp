@@ -53,6 +53,8 @@ int tun_mtu=1500;
 
 int mssfix=1;
 
+char rs_par_str[max_fec_packet_num*10+100];
+
 
 int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,my_time_t *&out_delay)
 {
@@ -252,9 +254,10 @@ int delay_send(my_time_t delay,const dest_t &dest,char *data,int len)
 
 int print_parameter()
 {
-	mylog(log_info,"jitter_min=%d jitter_max=%d output_interval_min=%d output_interval_max=%d fec_timeout=%d fec_data_num=%d fec_redundant_num=%d fec_mtu=%d fec_queue_len=%d fec_mode=%d\n",
-			jitter_min/1000,jitter_max/1000,output_interval_min/1000,output_interval_max/1000,g_fec_timeout/1000,
-			g_fec_data_num,g_fec_redundant_num,g_fec_mtu,g_fec_queue_len,g_fec_mode);
+	mylog(log_info,"jitter_min=%d jitter_max=%d output_interval_min=%d output_interval_max=%d fec_timeout=%d fec_mtu=%d fec_queue_len=%d fec_mode=%d\n",
+			jitter_min/1000,jitter_max/1000,output_interval_min/1000,output_interval_max/1000,g_fec_par.timeout/1000,g_fec_par.mtu,g_fec_par.queue_len,g_fec_par.mode);
+	mylog(log_info,"fec_str=%s\n",rs_par_str);
+	mylog(log_info,"fec_inner_parameter=%s\n",g_fec_par.rs_to_str());
 	return 0;
 }
 int handle_command(char *s)
@@ -267,14 +270,27 @@ int handle_command(char *s)
 	if(strncmp(s,"fec",strlen("fec"))==0)
 	{
 		mylog(log_info,"got command [fec]\n");
-		sscanf(s,"fec %d:%d",&a,&b);
+		char tmp_str[max_fec_packet_num*10+100];
+		fec_parameter_t tmp_par;
+		sscanf(s,"fec %s",tmp_str);
+		/*
 		if(a<1||b<0||a+b>254)
 		{
 			mylog(log_warn,"invaild value\n");
 			return -1;
+		}*/
+		int ret=tmp_par.rs_from_str(tmp_str);
+		if(ret!=0)
+		{
+			mylog(log_warn,"failed to parse [%s]\n",tmp_str);
+			return -1;
 		}
-		g_fec_data_num=a;
-		g_fec_redundant_num=b;
+		int version=g_fec_par.version;
+		g_fec_par.clone(tmp_par);
+		g_fec_par.version=version;
+		g_fec_par.version++;
+		//g_fec_data_num=a;
+		//g_fec_redundant_num=b;
 	}
 	else if(strncmp(s,"mtu",strlen("mtu"))==0)
 	{
@@ -285,7 +301,7 @@ int handle_command(char *s)
 			mylog(log_warn,"invaild value\n");
 			return -1;
 		}
-		g_fec_mtu=a;
+		g_fec_par.mtu=a;
 	}
 	else if(strncmp(s,"queue-len",strlen("queue-len"))==0)
 	{
@@ -296,7 +312,7 @@ int handle_command(char *s)
 			mylog(log_warn,"invaild value\n");
 			return -1;
 		}
-		g_fec_queue_len=a;
+		g_fec_par.queue_len=a;
 	}
 	else if(strncmp(s,"mode",strlen("mode"))==0)
 	{
@@ -307,7 +323,7 @@ int handle_command(char *s)
 			mylog(log_warn,"invaild value\n");
 			return -1;
 		}
-		g_fec_mode=a;
+		g_fec_par.mode=a;
 	}
 	else if(strncmp(s,"timeout",strlen("timeout"))==0)
 	{
@@ -318,7 +334,7 @@ int handle_command(char *s)
 			mylog(log_warn,"invaild value\n");
 			return -1;
 		}
-		g_fec_timeout=a*1000;
+		g_fec_par.timeout=a*1000;
 	}
 	else
 	{
@@ -440,7 +456,7 @@ int unit_test()
 	static fec_encode_manager_t fec_encode_manager;
 	static fec_decode_manager_t fec_decode_manager;
 
-	dynamic_update_fec=0;
+	//dynamic_update_fec=0;
 
 	fec_encode_manager.set_loop_and_cb(ev_default_loop(0),empty_cb);
 
@@ -534,7 +550,14 @@ int unit_test()
 		int * len;
 		fec_decode_manager.output(n,s_arr,len);
 
-		fec_encode_manager.reset_fec_parameter(3,2,g_fec_mtu,g_fec_queue_len,g_fec_timeout,1);
+		//fec_encode_manager.reset_fec_parameter(3,2,g_fec_mtu,g_fec_queue_len,g_fec_timeout,1);
+
+		fec_parameter_t &fec_par=fec_encode_manager.get_fec_par();
+		fec_par.mtu=g_fec_par.mtu;
+		fec_par.queue_len=g_fec_par.queue_len;
+		fec_par.timeout=g_fec_par.timeout;
+		fec_par.mode=1;
+		fec_par.rs_from_str((char *)"3:2");
 
 		fec_encode_manager.input((char *) a.c_str(), a.length());
 		fec_encode_manager.output(n,s_arr,len);
@@ -749,17 +772,19 @@ void process_arg(int argc, char *argv[])
 			}
 			else
 			{
-				sscanf(optarg,"%d:%d\n",&g_fec_data_num,&g_fec_redundant_num);
+				strcpy(rs_par_str,optarg);
+				//sscanf(optarg,"%d:%d\n",&g_fec_data_num,&g_fec_redundant_num);
+				/*
 				if(g_fec_data_num<1 ||g_fec_redundant_num<0||g_fec_data_num+g_fec_redundant_num>254)
 				{
 					mylog(log_fatal,"fec_data_num<1 ||fec_redundant_num<0||fec_data_num+fec_redundant_num>254\n");
 					myexit(-1);
-				}
+				}*/
 			}
 			break;
 		case 'q':
-			sscanf(optarg,"%d",&g_fec_queue_len);
-			if(g_fec_queue_len<1||g_fec_queue_len>10000)
+			sscanf(optarg,"%d",&g_fec_par.queue_len);
+			if(g_fec_par.queue_len<1||g_fec_par.queue_len>10000)
 			{
 
 					mylog(log_fatal,"fec_pending_num should be between 1 and 10000\n");
@@ -879,8 +904,8 @@ void process_arg(int argc, char *argv[])
 			}
 			else if(strcmp(long_options[option_index].name,"mode")==0)
 			{
-				sscanf(optarg,"%d",&g_fec_mode);
-				if(g_fec_mode!=0&&g_fec_mode!=1)
+				sscanf(optarg,"%d",&g_fec_par.mode);
+				if(g_fec_par.mode!=0&&g_fec_par.mode!=1)
 				{
 					mylog(log_fatal,"mode should be 0 or 1\n");
 					myexit(-1);
@@ -888,8 +913,8 @@ void process_arg(int argc, char *argv[])
 			}
 			else if(strcmp(long_options[option_index].name,"mtu")==0)
 			{
-				sscanf(optarg,"%d",&g_fec_mtu);
-				if(g_fec_mtu<100||g_fec_mtu>2000)
+				sscanf(optarg,"%d",&g_fec_par.mtu);
+				if(g_fec_par.mtu<100||g_fec_par.mtu>2000)
 				{
 					mylog(log_fatal,"fec_mtu should be between 100 and 2000\n");
 					myexit(-1);
@@ -897,14 +922,14 @@ void process_arg(int argc, char *argv[])
 			}
 			else if(strcmp(long_options[option_index].name,"timeout")==0)
 			{
-				sscanf(optarg,"%d",&g_fec_timeout);
-				if(g_fec_timeout<0||g_fec_timeout>1000)
+				sscanf(optarg,"%d",&g_fec_par.timeout);
+				if(g_fec_par.timeout<0||g_fec_par.timeout>1000)
 				{
 
 						mylog(log_fatal,"fec_pending_time should be between 0 and 1000(1s)\n");
 						myexit(-1);
 				}
-				g_fec_timeout*=1000;
+				g_fec_par.timeout*=1000;
 			}
 			else if(strcmp(long_options[option_index].name,"fifo")==0)
 			{
@@ -994,6 +1019,13 @@ void process_arg(int argc, char *argv[])
 			mylog(log_fatal,"error: -l not found\n");
 			myexit(-1);
 		}
+	}
+
+	int ret=g_fec_par.rs_from_str(rs_par_str);
+	if(ret!=0)
+	{
+		mylog(log_fatal,"failed to parse [rs_par_str]\n");
+		myexit(-1);
 	}
 
 	print_parameter();
