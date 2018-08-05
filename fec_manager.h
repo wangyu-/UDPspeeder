@@ -19,6 +19,8 @@ const int max_fec_packet_num=255;// this is the limitation of the rs lib
 extern u32_t fec_buff_num;
 
 const int rs_str_len=max_fec_packet_num*10+100;
+extern int header_overhead;
+extern int debug_fec;
 
 struct fec_parameter_t
 {
@@ -50,7 +52,7 @@ struct fec_parameter_t
 				mylog(log_warn,"failed to parse [%s]\n",tmp_str.c_str());
 				return -1;
 			}
-			if(x<1||y<1||x+y>max_fec_packet_num)
+			if(x<1||y<0||x+y>max_fec_packet_num)
 			{
 				mylog(log_warn,"invaild value x=%d y=%d\n",x,y);
 				return -1;

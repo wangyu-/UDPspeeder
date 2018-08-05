@@ -20,7 +20,7 @@
 
 fec_parameter_t g_fec_par;
 
-int debug_fec=1;
+int debug_fec=0;
 //int dynamic_update_fec=1;
 
 const int encode_fast_send=1;
@@ -288,15 +288,18 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     	if(fec_par.mode==0)
     	{
 
-    		actual_data_num=fec_par.get_tail().x;
-    		actual_redundant_num=fec_par.get_tail().y;
+
+    		int tail_x=fec_par.get_tail().x;
+    		int tail_y=fec_par.get_tail().y;
+    		actual_data_num=tail_x;
+    		actual_redundant_num=tail_y;
 
     		if(short_packet_optimize)
     		{
-    			u32_t best_len=(blob_encode.get_shard_len(actual_data_num,0)+header_overhead)*(actual_data_num+actual_redundant_num);
-    			int best_data_num=actual_data_num;
-    			assert(actual_data_num<=fec_par.rs_cnt);
-    			for(int i=1;i<actual_data_num;i++)
+    			u32_t best_len=(blob_encode.get_shard_len(tail_x,0)+header_overhead)*(tail_x+tail_y);
+    			int best_data_num=tail_x;
+    			assert(tail_x<=fec_par.rs_cnt);
+    			for(int i=1;i<tail_x;i++)
     			{
     				assert(fec_par.rs_par[i-1].x==i);
     				int tmp_x=fec_par.rs_par[i-1].x;
@@ -315,14 +318,10 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     			actual_data_num=best_data_num;
     			assert(best_data_num>=1&&best_data_num<=fec_par.rs_cnt);
     			actual_redundant_num=fec_par.rs_par[best_data_num-1].y;
-
-    			if(debug_fec)
-    				mylog(log_debug,"actual_data_num=%d actual_redundant_num=%d len=%d\n",actual_data_num,actual_redundant_num,blob_encode.get_shard_len(actual_data_num,0));
-    			else
-    				mylog(log_trace,"actual_data_num=%d actual_redundant_num=%d\n",actual_data_num,actual_redundant_num);
     		}
 
         	assert(blob_encode.output(actual_data_num,blob_output,fec_len)==0);
+
     	}
     	else
     	{
@@ -337,7 +336,11 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     		}
 
     	}
-    	mylog(log_trace,"%d %d %d\n",actual_data_num,actual_redundant_num,fec_len);
+		if(debug_fec)
+			mylog(log_debug,"x=%d y=%d len=%d\n",actual_data_num,actual_redundant_num,fec_len);
+		else
+			mylog(log_trace,"x=%d y=%d len=%d\n",actual_data_num,actual_redundant_num,fec_len);
+    	//mylog(log_trace,"%d %d %d\n",actual_data_num,actual_redundant_num,fec_len);
 
     	char *tmp_output_buf[max_fec_packet_num+5]={0};
     	for(int i=0;i<actual_data_num+actual_redundant_num;i++)

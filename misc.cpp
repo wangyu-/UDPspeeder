@@ -650,6 +650,8 @@ void process_arg(int argc, char *argv[])
 		{"queue-len", required_argument,   0,'q'},
 		{"fec", required_argument,   0,'f'},
 		{"jitter", required_argument,   0,'j'},
+		{"header-overhead", required_argument,    0, 1},
+		{"debug-fec", no_argument,    0, 1},
 		{"fifo", required_argument,    0, 1},
 		{"sub-net", required_argument,    0, 1},
 		{"tun-dev", required_argument,    0, 1},
@@ -660,6 +662,7 @@ void process_arg(int argc, char *argv[])
 		{NULL, 0, 0, 0}
       };
     int option_index = 0;
+    assert(g_fec_par.rs_from_str((char *)"20:10")==0);
 
 	for (i = 0; i < argc; i++)
 	{
@@ -939,6 +942,11 @@ void process_arg(int argc, char *argv[])
 				}
 				g_fec_par.timeout*=1000;
 			}
+			else if(strcmp(long_options[option_index].name,"debug-fec")==0)
+			{
+				debug_fec=1;
+				mylog(log_info,"debug_fec enabled\n");
+			}
 			else if(strcmp(long_options[option_index].name,"fifo")==0)
 			{
 				sscanf(optarg,"%s",fifo_file);
@@ -968,6 +976,11 @@ void process_arg(int argc, char *argv[])
 			{
 				sscanf(optarg,"%d",&tun_mtu);
 				mylog(log_warn,"changed tun_mtu,tun_mtu=%d\n",tun_mtu);
+			}
+			else if(strcmp(long_options[option_index].name,"header-overhead")==0)
+			{
+				sscanf(optarg,"%d",&header_overhead);
+				mylog(log_warn,"changed header_overhead,header_overhead=%d\n",header_overhead);
 			}
 			else if(strcmp(long_options[option_index].name,"disable-mssfix")==0)
 			{
