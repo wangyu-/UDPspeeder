@@ -54,7 +54,7 @@ int tun_mtu=1500;
 int mssfix=1;
 
 
-char rs_par_str[rs_str_len];
+char rs_par_str[rs_str_len]="20:10";
 
 
 int from_normal_to_fec(conn_info_t & conn_info,char *data,int len,int & out_n,char **&out_arr,int *&out_len,my_time_t *&out_delay)
@@ -662,7 +662,7 @@ void process_arg(int argc, char *argv[])
 		{NULL, 0, 0, 0}
       };
     int option_index = 0;
-    assert(g_fec_par.rs_from_str((char *)"20:10")==0);
+    assert(g_fec_par.rs_from_str(rs_par_str)==0);
 
 	for (i = 0; i < argc; i++)
 	{
