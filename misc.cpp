@@ -1045,7 +1045,7 @@ void process_arg(int argc, char *argv[])
 	int ret=g_fec_par.rs_from_str(rs_par_str);
 	if(ret!=0)
 	{
-		mylog(log_fatal,"failed to parse [rs_par_str]\n");
+		mylog(log_fatal,"failed to parse [%s]\n",rs_par_str);
 		myexit(-1);
 	}
 
