@@ -44,13 +44,16 @@ static void print_help()
 	printf("                                          default value: 1250. you typically shouldnt change this value.\n");
     printf("    -q,--queue-len        <number>        fec queue len, only for mode 0, fec will be performed immediately after queue is full.\n");
 	printf("                                          default value: 200. \n");
+
 	printf("    -j,--jitter           <number>        simulated jitter. randomly delay first packet for 0~<number> ms, default value: 0.\n");
 	printf("                                          do not use if you dont know what it means.\n");
 	printf("    -i,--interval         <number>        scatter each fec group to a interval of <number> ms, to protect burst packet loss.\n");
 	printf("                                          default value: 0. do not use if you dont know what it means.\n");
+	printf("    -f,--fec              x1:y1,x2:y2,..  similiar to -f/--fec above,fine-grained fec parameters,may help save bandwidth.\n");
+	printf("                                          example: \"-f 1:3,2:4,10:6,20:10\". check repo for details\n");
 	printf("    --random-drop         <number>        simulate packet loss, unit: 0.01%%. default value: 0.\n");
 	printf("    --disable-obscure     <number>        disable obscure, to save a bit bandwidth and cpu.\n");
-//	printf("    --disable-xor         <number>        disable xor\n");
+	//printf("    --disable-xor         <number>        disable xor\n");
 
 	printf("developer options:\n");
 	printf("    --fifo                <string>        use a fifo(named pipe) for sending commands to the running program, so that you\n");

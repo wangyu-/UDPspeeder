@@ -35,12 +35,16 @@ struct fec_parameter_t
 	{
 		unsigned char x;//AKA fec_data_num  (x should be same as <index of rs_par>+1 at the moment)
 		unsigned char y;//fec_redundant_num
-	}rs_par[255+10];
+	}rs_par[max_fec_packet_num+10];
 
 	int rs_from_str(char * s)//todo inefficient
 	{
 		vector<string> str_vec=string_to_vec(s,",");
-		if(str_vec.size()<1) return -1;
+		if(str_vec.size()<1)
+		{
+			mylog(log_warn,"failed to parse [%s]\n",s);
+			return -1;
+		}
 		vector<rs_parameter_t> par_vec;
 		for(int i=0;i<(int)str_vec.size();i++)
 		{
@@ -54,7 +58,7 @@ struct fec_parameter_t
 			}
 			if(x<1||y<0||x+y>max_fec_packet_num)
 			{
-				mylog(log_warn,"invaild value x=%d y=%d\n",x,y);
+				mylog(log_warn,"invaild value x=%d y=%d, x should >=1, y should >=0, x +y should <%d\n",x,y,max_fec_packet_num);
 				return -1;
 			}
 			tmp_par.x=x;
@@ -63,6 +67,7 @@ struct fec_parameter_t
 		}
 		assert(par_vec.size()==str_vec.size());
 
+		int found_problem=0;
 		for(int i=1;i<(int)par_vec.size();i++)
 		{
 			if(par_vec[i].x<=par_vec[i-1].x)
@@ -80,8 +85,17 @@ struct fec_parameter_t
 
 			if(pre_ratio<now_ratio)
 			{
-				mylog(log_warn,"%d/%d < %d/%d ,not suggested\n",pre_y,pre_x,now_y,now_x);
+				if(found_problem==0)
+				{
+					log_bare(log_warn,"possible problems: %d/%d < %d/%d ",pre_y,pre_x,now_y,now_x);
+					found_problem=1;
+				}
+				log_bare(log_warn,",%d/%d < %d/%d",pre_y,pre_x,now_y,now_x);
 			}
+		}
+		if(found_problem)
+		{
+			log_bare(log_warn,"\n");
 		}
 
 		{ //special treatment for first parameter
@@ -103,16 +117,27 @@ struct fec_parameter_t
 			rs_par[now_x-1].x=now_x;
 			rs_par[now_x-1].y=now_y;
 
-			double k= double(now_y-pre_y)/double(now_x-pre_x);
+			double now_ratio=double(par_vec[i].y)/par_vec[i].x;
+			double pre_ratio=double(par_vec[i-1].y)/par_vec[i-1].x;
+
+			//double k= double(now_y-pre_y)/double(now_x-pre_x);
 			for(int j=pre_x+1;j<=now_x-1;j++)
 			{
 				int in_x=j;
-				int in_y= double(pre_y) + double(in_x-pre_x)*k+ 0.9999;// round to upper
+
+			////////	int in_y= double(pre_y) + double(in_x-pre_x)*k+ 0.9999;// round to upper
+
+			double distance=now_x-pre_x;
+			///////	double in_ratio=pre_ratio*(1.0-(in_x-pre_x)/distance)   +   now_ratio *(1.0- (now_x-in_x)/distance);
+			//////	int in_y= in_x*in_ratio + 0.9999;
+				int in_y= pre_y +(now_y-pre_y) *(in_x-pre_x)/distance +0.99999;
+
 				if(in_x+in_y>max_fec_packet_num)
 				{
 					in_y=max_fec_packet_num-in_x;
 					assert(in_y>=0&&in_y<=max_fec_packet_num);
 				}
+
 				rs_par[in_x-1].x=in_x;
 				rs_par[in_x-1].y=in_y;
 			}
@@ -130,7 +155,9 @@ struct fec_parameter_t
 		assert(rs_cnt>=1);
 		for(int i=0;i<rs_cnt;i++)
 		{
-			sprintf(tmp_buf,"<%d,%d> ",int(rs_par[i].x),int(rs_par[i].y));
+			sprintf(tmp_buf,"%d:%d",int(rs_par[i].x),int(rs_par[i].y));
+			if(i!=0)
+				tmp_string+=",";
 			tmp_string+=tmp_buf;
 		}
 		strcpy(res,tmp_string.c_str());

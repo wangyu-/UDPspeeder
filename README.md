@@ -85,7 +85,7 @@ See [UDPspeeder + openvpn config guide](https://github.com/wangyu-/UDPspeeder/wi
 ### Full Options
 ```
 UDPspeeder V2
-git version: 6f55b8a2fc    build date: Nov 19 2017 06:11:23
+git version: 3e248b414c    build date: Aug  5 2018 21:59:52
 repository: https://github.com/wangyu-/UDPspeeder
 
 usage:
@@ -110,6 +110,8 @@ advanced options:
                                           do not use if you dont know what it means.
     -i,--interval         <number>        scatter each fec group to a interval of <number> ms, to protect burst packet loss.
                                           default value: 0. do not use if you dont know what it means.
+    -f,--fec              x1:y1,x2:y2,..  similiar to -f/--fec above,fine-grained fec parameters,may help save bandwidth.
+                                          example: "-f 1:3,2:4,10:6,20:10". check repo for details
     --random-drop         <number>        simulate packet loss, unit: 0.01%. default value: 0.
     --disable-obscure     <number>        disable obscure, to save a bit bandwidth and cpu.
 developer options:
