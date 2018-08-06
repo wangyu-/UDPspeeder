@@ -322,6 +322,10 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 
         	assert(blob_encode.output(actual_data_num,blob_output,fec_len)==0);
 
+    		if(debug_fec)
+    			mylog(log_debug,"x=%d y=%d len=%d\n",actual_data_num,actual_redundant_num,fec_len);
+    		else
+    			mylog(log_trace,"x=%d y=%d len=%d\n",actual_data_num,actual_redundant_num,fec_len);
     	}
     	else
     	{
@@ -329,17 +333,22 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
     		actual_data_num=counter;
     		actual_redundant_num=fec_par.rs_par[counter-1].y;
 
+    		int sum_ori=0;
     		for(int i=0;i<counter;i++)
     		{
+    			sum_ori+=input_len[i];
     			assert(input_len[i]>=0);
     			if(input_len[i]>fec_len) fec_len=input_len[i];
     		}
 
+    		int sum=fec_len*counter;
+
+    		if(debug_fec)
+    			mylog(log_debug,"x=%d y=%d len=%d sum_ori=%d sum=%d\n",actual_data_num,actual_redundant_num,fec_len,sum_ori,sum);
+    		else
+    			mylog(log_trace,"x=%d y=%d len=%d sum_ori=%d sum=%d\n",actual_data_num,actual_redundant_num,fec_len,sum_ori,sum);
     	}
-		if(debug_fec)
-			mylog(log_debug,"x=%d y=%d len=%d\n",actual_data_num,actual_redundant_num,fec_len);
-		else
-			mylog(log_trace,"x=%d y=%d len=%d\n",actual_data_num,actual_redundant_num,fec_len);
+
     	//mylog(log_trace,"%d %d %d\n",actual_data_num,actual_redundant_num,fec_len);
 
     	char *tmp_output_buf[max_fec_packet_num+5]={0};
