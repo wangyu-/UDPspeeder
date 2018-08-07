@@ -83,19 +83,22 @@ struct fec_parameter_t
 			double now_ratio=double(par_vec[i].y)/par_vec[i].x;
 			double pre_ratio=double(par_vec[i-1].y)/par_vec[i-1].x;
 
-			if(pre_ratio<now_ratio)
+			if(pre_ratio+0.0001<now_ratio)
 			{
 				if(found_problem==0)
 				{
-					log_bare(log_warn,"possible problems: %d/%d < %d/%d ",pre_y,pre_x,now_y,now_x);
+					mylog(log_warn,"possible problems: %d/%d<%d/%d",pre_y,pre_x,now_y,now_x);
 					found_problem=1;
 				}
-				log_bare(log_warn,",%d/%d < %d/%d",pre_y,pre_x,now_y,now_x);
+				else
+				{
+					log_bare(log_warn,", %d/%d<%d/%d",pre_y,pre_x,now_y,now_x);
+				}
 			}
 		}
 		if(found_problem)
 		{
-			log_bare(log_warn,"\n");
+			log_bare(log_warn," in %s\n",s);
 		}
 
 		{ //special treatment for first parameter
@@ -130,7 +133,7 @@ struct fec_parameter_t
 			double distance=now_x-pre_x;
 			///////	double in_ratio=pre_ratio*(1.0-(in_x-pre_x)/distance)   +   now_ratio *(1.0- (now_x-in_x)/distance);
 			//////	int in_y= in_x*in_ratio + 0.9999;
-				int in_y= pre_y +(now_y-pre_y) *(in_x-pre_x)/distance +0.99999;
+				int in_y= pre_y +(now_y-pre_y) *(in_x-pre_x)/distance +0.9999;
 
 				if(in_x+in_y>max_fec_packet_num)
 				{
