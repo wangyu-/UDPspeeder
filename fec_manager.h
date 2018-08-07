@@ -291,7 +291,7 @@ struct blob_decode_t
 	int output(int &n,char ** &output,int *&len_arr);
 };
 
-class fec_encode_manager_t
+class fec_encode_manager_t:not_copy_able_t
 {
 
 private:
@@ -422,10 +422,10 @@ struct fec_group_t
 	//int data_counter=0;
 	map<int,int>  group_mp;
 };
-class fec_decode_manager_t
+class fec_decode_manager_t:not_copy_able_t
 {
 	anti_replay_t anti_replay;
-	fec_data_t *fec_data;
+	fec_data_t *fec_data=0;
 	unordered_map<u32_t, fec_group_t> mp;
 	blob_decode_t blob_decode;
 
@@ -443,15 +443,22 @@ public:
 	fec_decode_manager_t()
 	{
 		fec_data=new fec_data_t[fec_buff_num+5];
+		assert(fec_data!=0);
 		clear();
 	}
+	/*
 	fec_decode_manager_t(const fec_decode_manager_t &b)
 	{
 		assert(0==1);//not allowed to copy
-	}
+	}*/
 	~fec_decode_manager_t()
 	{
-		delete fec_data;
+		mylog(log_debug,"fec_decode_manager destroyed\n");
+		if(fec_data!=0)
+		{
+			mylog(log_debug,"fec_data freed\n");
+			delete fec_data;
+		}
 	}
 	int clear()
 	{
