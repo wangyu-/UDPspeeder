@@ -323,9 +323,9 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
         	assert(blob_encode.output(actual_data_num,blob_output,fec_len)==0);
 
     		if(debug_fec)
-    			mylog(log_debug,"x=%d y=%d len=%d\n",actual_data_num,actual_redundant_num,fec_len);
+    			mylog(log_debug,"x=%d y=%d len=%d cnt=%d\n",actual_data_num,actual_redundant_num,fec_len,counter);
     		else
-    			mylog(log_trace,"x=%d y=%d len=%d\n",actual_data_num,actual_redundant_num,fec_len);
+    			mylog(log_trace,"x=%d y=%d len=%d cnt=%d\n",actual_data_num,actual_redundant_num,fec_len,counter);
     	}
     	else
     	{
