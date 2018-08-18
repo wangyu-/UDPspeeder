@@ -649,9 +649,9 @@ int fec_decode_manager_t::input(char *s,int len)
 			if(cnt<x)
 			{
 				if(debug_fec_dec)
-					mylog(log_debug,"[dec][failed]seq=%08x x=%d y=%d cnt=%d\n",seq,x,y,cnt);
+					mylog(log_debug,"[dec][failed]seq=%08x x=%d y=%d cnt=%d\n",tmp_seq,x,y,cnt);
 				else
-					mylog(log_trace,"[dec][failed]seq=%08x x=%d y=%d cnt=%d\n",seq,x,y,cnt);
+					mylog(log_trace,"[dec][failed]seq=%08x x=%d y=%d cnt=%d\n",tmp_seq,x,y,cnt);
 			}
 			mp.erase(tmp_it);
 		}
