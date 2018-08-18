@@ -20,7 +20,8 @@ extern u32_t fec_buff_num;
 
 const int rs_str_len=max_fec_packet_num*10+100;
 extern int header_overhead;
-extern int debug_fec;
+extern int debug_fec_enc;
+extern int debug_fec_dec;
 
 struct fec_parameter_t
 {

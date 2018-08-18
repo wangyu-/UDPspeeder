@@ -653,7 +653,9 @@ void process_arg(int argc, char *argv[])
 		{"fec", required_argument,   0,'f'},
 		{"jitter", required_argument,   0,'j'},
 		{"header-overhead", required_argument,    0, 1},
-		{"debug-fec", no_argument,    0, 1},
+		//{"debug-fec", no_argument,    0, 1},
+		{"debug-fec-enc", no_argument,    0, 1},
+		{"debug-fec-dec", no_argument,    0, 1},
 		{"fifo", required_argument,    0, 1},
 		{"sub-net", required_argument,    0, 1},
 		{"tun-dev", required_argument,    0, 1},
@@ -949,10 +951,15 @@ void process_arg(int argc, char *argv[])
 				}
 				g_fec_par.timeout*=1000;
 			}
-			else if(strcmp(long_options[option_index].name,"debug-fec")==0)
+			else if(strcmp(long_options[option_index].name,"debug-fec-enc")==0)
 			{
-				debug_fec=1;
-				mylog(log_info,"debug_fec enabled\n");
+				debug_fec_enc=1;
+				mylog(log_info,"debug_fec_enc enabled\n");
+			}
+			else if(strcmp(long_options[option_index].name,"debug-fec-dec")==0)
+			{
+				debug_fec_dec=1;
+				mylog(log_info,"debug_fec_dec enabled\n");
 			}
 			else if(strcmp(long_options[option_index].name,"fifo")==0)
 			{

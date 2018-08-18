@@ -20,7 +20,8 @@
 
 fec_parameter_t g_fec_par;
 
-int debug_fec=0;
+int debug_fec_enc=0;
+int debug_fec_dec=0;
 //int dynamic_update_fec=1;
 
 const int encode_fast_send=1;
@@ -322,10 +323,10 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 
         	assert(blob_encode.output(actual_data_num,blob_output,fec_len)==0);
 
-    		if(debug_fec)
-    			mylog(log_debug,"x=%d y=%d len=%d cnt=%d\n",actual_data_num,actual_redundant_num,fec_len,counter);
+    		if(debug_fec_enc)
+    			mylog(log_debug,"[enc]seq=%08x x=%d y=%d len=%d cnt=%d\n",seq,actual_data_num,actual_redundant_num,fec_len,counter);
     		else
-    			mylog(log_trace,"x=%d y=%d len=%d cnt=%d\n",actual_data_num,actual_redundant_num,fec_len,counter);
+    			mylog(log_trace,"[enc]seq=%08x x=%d y=%d len=%d cnt=%d\n",seq,actual_data_num,actual_redundant_num,fec_len,counter);
     	}
     	else
     	{
@@ -343,10 +344,10 @@ int fec_encode_manager_t::input(char *s,int len/*,int &is_first_packet*/)
 
     		int sum=fec_len*counter;
 
-    		if(debug_fec)
-    			mylog(log_debug,"x=%d y=%d len=%d sum_ori=%d sum=%d\n",actual_data_num,actual_redundant_num,fec_len,sum_ori,sum);
+    		if(debug_fec_enc)
+    			mylog(log_debug,"[enc]seq=%08x x=%d y=%d len=%d sum_ori=%d sum=%d\n",seq,actual_data_num,actual_redundant_num,fec_len,sum_ori,sum);
     		else
-    			mylog(log_trace,"x=%d y=%d len=%d sum_ori=%d sum=%d\n",actual_data_num,actual_redundant_num,fec_len,sum_ori,sum);
+    			mylog(log_trace,"[enc]seq=%08x x=%d y=%d len=%d sum_ori=%d sum=%d\n",seq,actual_data_num,actual_redundant_num,fec_len,sum_ori,sum);
     	}
 
     	//mylog(log_trace,"%d %d %d\n",actual_data_num,actual_redundant_num,fec_len);
@@ -638,9 +639,21 @@ int fec_decode_manager_t::input(char *s,int len)
 		u32_t tmp_seq=fec_data[index].seq;
 		anti_replay.set_invaild(tmp_seq);
 
-		if(mp.find(tmp_seq)!=mp.end())
+		auto tmp_it=mp.find(tmp_seq);
+		if(tmp_it!=mp.end())
 		{
-			mp.erase(tmp_seq);
+			int x=tmp_it->second.data_num;
+			int y=tmp_it->second.redundant_num;
+			int cnt=tmp_it->second.group_mp.size();
+
+			if(cnt<x)
+			{
+				if(debug_fec_dec)
+					mylog(log_debug,"[dec][failed]seq=%08x x=%d y=%d cnt=%d\n",seq,x,y,cnt);
+				else
+					mylog(log_trace,"[dec][failed]seq=%08x x=%d y=%d cnt=%d\n",seq,x,y,cnt);
+			}
+			mp.erase(tmp_it);
 		}
 		if(tmp_seq==seq)
 		{
@@ -701,16 +714,27 @@ int fec_decode_manager_t::input(char *s,int len)
 		int group_data_num=mp[seq].data_num;
 		int group_redundant_num=mp[seq].redundant_num;
 
+		int x_got=0;
+		int y_got=0;
 		//mylog(log_error,"fec here!\n");
 		if(type==0)
 		{
 			char *fec_tmp_arr[max_fec_packet_num+5]={0};
 			for(auto it=inner_mp.begin();it!=inner_mp.end();it++)
 			{
+				if(it->first <group_data_num)
+					x_got++;
+				else
+					y_got++;
 				fec_tmp_arr[it->first]=fec_data[it->second].buf;
 			}
 			assert(rs_decode2(group_data_num,group_data_num+group_redundant_num,fec_tmp_arr,len)==0); //the input data has been modified in-place
 			//this line should always succeed
+
+    		if(debug_fec_dec)
+    			mylog(log_debug,"[dec]seq=%08x x=%d y=%d len=%d cnt=%d X=%d Y=%d\n",seq,group_data_num,group_redundant_num,len,int(inner_mp.size()),x_got,y_got);
+    		else
+    			mylog(log_trace,"[dec]seq=%08x x=%d y=%d len=%d cnt=%d X=%d Y=%d\n",seq,group_data_num,group_redundant_num,len,int(inner_mp.size()),x_got,y_got);
 
 			blob_decode.clear();
 			for(int i=0;i<group_data_num;i++)
@@ -750,6 +774,11 @@ int fec_decode_manager_t::input(char *s,int len)
 			}
 			for(auto it=inner_mp.begin();it!=inner_mp.end();it++)
 			{
+				if(it->first <group_data_num)
+					x_got++;
+				else
+					y_got++;
+
 				output_s_arr_buf[it->first]=fec_data[it->second].buf;
 				if(fec_data[it->second].len<(int)sizeof(u16_t))
 				{
@@ -790,9 +819,12 @@ int fec_decode_manager_t::input(char *s,int len)
 
 			assert(rs_decode2(group_data_num,group_data_num+group_redundant_num,output_s_arr_buf,max_len)==0);//this should always succeed
 
+			int sum_ori=0;
+
 			for(int i=0;i<group_data_num;i++)
 			{
 				output_len_arr_buf[i]=read_u16(output_s_arr_buf[i]);
+				sum_ori+=output_len_arr_buf[i];
 				output_s_arr_buf[i]+=sizeof(u16_t);
 				if(output_len_arr_buf[i]>max_data_len)
 				{
@@ -806,6 +838,14 @@ int fec_decode_manager_t::input(char *s,int len)
 					//break;
 				}
 			}
+
+			int sum=max_len*group_data_num;
+
+    		if(debug_fec_dec)
+    			mylog(log_debug,"[dec]seq=%08x x=%d y=%d len=%d sum_ori=%d sum=%d X=%d Y=%d\n",seq,group_data_num,group_redundant_num,max_len,sum_ori,sum,x_got,y_got);
+    		else
+    			mylog(log_trace,"[dec]seq=%08x x=%d y=%d len=%d sum_ori=%d sum=%d X=%d Y=%d\n",seq,group_data_num,group_redundant_num,max_len,sum_ori,sum,x_got,y_got);
+
 			if(fec_result_ok)
 			{
 
