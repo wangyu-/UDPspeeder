@@ -42,17 +42,15 @@ static void print_help()
 	printf("    --mtu                 <number>        mtu. for mode 0, the program will split packet to segment smaller than mtu value.\n");
 	printf("                                          for mode 1, no packet will be split, the program just check if the mtu is exceed.\n");
 	printf("                                          default value: 1250. you typically shouldnt change this value.\n");
-    printf("    -q,--queue-len        <number>        fec queue len, only for mode 0, fec will be performed immediately after queue is full.\n");
-	printf("                                          default value: 200. \n");
-
 	printf("    -j,--jitter           <number>        simulated jitter. randomly delay first packet for 0~<number> ms, default value: 0.\n");
 	printf("                                          do not use if you dont know what it means.\n");
-	printf("    -i,--interval         <number>        scatter each fec group to a interval of <number> ms, to protect burst packet loss.\n");
+	printf("    -i,--interval         <number>        scatter each fec group to a interval of <number> ms, to defend burst packet loss.\n");
 	printf("                                          default value: 0. do not use if you dont know what it means.\n");
 	printf("    -f,--fec              x1:y1,x2:y2,..  similiar to -f/--fec above,fine-grained fec parameters,may help save bandwidth.\n");
 	printf("                                          example: \"-f 1:3,2:4,10:6,20:10\". check repo for details\n");
 	printf("    --random-drop         <number>        simulate packet loss, unit: 0.01%%. default value: 0.\n");
-	printf("    --disable-obscure     <number>        disable obscure, to save a bit bandwidth and cpu.\n");
+	printf("    --disable-obscure     <number>        disable obscure, to save a bit bandwidth and cpu\n");
+	printf("    --disable-checksum    <number>        disable checksum to save a bit bandwdith and cpu\n");
 	//printf("    --disable-xor         <number>        disable xor\n");
 
 	printf("developer options:\n");
@@ -61,9 +59,11 @@ static void print_help()
 	printf("                                          supported commands.\n");
 	printf("    -j ,--jitter          jmin:jmax       similiar to -j above, but create jitter randomly between jmin and jmax\n");
 	printf("    -i,--interval         imin:imax       similiar to -i above, but scatter randomly between imin and imax\n");
+    printf("    -q,--queue-len        <number>        fec queue len, only for mode 0, fec will be performed immediately after queue is full.\n");
+	printf("                                          default value: 200. \n");
     printf("    --decode-buf          <number>        size of buffer of fec decoder,unit: packet, default: 2000\n");
-    printf("    --fix-latency         <number>        try to stabilize latency, only for mode 0\n");
-    printf("    --delay-capacity      <number>        max number of delayed packets\n");
+//    printf("    --fix-latency         <number>        try to stabilize latency, only for mode 0\n");
+    printf("    --delay-capacity      <number>        max number of delayed packets, 0 means unlimited, default: 0\n");
 	printf("    --disable-fec         <number>        completely disable fec, turn the program into a normal udp tunnel\n");
 	printf("    --sock-buf            <number>        buf size for socket, >=10 and <=10240, unit: kbyte, default: 1024\n");
 	printf("log and help options:\n");
