@@ -98,6 +98,7 @@ void sigint_cb(struct ev_loop *l, ev_signal *w, int revents)
 
 int main(int argc, char *argv[])
 {
+	working_mode=tunnel_mode;
 	init_ws();
 	//unit_test();
 
@@ -117,8 +118,6 @@ int main(int argc, char *argv[])
     ev_signal signal_watcher_sigint;
     ev_signal_init(&signal_watcher_sigint, sigint_cb, SIGINT);
     ev_signal_start(loop, &signal_watcher_sigint);
-
-	//working_mode=tunnel_mode;
 
 	assert(sizeof(u64_t)==8);
 	assert(sizeof(i64_t)==8);
@@ -143,13 +142,9 @@ int main(int argc, char *argv[])
 		}
 	}
 
-
 	process_arg(argc,argv);
 
 	delay_manager.set_capacity(delay_capacity);
-	//local_ip_uint32=inet_addr(local_ip);
-	//remote_ip_uint32=inet_addr(remote_ip);
-	sub_net_uint32=inet_addr(sub_net);// used only in tinyfecVPN
 
 	if(strlen(tun_dev)==0)
 	{

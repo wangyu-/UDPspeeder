@@ -103,6 +103,7 @@ const int max_addr_len=100;
 const int max_data_len=3600;
 const int buf_len=max_data_len+200;
 
+const int default_mtu=1250;
 
 //const u32_t timer_interval=400;
 ////const u32_t conv_timeout=180000;
@@ -228,7 +229,6 @@ struct address_t  //TODO scope id
 	{
 		clear();
 	}*/
-
 	void clear()
 	{
 		memset(&inner,0,sizeof(inner));
@@ -270,10 +270,16 @@ struct address_t  //TODO scope id
 	char* get_str();
 	void to_str(char *);
 
-	inline u32_t get_type()
+	inline int is_vaild()
 	{
 		u32_t ret=((sockaddr*)&inner)->sa_family;
-		assert(ret==AF_INET||ret==AF_INET6);
+		return (ret==AF_INET||ret==AF_INET6);
+	}
+
+	inline u32_t get_type()
+	{
+		assert(is_vaild());
+		u32_t ret=((sockaddr*)&inner)->sa_family;
 		return ret;
 	}
 

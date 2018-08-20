@@ -52,8 +52,10 @@ int keep_reconnect=0;
 
 int tun_mtu=1500;
 
-int mssfix=1;
+int mssfix=default_mtu;
 
+int manual_set_tun=0;
+int persist_tun=0;
 
 char rs_par_str[rs_str_len]="20:10";
 
@@ -660,8 +662,10 @@ void process_arg(int argc, char *argv[])
 		{"sub-net", required_argument,    0, 1},
 		{"tun-dev", required_argument,    0, 1},
 		{"tun-mtu", required_argument,    0, 1},
-		{"disable-mssfix", no_argument,    0, 1},
+		{"mssfix", required_argument,    0, 1},
 		{"keep-reconnect", no_argument,    0, 1},
+		{"persist-tun", no_argument,    0, 1},
+		{"manual-set-tun", no_argument,    0, 1},
 		{"interval", required_argument,   0,'i'},
 		{NULL, 0, 0, 0}
       };
@@ -972,6 +976,16 @@ void process_arg(int argc, char *argv[])
 				keep_reconnect=1;
 				mylog(log_info,"keep_reconnect enabled\n");
 			}
+			else if(strcmp(long_options[option_index].name,"manual-set-tun")==0)
+			{
+				manual_set_tun=1;
+				mylog(log_info,"manual_set_tun enabled\n");
+			}
+			else if(strcmp(long_options[option_index].name,"persist-tun")==0)
+			{
+				persist_tun=1;
+				mylog(log_info,"persist_tun enabled\n");
+			}
 			else if(strcmp(long_options[option_index].name,"sub-net")==0)
 			{
 				sscanf(optarg,"%s",sub_net);
@@ -983,8 +997,6 @@ void process_arg(int argc, char *argv[])
 				sscanf(optarg,"%s",tun_dev);
 				mylog(log_info,"tun_dev=%s\n",tun_dev);
 
-				mylog(log_info,"running at tun-dev mode\n");
-				working_mode=tun_dev_mode;
 			}
 			else if(strcmp(long_options[option_index].name,"tun-mtu")==0)
 			{
@@ -996,10 +1008,10 @@ void process_arg(int argc, char *argv[])
 				sscanf(optarg,"%d",&header_overhead);
 				mylog(log_warn,"changed header_overhead,header_overhead=%d\n",header_overhead);
 			}
-			else if(strcmp(long_options[option_index].name,"disable-mssfix")==0)
+			else if(strcmp(long_options[option_index].name,"mssfix")==0)
 			{
-				mssfix=0;
-				mylog(log_warn,"mssfix disabled\n");
+				sscanf(optarg,"%d",&mssfix);
+				mylog(log_warn,"mssfix=%d\n",mssfix);
 			}
 			else
 			{

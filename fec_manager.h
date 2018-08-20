@@ -26,7 +26,7 @@ extern int debug_fec_dec;
 struct fec_parameter_t
 {
 	int version=0;
-	int mtu=1250;
+	int mtu=default_mtu;
 	int queue_len=200;
 	int timeout=8*1000;
 	int mode=0;
