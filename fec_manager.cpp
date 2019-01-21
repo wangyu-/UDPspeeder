@@ -594,6 +594,12 @@ int fec_decode_manager_t::input(char *s,int len)
 		return 0;
 	}
 
+	if(mp[seq].fec_done!=0)
+	{
+		mylog(log_debug,"fec already done, ignore\n");
+		return -1;
+	}
+
 	if(mp[seq].group_mp.find(inner_index)!=mp[seq].group_mp.end() )
 	{
 		mylog(log_debug,"dup fec index\n");//duplicate can happen on  a normal network, so its just log_debug
@@ -730,6 +736,7 @@ int fec_decode_manager_t::input(char *s,int len)
 			}
 			assert(rs_decode2(group_data_num,group_data_num+group_redundant_num,fec_tmp_arr,len)==0); //the input data has been modified in-place
 			//this line should always succeed
+    		mp[seq].fec_done=1;
 
     		if(debug_fec_dec)
     			mylog(log_debug,"[dec]seq=%08x x=%d y=%d len=%d cnt=%d X=%d Y=%d\n",seq,group_data_num,group_redundant_num,len,int(inner_mp.size()),x_got,y_got);
@@ -818,6 +825,7 @@ int fec_decode_manager_t::input(char *s,int len)
 			mylog(log_trace,"fec done,%d %d,missed_packet_counter=%d\n",group_data_num,group_redundant_num,missed_packet_counter);
 
 			assert(rs_decode2(group_data_num,group_data_num+group_redundant_num,output_s_arr_buf,max_len)==0);//this should always succeed
+			mp[seq].fec_done=1;
 
 			int sum_ori=0;
 

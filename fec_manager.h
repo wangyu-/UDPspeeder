@@ -196,7 +196,7 @@ struct fec_parameter_t
 extern fec_parameter_t g_fec_par;
 //extern int dynamic_update_fec;
 
-const int anti_replay_timeout=60*1000;// 60s
+const int anti_replay_timeout=120*1000;// 120s
 
 struct anti_replay_t
 {
@@ -423,6 +423,7 @@ struct fec_group_t
 	int data_num=-1;
 	int redundant_num=-1;
 	int len=-1;
+	int fec_done=0;
 	//int data_counter=0;
 	map<int,int>  group_mp;
 };
