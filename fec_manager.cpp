@@ -596,7 +596,7 @@ int fec_decode_manager_t::input(char *s,int len)
 
 	if(mp[seq].fec_done!=0)
 	{
-		mylog(log_debug,"fec already done, ignore\n");
+		mylog(log_debug,"fec already done, ignore, seq=%u\n",seq);
 		return -1;
 	}
 
