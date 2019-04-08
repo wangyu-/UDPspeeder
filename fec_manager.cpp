@@ -186,8 +186,10 @@ int fec_encode_manager_t::append(char *s,int len/*,int &is_first_packet*/)
 	{
 		first_packet_time=get_current_time_us();
 
+		const double m=1000*1000;
+
 		ev_timer_stop(loop, &timer);
-		ev_timer_set(&timer, fec_par.timeout/1000000.0 ,0 );
+		ev_timer_set(&timer, fec_par.timeout/m,0 );
 		ev_timer_start(loop, &timer);
 	}
 	if(fec_par.mode==0)//for type 0 use blob

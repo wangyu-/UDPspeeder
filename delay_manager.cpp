@@ -117,8 +117,10 @@ int delay_manager_t::check()
 		if(!delay_mp.empty())
 		{
 			const double m=1000*1000;
+			double timer_value=delay_mp.begin()->first/m -get_current_time_us()/m; // be aware of negative value, and be aware of uint
+			if(timer_value<0) timer_value=0; // set it to 0 if negative, although libev support negative value
 			ev_timer_stop(loop, &timer);
-			ev_timer_set(&timer, delay_mp.begin()->first/m -get_current_time_us()/m,0 );
+			ev_timer_set(&timer, timer_value,0 );
 			ev_timer_start(loop, &timer);
 		}
 		else
