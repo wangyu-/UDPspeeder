@@ -239,7 +239,7 @@ struct anti_replay_t
 		}
 		replay_buffer[index]=seq;
 		assert(mp.find(seq)==mp.end());
-		mp[seq].my_time=get_current_time_rough();
+		mp[seq].my_time=get_current_time();
 		mp[seq].index=index;
 		index++;
 		if(index==int(anti_replay_buff_size)) index=0;
@@ -248,7 +248,7 @@ struct anti_replay_t
 	{
 		if(mp.find(seq)==mp.end()) return 1;
 		
-		if(get_current_time_rough()-mp[seq].my_time>anti_replay_timeout)
+		if(get_current_time()-mp[seq].my_time>anti_replay_timeout)
 		{
 			replay_buffer[mp[seq].index]=u64_t(i64_t(-1));
 			mp.erase(seq);

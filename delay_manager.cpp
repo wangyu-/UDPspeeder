@@ -116,14 +116,9 @@ int delay_manager_t::check()
 		}
 		if(!delay_mp.empty())
 		{
-			//itimerspec its;
-			//memset(&its.it_interval,0,sizeof(its.it_interval));
-			//its.it_value.tv_sec=delay_mp.begin()->first/1000000llu;
-			//its.it_value.tv_nsec=(delay_mp.begin()->first%1000000llu)*1000llu;
-			//timerfd_settime(timer_fd,TFD_TIMER_ABSTIME,&its,0);
-
+			const double m=1000*1000;
 			ev_timer_stop(loop, &timer);
-			ev_timer_set(&timer, delay_mp.begin()->first /1000000.0 - ev_now(loop),0 );   //we should use ev_now here.
+			ev_timer_set(&timer, delay_mp.begin()->first/m -get_current_time_us()/m,0 );
 			ev_timer_start(loop, &timer);
 		}
 		else

@@ -184,19 +184,11 @@ int fec_encode_manager_t::append(char *s,int len/*,int &is_first_packet*/)
 {
 	if(counter==0)
 	{
-		my_itimerspec its;
-		memset(&its.it_interval,0,sizeof(its.it_interval));
 		first_packet_time=get_current_time_us();
-		my_time_t tmp_time=fec_par.timeout+first_packet_time;
-		its.it_value.tv_sec=tmp_time/1000000llu;
-		its.it_value.tv_nsec=(tmp_time%1000000llu)*1000llu;
-		//timerfd_settime(timer_fd,TFD_TIMER_ABSTIME,&its,0);
 
 		ev_timer_stop(loop, &timer);
-		ev_timer_set(&timer, tmp_time/1000000.0 - ev_now(loop) ,0 );   //we should use ev_now here.
+		ev_timer_set(&timer, fec_par.timeout/1000000.0 ,0 );
 		ev_timer_start(loop, &timer);
-
-		//ev_timer_set(loop,)
 	}
 	if(fec_par.mode==0)//for type 0 use blob
 	{
