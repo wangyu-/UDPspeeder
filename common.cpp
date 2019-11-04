@@ -953,7 +953,7 @@ int new_listen_socket2(int &fd,address_t &addr)
 	int yes = 1;
 
 	if (::bind(fd, (struct sockaddr*) &addr.inner, addr.get_len()) == -1) {
-		mylog(log_fatal,"socket bind error\n");
+		mylog(log_fatal,"socket bind error=%s\n",get_sock_error());
 		//perror("socket bind error");
 		myexit(1);
 	}
@@ -973,13 +973,13 @@ int new_connected_socket2(int &fd,address_t &addr,bool bind_enabled,address_t &b
 	}
 
 	if (bind_enabled && ::bind(fd, (struct sockaddr*) &bind_addr.inner, bind_addr.get_len()) == -1) {
-		mylog(log_fatal,"socket bind error\n");
+		mylog(log_fatal,"socket bind error=%s\n", get_sock_error());
 		//perror("socket bind error");
 		myexit(1);
 	}
 
-	if (strlen(interface_string) > 0 && setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, interface_string, strlen(interface_string)) < 0) {
-		mylog(log_fatal,"socket interface bind error\n");
+	if (strlen(interface_string) > 0 && ::setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, interface_string, strlen(interface_string)) < 0) {
+		mylog(log_fatal,"socket interface bind error=%s\n", get_sock_error());
 		//perror("socket bind error");
 		myexit(1);
 	}
