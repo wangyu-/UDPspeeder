@@ -446,7 +446,7 @@ int new_listen_socket(int &fd,u32_t ip,int port);
 int new_connected_socket(int &fd,u32_t ip,int port);
 
 int new_listen_socket2(int &fd,address_t &addr);
-int new_connected_socket2(int &fd,address_t &addr);
+int new_connected_socket2(int &fd,address_t &addr,bool bind_enabled,address_t &bind_addr);
 
 struct not_copy_able_t
 {

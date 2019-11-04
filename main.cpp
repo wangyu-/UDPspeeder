@@ -37,6 +37,7 @@ static void print_help()
 	printf("    --report              <number>        turn on send/recv report, and set a period for reporting, unit: s\n");
 
 	printf("advanced options:\n");
+	printf("    -b,--bind             ip:port         force all output packets to go through this ip. Set port to 0 to use a random one.\n");
 	printf("    --mode                <number>        fec-mode,available values: 0,1; mode 0(default) costs less bandwidth,no mtu problem.\n");
 	printf("                                          mode 1 usually introduces less latency, but you have to care about mtu.\n");
 	printf("    --mtu                 <number>        mtu. for mode 0, the program will split packet to segment smaller than mtu value.\n");

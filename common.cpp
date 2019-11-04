@@ -964,13 +964,20 @@ int new_listen_socket2(int &fd,address_t &addr)
 
 	return 0;
 }
-int new_connected_socket2(int &fd,address_t &addr)
+int new_connected_socket2(int &fd,address_t &addr,bool bind_enabled,address_t &bind_addr)
 {
 	fd = socket(addr.get_type(), SOCK_DGRAM, IPPROTO_UDP);
 	if (fd < 0) {
 		mylog(log_warn, "[%s]create udp_fd error\n", addr.get_str());
 		return -1;
 	}
+
+	if (bind_enabled && ::bind(fd, (struct sockaddr*) &bind_addr.inner, bind_addr.get_len()) == -1) {
+		mylog(log_fatal,"socket bind error\n");
+		//perror("socket bind error");
+		myexit(1);
+	}
+
 	setnonblocking(fd);
 	set_buf_size(fd, socket_buf_size);
 
