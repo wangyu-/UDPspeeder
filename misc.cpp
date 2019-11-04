@@ -28,6 +28,8 @@ int output_interval_max=0*1000;
 
 int fix_latency=0;
 
+char interface_string[16];
+
 bool has_b=false;
 address_t local_addr,remote_addr,bind_addr;
 //u32_t local_ip_uint32,remote_ip_uint32=0;
@@ -649,6 +651,7 @@ void process_arg(int argc, char *argv[])
 		{"report", required_argument,    0, 1},
 		{"delay-capacity", required_argument,    0, 1},
 		{"mtu", required_argument,    0, 1},
+		{"interface", required_argument,    0, 1},
 		{"mode", required_argument,   0,1},
 		{"timeout", required_argument,   0,1},
 		{"decode-buf", required_argument,   0,1},
@@ -947,6 +950,16 @@ void process_arg(int argc, char *argv[])
 				if(g_fec_par.mtu<100||g_fec_par.mtu>2000)
 				{
 					mylog(log_fatal,"fec_mtu should be between 100 and 2000\n");
+					myexit(-1);
+				}
+			}
+			else if(strcmp(long_options[option_index].name,"interface")==0)
+			{
+				sscanf(optarg,"%s\n",interface_string);
+				mylog(log_debug,"interface=%s\n",interface_string);
+				if(strlen(interface_string)==0)
+				{
+					mylog(log_fatal,"interface_string len=0??\n");
 					myexit(-1);
 				}
 			}

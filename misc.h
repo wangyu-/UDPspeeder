@@ -39,6 +39,8 @@ extern int fix_latency;
 //extern char local_ip[100], remote_ip[100];
 //extern int local_port, remote_port;
 
+extern char interface_string[16];
+
 extern bool has_b;
 extern address_t local_addr,remote_addr,bind_addr;
 
