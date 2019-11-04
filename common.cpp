@@ -978,12 +978,10 @@ int new_connected_socket2(int &fd,address_t &addr,bool bind_enabled,address_t &b
 		myexit(1);
 	}
 
-	if (strlen(interface_string) > 0) {
-		if (setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, interface_string, strlen(interface_string)) < 0) {
-			mylog(log_fatal,"socket interface bind error\n");
-			//perror("socket bind error");
-			myexit(1);
-		}
+	if (strlen(interface_string) > 0 && setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, interface_string, strlen(interface_string)) < 0) {
+		mylog(log_fatal,"socket interface bind error\n");
+		//perror("socket bind error");
+		myexit(1);
 	}
 
 	setnonblocking(fd);
