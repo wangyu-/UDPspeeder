@@ -22,7 +22,7 @@ void server_clear_function(u64_t u64)//used in conv_manager in server mode.for s
 
 	address_t &addr=fd_manager.get_info(fd64).addr;//
 	assert(conn_manager.exist(addr));//
-	ev_loop *loop =conn_manager.find_insert(addr).loop;  // overkill ? should we just use ev_default_loop(0)?
+	struct ev_loop *loop =conn_manager.find_insert(addr).loop;  // overkill ? should we just use ev_default_loop(0)?
 
 	ev_io_stop(loop,&watcher);
 

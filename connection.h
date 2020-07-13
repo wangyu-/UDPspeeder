@@ -295,7 +295,7 @@ struct conn_info_t:not_copy_able_t     //stores info for a raw connection.for cl
 	u64_t last_active_time;
 	stat_t stat;
 
-	ev_loop* loop=0;
+	struct ev_loop* loop=0;
 	int local_listen_fd;
 
 	int remote_fd;  //only used for client

@@ -32,11 +32,16 @@
 //#include <net/if.h>
 #include <stdarg.h>
 #include <assert.h>
+
+#if !defined(NO_LIBEV_EMBED)
 #include <my_ev.h>
+#else
+#include "ev.h"
+#endif
 
 #if defined(__MINGW32__)
 #include <winsock2.h>
-#include <Ws2tcpip.h >
+#include <ws2tcpip.h>
 typedef int socklen_t;
 #else
 #include <sys/socket.h> 
