@@ -7,16 +7,19 @@ cc_mingw_cross=i686-w64-mingw32-g++-posix
 cc_mac_cross=o64-clang++ -stdlib=libc++
 #cc_bcm2708=/home/wangyu/raspberry/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf-g++ 
 
-FLAGS= -std=c++11   -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers ${OPT}
 
 SOURCES0=main.cpp log.cpp common.cpp lib/fec.cpp lib/rs.cpp packet.cpp delay_manager.cpp fd_manager.cpp connection.cpp fec_manager.cpp misc.cpp tunnel_client.cpp tunnel_server.cpp
 SOURCES=${SOURCES0} my_ev.cpp -isystem libev 
-
 NAME=speederv2
+
+
+FLAGS= -std=c++11   -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers ${OPT}
 
 TARGETS=amd64 arm mips24kc_be x86  mips24kc_le
 
 TAR=${NAME}_binaries.tar.gz `echo ${TARGETS}|sed -r 's/([^ ]+)/${NAME}_\1/g'` version.txt
+
+export STAGING_DIR=/tmp/    #just for supress warning of staging_dir not define
 
 # targets for nativei (non-cross) compile 
 all:git_version
@@ -65,22 +68,6 @@ debug2: git_version
 	rm -f ${NAME}
 	${cc_local}   -o ${NAME}          -I. ${SOURCES} ${FLAGS} -lrt -Wformat-nonliteral -ggdb
 
-#targets only for cross compile windows targets on linux 
-
-mingw_cross:git_version   #to build this and the below one you need 'mingw-w64' installed (the cross compile version on linux)
-	rm -f ${NAME}
-	${cc_mingw_cross}   -o ${NAME}.exe          -I. ${SOURCES} ${FLAGS}  -ggdb -static -O2 -lws2_32
-
-mingw_cross_wepoll:git_version    #to compile you need a pacthed version of libev with wepoll backend installed
-	rm -f ${NAME}
-	${cc_mingw_cross}   -o ${NAME}_wepoll.exe       -I. ${SOURCES0} ${FLAGS}  -ggdb -static -O2   -DNO_LIBEV_EMBED -D_WIN32 -lev -lws2_32
-
-#targets only for cross compile macos targets on linux 
-
-mac_cross:git_version   #need to install 'osxcross' first.
-	rm -f ${NAME}
-	${cc_mac_cross}   -o ${NAME}_mac          -I. ${SOURCES} ${FLAGS}  -ggdb -O2
-
 #targets only for 'make release'
 
 mips24kc_be: git_version
@@ -101,6 +88,25 @@ arm:git_version
 release: ${TARGETS}
 	cp git_version.h version.txt
 	tar -zcvf ${TAR}
+
+#targets for cross compile windows targets on linux 
+
+mingw_cross:git_version   #to build this and the below one you need 'mingw-w64' installed (the cross compile version on linux)
+	${cc_mingw_cross}   -o ${NAME}.exe          -I. ${SOURCES} ${FLAGS}  -ggdb -static -O2 -lws2_32
+
+mingw_cross_wepoll:git_version    #to compile you need a pacthed version of libev with wepoll backend installed
+	${cc_mingw_cross}   -o ${NAME}_wepoll.exe       -I. ${SOURCES0} ${FLAGS}  -ggdb -static -O2   -DNO_LIBEV_EMBED -D_WIN32 -lev -lws2_32
+
+#targets for cross compile macos targets on linux 
+
+mac_cross:git_version   #need to install 'osxcross' first.
+	${cc_mac_cross}   -o ${NAME}_mac          -I. ${SOURCES} ${FLAGS}  -ggdb -O2
+
+#release2 includes all binary in 'release' plus win and mac cross compile targets
+
+release2: ${TARGETS} mingw_cross mingw_cross_wepoll mac_cross
+	cp git_version.h version.txt
+	tar -zcvf ${TAR} ${NAME}.exe ${NAME}_wepoll.exe ${NAME}_mac
 
 clean:	
 	rm -f ${TAR}
