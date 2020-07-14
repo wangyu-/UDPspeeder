@@ -295,7 +295,7 @@ int tunnel_client_event_loop()
     int & remote_fd=conn_info.remote_fd;
     fd64_t &remote_fd64=conn_info.remote_fd64;
 
-	assert(new_connected_socket2(remote_fd,remote_addr)==0);
+	assert(new_connected_socket2(remote_fd,remote_addr,has_b,bind_addr,interface_string)==0);
 	remote_fd64=fd_manager.create(remote_fd);
 
 	mylog(log_debug,"remote_fd64=%llu\n",remote_fd64);

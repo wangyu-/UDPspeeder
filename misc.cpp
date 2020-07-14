@@ -28,7 +28,10 @@ int output_interval_max=0*1000;
 
 int fix_latency=0;
 
-address_t local_addr,remote_addr;
+char interface_string[16];
+
+bool has_b=false;
+address_t local_addr,remote_addr,bind_addr;
 //u32_t local_ip_uint32,remote_ip_uint32=0;
 //char local_ip[100], remote_ip[100];
 //int local_port = -1, remote_port = -1;
@@ -648,12 +651,14 @@ void process_arg(int argc, char *argv[])
 		{"report", required_argument,    0, 1},
 		{"delay-capacity", required_argument,    0, 1},
 		{"mtu", required_argument,    0, 1},
+		{"interface", required_argument,    0, 1},
 		{"mode", required_argument,   0,1},
 		{"timeout", required_argument,   0,1},
 		{"decode-buf", required_argument,   0,1},
 		{"queue-len", required_argument,   0,'q'},
 		{"fec", required_argument,   0,'f'},
 		{"jitter", required_argument,   0,'j'},
+		{"bind", required_argument,   0,'b'},
 		{"header-overhead", required_argument,    0, 1},
 		//{"debug-fec", no_argument,    0, 1},
 		{"debug-fec-enc", no_argument,    0, 1},
@@ -717,7 +722,7 @@ void process_arg(int argc, char *argv[])
 
 
 	int no_l = 1, no_r = 1;
-	while ((opt = getopt_long(argc, argv, "l:r:hcsk:j:f:p:n:i:q:",long_options,&option_index)) != -1)
+	while ((opt = getopt_long(argc, argv, "l:r:hcsk:j:f:p:n:i:q:b",long_options,&option_index)) != -1)
 	{
 		//string opt_key;
 		//opt_key+=opt;
@@ -823,6 +828,10 @@ void process_arg(int argc, char *argv[])
 		case 'r':
 			no_r = 0;
 			remote_addr.from_str(optarg);
+			break;
+		case 'b':
+			has_b = true;
+			bind_addr.from_str(optarg);
 			break;
 		case 'h':
 			break;
@@ -941,6 +950,16 @@ void process_arg(int argc, char *argv[])
 				if(g_fec_par.mtu<100||g_fec_par.mtu>2000)
 				{
 					mylog(log_fatal,"fec_mtu should be between 100 and 2000\n");
+					myexit(-1);
+				}
+			}
+			else if(strcmp(long_options[option_index].name,"interface")==0)
+			{
+				sscanf(optarg,"%s\n",interface_string);
+				mylog(log_debug,"interface=%s\n",interface_string);
+				if(strlen(interface_string)==0)
+				{
+					mylog(log_fatal,"interface_string len=0??\n");
 					myexit(-1);
 				}
 			}
