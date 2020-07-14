@@ -964,7 +964,7 @@ int new_listen_socket2(int &fd,address_t &addr)
 
 	return 0;
 }
-int new_connected_socket2(int &fd,address_t &addr,bool bind_enabled,address_t &bind_addr,char interface_string[])
+int new_connected_socket2(int &fd,address_t &addr,address_t *bind_addr,char * interface_string)
 {
 	fd = socket(addr.get_type(), SOCK_DGRAM, IPPROTO_UDP);
 	if (fd < 0) {
@@ -972,17 +972,19 @@ int new_connected_socket2(int &fd,address_t &addr,bool bind_enabled,address_t &b
 		return -1;
 	}
 
-	if (bind_enabled && ::bind(fd, (struct sockaddr*) &bind_addr.inner, bind_addr.get_len()) == -1) {
+	if (bind_addr && ::bind(fd, (struct sockaddr*) &bind_addr->inner, bind_addr->get_len()) == -1) {
 		mylog(log_fatal,"socket bind error=%s\n", get_sock_error());
 		//perror("socket bind error");
 		myexit(1);
 	}
 
-	if (strlen(interface_string) > 0 && ::setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, interface_string, strlen(interface_string)) < 0) {
+#ifdef __linux__
+	if (interface_string && ::setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, interface_string, strlen(interface_string)) < 0) {
 		mylog(log_fatal,"socket interface bind error=%s\n", get_sock_error());
 		//perror("socket bind error");
 		myexit(1);
 	}
+#endif
 
 	setnonblocking(fd);
 	set_buf_size(fd, socket_buf_size);

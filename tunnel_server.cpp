@@ -232,7 +232,7 @@ static void local_listen_cb(struct ev_loop *loop, struct ev_io *watcher, int rev
 			}
 
 			int new_udp_fd;
-			ret=new_connected_socket2(new_udp_fd,remote_addr,has_b,bind_addr,interface_string);
+			ret=new_connected_socket2(new_udp_fd,remote_addr,out_addr,out_interface);
 
 			if (ret != 0) {
 				mylog(log_warn, "[%s]new_connected_socket failed\n",addr.get_str());

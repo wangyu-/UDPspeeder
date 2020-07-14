@@ -4,7 +4,7 @@ cc_mips24kc_be=/toolchains/lede-sdk-17.01.2-ar71xx-generic_gcc-5.4.0_musl-1.1.16
 cc_mips24kc_le=/toolchains/lede-sdk-17.01.2-ramips-mt7621_gcc-5.4.0_musl-1.1.16.Linux-x86_64/staging_dir/toolchain-mipsel_24kc_gcc-5.4.0_musl-1.1.16/bin/mipsel-openwrt-linux-musl-g++
 cc_arm= /toolchains/arm-2014.05/bin/arm-none-linux-gnueabi-g++
 cc_mingw_cross=i686-w64-mingw32-g++-posix
-cc_mac_cross=o64-clang++ -stdlib=libc++ -std=c++11
+cc_mac_cross=o64-clang++ -stdlib=libc++
 #cc_bcm2708=/home/wangyu/raspberry/tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian/bin/arm-linux-gnueabihf-g++ 
 
 FLAGS= -std=c++11   -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers ${OPT}

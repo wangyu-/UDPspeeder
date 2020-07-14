@@ -37,8 +37,6 @@ static void print_help()
 	printf("    --report              <number>        turn on send/recv report, and set a period for reporting, unit: s\n");
 
 	printf("advanced options:\n");
-	printf("    -b,--bind             ip:port         force all output packets to go through this address. Set port to 0 to use a random one.\n");
-	printf("    --interface           <string>        force all output packets to go through this interface.\n");
 	printf("    --mode                <number>        fec-mode,available values: 0,1; mode 0(default) costs less bandwidth,no mtu problem.\n");
 	printf("                                          mode 1 usually introduces less latency, but you have to care about mtu.\n");
 	printf("    --mtu                 <number>        mtu. for mode 0, the program will split packet to segment smaller than mtu value.\n");
@@ -68,6 +66,10 @@ static void print_help()
     printf("    --delay-capacity      <number>        max number of delayed packets, 0 means unlimited, default: 0\n");
 	printf("    --disable-fec         <number>        completely disable fec, turn the program into a normal udp tunnel\n");
 	printf("    --sock-buf            <number>        buf size for socket, >=10 and <=10240, unit: kbyte, default: 1024\n");
+	printf("    --out-addr            ip:port         force all output packets to go through this address. Set port to 0 to use a random one.\n");
+#ifdef __linux__
+	printf("    --out-interface       <string>        force all output packets to go through this interface.\n");
+#endif
 	printf("log and help options:\n");
 	printf("    --log-level           <number>        0: never    1: fatal   2: error   3: warn \n");
 	printf("                                          4: info (default)      5: debug   6: trace\n");

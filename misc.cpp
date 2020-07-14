@@ -28,10 +28,10 @@ int output_interval_max=0*1000;
 
 int fix_latency=0;
 
-char interface_string[16];
 
-bool has_b=false;
-address_t local_addr,remote_addr,bind_addr;
+address_t local_addr,remote_addr;
+address_t *out_addr=0;
+char *out_interface=0;
 //u32_t local_ip_uint32,remote_ip_uint32=0;
 //char local_ip[100], remote_ip[100];
 //int local_port = -1, remote_port = -1;
@@ -651,14 +651,15 @@ void process_arg(int argc, char *argv[])
 		{"report", required_argument,    0, 1},
 		{"delay-capacity", required_argument,    0, 1},
 		{"mtu", required_argument,    0, 1},
-		{"interface", required_argument,    0, 1},
 		{"mode", required_argument,   0,1},
 		{"timeout", required_argument,   0,1},
 		{"decode-buf", required_argument,   0,1},
 		{"queue-len", required_argument,   0,'q'},
 		{"fec", required_argument,   0,'f'},
 		{"jitter", required_argument,   0,'j'},
-		{"bind", required_argument,   0,'b'},
+		{"out-addr", required_argument,   0,1},
+		{"out-interface", required_argument,    0, 1},
+		{"key", required_argument,   0,'k'},
 		{"header-overhead", required_argument,    0, 1},
 		//{"debug-fec", no_argument,    0, 1},
 		{"debug-fec-enc", no_argument,    0, 1},
@@ -829,10 +830,6 @@ void process_arg(int argc, char *argv[])
 			no_r = 0;
 			remote_addr.from_str(optarg);
 			break;
-		case 'b':
-			has_b = true;
-			bind_addr.from_str(optarg);
-			break;
 		case 'h':
 			break;
 		case 1:
@@ -953,13 +950,21 @@ void process_arg(int argc, char *argv[])
 					myexit(-1);
 				}
 			}
-			else if(strcmp(long_options[option_index].name,"interface")==0)
+			else if(strcmp(long_options[option_index].name,"out-addr")==0)
 			{
-				sscanf(optarg,"%s\n",interface_string);
-				mylog(log_debug,"interface=%s\n",interface_string);
-				if(strlen(interface_string)==0)
+			    //has_b = true;
+			    mylog(log_debug,"out-addr=%s\n",optarg);
+			    out_addr=new address_t();
+			    out_addr->from_str(optarg);
+			}
+			else if(strcmp(long_options[option_index].name,"out-interface")==0)
+			{
+			    out_interface=new char[strlen(optarg)+10];
+				sscanf(optarg,"%s\n",out_interface);
+				mylog(log_debug,"out-interface=%s\n",out_interface);
+				if(strlen(out_interface)==0)
 				{
-					mylog(log_fatal,"interface_string len=0??\n");
+					mylog(log_fatal,"out_interface string len=0??\n");
 					myexit(-1);
 				}
 			}
