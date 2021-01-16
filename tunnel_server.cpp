@@ -93,7 +93,7 @@ void data_from_remote_or_fec_timeout_or_conn_timer(conn_info_t & conn_info,fd64_
 
 		if(data_len==max_data_len+1)
 		{
-			mylog(log_warn,"huge packet, data_len > %d, packet truncated, dropped\n",max_data_len);
+			mylog(log_warn,"huge packet from upper level, data_len > %d, packet truncated, dropped\n",max_data_len);
 			return ;
 		}
 
