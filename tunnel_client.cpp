@@ -44,11 +44,17 @@ void data_from_local_or_fec_timeout(conn_info_t & conn_info,int is_time_out)
 		mylog(log_trace,"events[idx].data.u64 == (u64_t)local_listen_fd\n");
 		address_t::storage_t udp_new_addr_in={0};
 		socklen_t udp_new_addr_len = sizeof(address_t::storage_t);
-		if ((data_len = recvfrom(local_listen_fd, data, max_data_len, 0,
+		if ((data_len = recvfrom(local_listen_fd, data, max_data_len+1, 0,
 				(struct sockaddr *) &udp_new_addr_in, &udp_new_addr_len)) == -1) {
 			mylog(log_debug,"recv_from error,this shouldnt happen,err=%s,but we can try to continue\n",get_sock_error());
 			return;
 		};
+
+		if(data_len==max_data_len+1)
+		{
+			mylog(log_warn,"huge packet, data_len > %d, packet truncated, dropped\n",max_data_len);
+			return ;
+		}
 
 		if(!disable_mtu_warn&&data_len>=mtu_warn)
 		{
@@ -122,7 +128,15 @@ static void remote_cb(struct ev_loop *loop, struct ev_io *watcher, int revents)
 
 	int fd=fd_manager.to_fd(remote_fd64);
 
-	int data_len =recv(fd,data,max_data_len,0);
+	int data_len =recv(fd,data,max_data_len+1,0);
+
+	if(data_len==max_data_len+1)
+        {
+                mylog(log_warn,"huge packet, data_len > %d, packet truncated, dropped\n",max_data_len);
+                return ;
+        }
+
+
 	mylog(log_trace, "received data from udp fd %d, len=%d\n", remote_fd,data_len);
 	if(data_len<0)
 	{
