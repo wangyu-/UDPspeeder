@@ -515,7 +515,7 @@ found_piv:
 	 * we can optimize the addmul).
 	 */
 	id_row[icol] = 1;
-	if (bcmp(pivot_row, id_row, k*sizeof(gf)) != 0) {
+	if (memcmp(pivot_row, id_row, k*sizeof(gf)) != 0) {
 	    for (p = src, ix = 0 ; ix < k ; ix++, p += k ) {
 		if (ix != icol) {
 		    c = p[icol] ;
