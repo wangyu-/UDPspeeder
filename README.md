@@ -15,7 +15,7 @@ Assume your local network to your server is lossy. Just establish a VPN connecti
 
 [UDPspeeder Wiki](https://github.com/wangyu-/UDPspeeder/wiki)
 
-[简体中文](/doc/README.zh-cn.md)(内容更丰富)
+[简体中文](/doc/README.zh-cn.md)
 
 # Efficacy
 tested on a link with 100ms latency and 10% packet loss at both direction
