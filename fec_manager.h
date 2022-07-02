@@ -195,6 +195,8 @@ struct fec_parameter_t
 		assert(other.rs_cnt>=1);
 		rs_cnt=other.rs_cnt;
 		memcpy(rs_par,other.rs_par,sizeof(rs_parameter_t)*rs_cnt);
+		
+		version++;
 
 		return 0;
 	}
