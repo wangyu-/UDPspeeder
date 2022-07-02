@@ -293,7 +293,6 @@ int handle_command(char *s)
 			return -1;
 		}
 		g_fec_par.clone_fec(tmp_par);
-		g_fec_par.version++;
 		strcpy(rs_par_str,tmp_str);
 		//g_fec_data_num=a;
 		//g_fec_redundant_num=b;
