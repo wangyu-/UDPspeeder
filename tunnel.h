@@ -8,7 +8,6 @@
 #ifndef TUNNEL_H_
 #define TUNNEL_H_
 
-
 #include "misc.h"
 
 int tunnel_client_event_loop();
