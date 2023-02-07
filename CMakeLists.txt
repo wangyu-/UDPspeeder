@@ -1,3 +1,5 @@
+#note: experimental
+
 cmake_minimum_required(VERSION 3.7)
 project(speederv2)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

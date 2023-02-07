@@ -188,6 +188,9 @@ struct stat_t {
     inner_stat_t normal_to_fec;
     inner_stat_t fec_to_normal;
     stat_t() {
+        clear();
+    }
+    void clear(){
         memset(this, 0, sizeof(stat_t));
     }
     void report_as_client() {
