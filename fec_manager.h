@@ -190,13 +190,11 @@ struct fec_parameter_t
 		return 0;
 	}
 
-	int clone_fec(fec_parameter_t & other)
+	int copy_fec(fec_parameter_t & other)
 	{
 		assert(other.rs_cnt>=1);
 		rs_cnt=other.rs_cnt;
 		memcpy(rs_par,other.rs_par,sizeof(rs_parameter_t)*rs_cnt);
-		
-		version++;
 
 		return 0;
 	}

@@ -292,7 +292,9 @@ int handle_command(char *s)
 			mylog(log_warn,"failed to parse [%s]\n",tmp_str);
 			return -1;
 		}
-		g_fec_par.clone_fec(tmp_par);
+		int version=g_fec_par.version;
+		g_fec_par.copy_fec(tmp_par);
+		g_fec_par.version=version+1;
 		strcpy(rs_par_str,tmp_str);
 		//g_fec_data_num=a;
 		//g_fec_redundant_num=b;
