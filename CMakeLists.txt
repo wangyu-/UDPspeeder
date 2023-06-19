@@ -24,7 +24,7 @@ set(SOURCE_FILES
         tunnel_server.cpp
         my_ev.cpp
 )
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers -O2 -g -fsanitize=address,undefined")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -Wno-missing-field-initializers -O2 -g -fsanitize=address,undefined -fno-sanitize=shift")
 
 #target_include_directories(speederv2 PRIVATE .)
 #set(CMAKE_LINK_LIBRARY_FLAG "-lrt")
