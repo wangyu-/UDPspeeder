@@ -413,7 +413,7 @@ class fec_decode_manager_t : not_copy_able_t {
         mylog(log_debug, "fec_decode_manager destroyed\n");
         if (fec_data != 0) {
             mylog(log_debug, "fec_data freed\n");
-            delete fec_data;
+            delete[] fec_data;
         }
     }
     int clear() {
