@@ -895,8 +895,8 @@ int new_connected_socket2(int &fd, address_t &addr, address_t *bind_addr, char *
 u32_t djb2(unsigned char *str, int len) {
     u32_t hash = 5381;
     int c;
-    int i = 0;
-    while (c = *str++, i++ != len) {
+    for (int i=0; i<len ;i++) {
+        c = *(str++);
         hash = ((hash << 5) + hash) ^ c; /* (hash * 33) ^ c */
     }
 
@@ -907,13 +907,14 @@ u32_t djb2(unsigned char *str, int len) {
 u32_t sdbm(unsigned char *str, int len) {
     u32_t hash = 0;
     int c;
-    int i = 0;
-    while (c = *str++, i++ != len) {
+    for (int i=0; i<len ;i++) {
+        c = *(str++);
         hash = c + (hash << 6) + (hash << 16) - hash;
     }
     // hash=htonl(hash);
     return hash;
 }
+
 
 vector<string> string_to_vec(const char *s, const char *sp) {
     vector<string> res;
