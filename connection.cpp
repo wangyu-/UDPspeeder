@@ -12,6 +12,8 @@
 const int disable_conn_clear = 0;  // a raw connection is called conn.
 
 int report_interval = 0;
+u32_t server_conn_timeout_s = 60;  // default connection timeout in seconds
+u32_t conv_timeout_s = 30;         // default conversation timeout in seconds
 
 void server_clear_function(u64_t u64)  // used in conv_manager in server mode.for server we have to use one udp fd for one conv(udp connection),
 // so we have to close the fd when conv expires
@@ -114,7 +116,7 @@ int conn_manager_t::clear_inactive0() {
         if (it->second->conv_manager.s.get_size() > 0) {
             // mylog(log_info,"[%s:%d]size %d \n",my_ntoa(get_u64_h(it->first)),get_u64_l(it->first),(int)it->second->conv_manager.get_size());
             it++;
-        } else if (current_time < it->second->last_active_time + server_conn_timeout) {
+        } else if (current_time < it->second->last_active_time + server_conn_timeout_s * 1000) {
             it++;
         } else {
             address_t tmp_addr = it->first;  // avoid making get_str() const;
@@ -127,4 +129,8 @@ int conn_manager_t::clear_inactive0() {
     }
     clear_it = it;
     return 0;
+}
+
+bool conn_manager_t::has_active_connections() {
+    return !mp.empty();
 }

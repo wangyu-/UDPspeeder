@@ -54,6 +54,8 @@ int mssfix = default_mtu;
 int manual_set_tun = 0;
 int persist_tun = 0;
 
+bool shutdown_if_all_disconnected = false;
+
 char rs_par_str[rs_str_len] = "20:10";
 
 int from_normal_to_fec(conn_info_t &conn_info, char *data, int len, int &out_n, char **&out_arr, int *&out_len, my_time_t *&out_delay) {
@@ -225,6 +227,7 @@ int print_parameter() {
           jitter_min / 1000, jitter_max / 1000, output_interval_min / 1000, output_interval_max / 1000, g_fec_par.timeout / 1000, g_fec_par.mtu, g_fec_par.queue_len, g_fec_par.mode);
     mylog(log_info, "fec_str=%s\n", rs_par_str);
     mylog(log_info, "fec_inner_parameter=%s\n", g_fec_par.rs_to_str());
+    mylog(log_info, "conv_timeout=%d conn_timeout=%d\n", conv_timeout_s, server_conn_timeout_s);
     return 0;
 }
 int handle_command(char *s) {
@@ -582,6 +585,9 @@ void process_arg(int argc, char *argv[]) {
             {"persist-tun", no_argument, 0, 1},
             {"manual-set-tun", no_argument, 0, 1},
             {"interval", required_argument, 0, 'i'},
+            {"conn-timeout", required_argument, 0, 1},
+            {"conv-timeout", required_argument, 0, 1},
+            {"shutdown", no_argument, 0, 1},
             {NULL, 0, 0, 0}};
     int option_index = 0;
     assert(g_fec_par.rs_from_str(rs_par_str) == 0);
@@ -842,6 +848,15 @@ void process_arg(int argc, char *argv[]) {
                 } else if (strcmp(long_options[option_index].name, "mssfix") == 0) {
                     sscanf(optarg, "%d", &mssfix);
                     mylog(log_warn, "mssfix=%d\n", mssfix);
+                } else if (strcmp(long_options[option_index].name, "conn-timeout") == 0) {
+                    sscanf(optarg, "%u", &server_conn_timeout_s);
+                    mylog(log_warn, "conn_timeout=%d\n", server_conn_timeout_s);
+                } else if (strcmp(long_options[option_index].name, "conv-timeout") == 0) {
+                    sscanf(optarg, "%u", &conv_timeout_s);
+                    mylog(log_warn, "conv_timeout=%d\n", conv_timeout_s);
+                } else if (strcmp(long_options[option_index].name, "shutdown") == 0) {
+                    shutdown_if_all_disconnected = true;
+                    mylog(log_warn, "shutdown enabled\n");
                 } else {
                     mylog(log_fatal, "unknown option\n");
                     myexit(-1);

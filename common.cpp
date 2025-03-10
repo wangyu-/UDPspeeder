@@ -854,7 +854,7 @@ int new_listen_socket2(int &fd, address_t &addr) {
     setnonblocking(fd);
     set_buf_size(fd, socket_buf_size);
 
-    mylog(log_debug, "local_listen_fd=%d\n", fd);
+    mylog(log_debug, "[%s]local_listen_fd=%d\n", addr.get_str(), fd);
 
     return 0;
 }

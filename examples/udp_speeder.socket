@@ -1,0 +1,9 @@
+[Unit]
+Description=UDP Speeder Socket
+
+[Socket]
+ListenDatagram=0.0.0.0:4096
+FreeBind=true
+
+[Install]
+WantedBy=sockets.target
