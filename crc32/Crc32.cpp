@@ -55,6 +55,10 @@
   #endif
 #endif
 
+#if !defined(__BYTE_ORDER) && defined(__BYTE_ORDER__)
+  #define __BYTE_ORDER __BYTE_ORDER__
+#endif
+
 // abort if byte order is undefined
 #if !defined(__BYTE_ORDER)
 #error undefined byte order, compile with -D__BYTE_ORDER=1234 (if little endian) or -D__BYTE_ORDER=4321 (big endian)
