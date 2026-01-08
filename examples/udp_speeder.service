@@ -1,0 +1,9 @@
+[Unit]
+Description=UDP Speeder Service
+After=network.target
+
+[Service]
+ExecStart=/home/mkarpets/repos/UDPspeeder/speederv2 -s -l0.0.0.0:4096 -r127.0.0.1:7777 -f20:10 --log-level 4 --conv-timeout 10 --conn-timeout 20 --shutdown
+
+[Install]
+WantedBy=multi-user.target

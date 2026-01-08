@@ -6,6 +6,10 @@
  */
 
 #include "tunnel.h"
+#ifdef SYSTEMD_SOCKET_ACTIVATION
+#include <systemd/sd-daemon.h>
+#endif
+#include <arpa/inet.h>
 
 static void conn_timer_cb(struct ev_loop *loop, struct ev_timer *watcher, int revents);
 static void fec_encode_cb(struct ev_loop *loop, struct ev_timer *watcher, int revents);
@@ -14,6 +18,8 @@ static void remote_cb(struct ev_loop *loop, struct ev_io *watcher, int revents);
 enum tmp_mode_t { is_from_remote = 0,
                   is_fec_timeout,
                   is_conn_timer };
+
+bool first_connection_established = false;
 
 void data_from_remote_or_fec_timeout_or_conn_timer(conn_info_t &conn_info, fd64_t fd64, tmp_mode_t mode) {
     int ret;
@@ -193,6 +199,7 @@ static void local_listen_cb(struct ev_loop *loop, struct ev_io *watcher, int rev
         conn_info.fec_encode_manager.set_loop_and_cb(loop, fec_encode_cb);
 
         mylog(log_info, "new connection from %s\n", addr.get_str());
+        first_connection_established = true;
     }
     conn_info_t &conn_info = conn_manager.find_insert(addr);
 
@@ -316,7 +323,59 @@ static void global_timer_cb(struct ev_loop *loop, struct ev_timer *watcher, int 
     // uint64_t value;
     // read(timer.get_timer_fd(), &value, 8);
     conn_manager.clear_inactive();
+
+    if (shutdown_if_all_disconnected && first_connection_established && !conn_manager.has_active_connections()) {
+        mylog(log_info, "No active connections, exiting...\n");
+        ev_break(loop, EVBREAK_ALL);
+    }
+
     mylog(log_trace, "events[idx].data.u64==(u64_t)timer.get_timer_fd()\n");
+}
+
+void print_socket_info(int fd) {
+    struct sockaddr_storage addr;
+    socklen_t addr_len = sizeof(addr);
+    if (getsockname(fd, (struct sockaddr *)&addr, &addr_len) == -1) {
+        mylog(log_error, "getsockname failed: %s\n", strerror(errno));
+        return;
+    }
+
+    char ip_str[INET6_ADDRSTRLEN];
+    void *ip_addr;
+    int port;
+    const char *family_str;
+
+    if (addr.ss_family == AF_INET) {
+        struct sockaddr_in *s = (struct sockaddr_in *)&addr;
+        ip_addr = &(s->sin_addr);
+        port = ntohs(s->sin_port);
+        family_str = "AF_INET";
+    } else {
+        struct sockaddr_in6 *s = (struct sockaddr_in6 *)&addr;
+        ip_addr = &(s->sin6_addr);
+        port = ntohs(s->sin6_port);
+        family_str = "AF_INET6";
+    }
+
+    inet_ntop(addr.ss_family, ip_addr, ip_str, sizeof(ip_str));
+
+    int sock_type;
+    socklen_t optlen = sizeof(sock_type);
+    if (getsockopt(fd, SOL_SOCKET, SO_TYPE, &sock_type, &optlen) == -1) {
+        mylog(log_error, "getsockopt failed: %s\n", strerror(errno));
+        return;
+    }
+
+    const char *type_str;
+    if (sock_type == SOCK_DGRAM) {
+        type_str = "SOCK_DGRAM";
+    } else if (sock_type == SOCK_STREAM) {
+        type_str = "SOCK_STREAM";
+    } else {
+        type_str = "UNKNOWN";
+    }
+
+    mylog(log_info, "Socket info - Family: %s, Type: %s, IP: %s, Port: %d\n", family_str, type_str, ip_str, port);
 }
 
 int tunnel_server_event_loop() {
@@ -326,8 +385,32 @@ int tunnel_server_event_loop() {
     // int epoll_fd;
     // int remote_fd;
 
-    int local_listen_fd;
-    new_listen_socket2(local_listen_fd, local_addr);
+    int local_listen_fd = -1;
+#ifdef SYSTEMD_SOCKET_ACTIVATION
+    int n = sd_listen_fds(0);
+    if (sd_listen_fds(0) > 0) {
+        if (n != 1) {
+            mylog(log_fatal, "expect exactly 1 socket passed from systemd, but got %d\n", n);
+            myexit(-1);
+        }
+
+        int fd = SD_LISTEN_FDS_START;
+        // print_socket_info(fd);
+
+        int ret = sd_is_socket_inet(fd, local_addr.get_type(), SOCK_DGRAM, -1, local_addr.get_port());
+        mylog(log_info, "sd_is_socket_inet returned: %d\n", ret);
+        if (ret <= 0) {
+            mylog(log_fatal, "socket is not UDP\n");
+            myexit(-1);
+        }
+
+        local_listen_fd = fd;
+        mylog(log_info, "Using socket passed from systemd\n");
+    }
+#endif
+    if (local_listen_fd < 0) {
+        new_listen_socket2(local_listen_fd, local_addr);
+    }
 
     // epoll_fd = epoll_create1(0);
     // assert(epoll_fd>0);

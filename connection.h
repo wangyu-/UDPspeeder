@@ -9,6 +9,8 @@
 #define CONNECTION_H_
 
 extern int disable_anti_replay;
+extern unsigned int server_conn_timeout_s;
+extern unsigned int conv_timeout_s;
 
 #include "connection.h"
 #include "common.h"
@@ -146,7 +148,7 @@ struct conv_manager_t  // manage the udp connections
             u32_t conv;
             my_time_t ts = lru.peek_back(conv);
 
-            if (current_time - ts < conv_timeout) break;
+            if (current_time - ts < conv_timeout_s * 1000) break;
 
             erase_conv(conv);
             if (info == 0) {
@@ -318,6 +320,7 @@ struct conn_manager_t  // manager for connections. for client,we dont need conn_
     int erase(unordered_map<address_t, conn_info_t *>::iterator erase_it);
     int clear_inactive();
     int clear_inactive0();
+    bool has_active_connections();
 };
 
 extern conn_manager_t conn_manager;

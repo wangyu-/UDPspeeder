@@ -50,6 +50,9 @@ static void print_help() {
     printf("    --disable-obscure     <number>        disable obscure, to save a bit bandwidth and cpu\n");
     printf("    --disable-checksum    <number>        disable checksum to save a bit bandwdith and cpu\n");
     // printf("    --disable-xor         <number>        disable xor\n");
+    printf("    --conn-timeout        <number>        connection timeout in seconds, default: 60\n");
+    printf("    --conv-timeout        <number>        conversation timeout in seconds, default: 30\n");
+    printf("    --shutdown                            shut down after all connections are disconnected\n");
 
     printf("developer options:\n");
     printf("    --fifo                <string>        use a fifo(named pipe) for sending commands to the running program, so that you\n");

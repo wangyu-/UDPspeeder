@@ -26,7 +26,7 @@ export STAGING_DIR=/tmp/    #just for supress warning of staging_dir not define
 # targets for nativei (non-cross) compile 
 all:git_version
 	rm -f ${NAME}
-	${cc_local}   -o ${NAME}          -I. ${SOURCES} ${FLAGS} -lrt -ggdb -static -O2
+	${cc_local} -DSYSTEMD_SOCKET_ACTIVATION -o ${NAME} -I. ${SOURCES} ${FLAGS} -lrt -lsystemd -ggdb -O2
 
 freebsd:git_version
 	rm -f ${NAME}
