@@ -1,0 +1,5 @@
+# Binaries and executables
+speederv2
+
+# Build artifacts
+git_version.h
